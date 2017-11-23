@@ -1,0 +1,11 @@
+*/bin/*
+*/output/*
+*/data/*
+rw
+*.txt
+*log*.xml
+RemoteSystemsTempFiles
+.recommenders
+.metadata
+*.jpg
+/bin/
