@@ -11,7 +11,7 @@ import pers.di.dataapi_test.TestCommonHelper;
 import pers.di.dataengine.*;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.*;
-import utils.SelectResult;
+import utils.XSelectFilter;
 
 public class QS1711Strategy {
 	
@@ -19,31 +19,27 @@ public class QS1711Strategy {
 	{
 		public TestStrategy()
 		{
-			m_seletctID = new ArrayList<String>();
+			
 		}
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			
+			m_XSelectFilter = new XSelectFilter(ctx.ap());
 		}
 	
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
-			for(int i=0; i<m_seletctID.size(); i++)
-			{
-				String stockID = m_seletctID.get(i);
-				super.addCurrentDayInterestMinuteDataID(stockID);
-			}
+			super.addCurrentDayInterestMinuteDataIDs(m_XSelectFilter.selectList());
 		}
 		
 		public void onHandleBuy(QuantContext ctx)
 		{
 			// find want create IDs
 			List<String> cIntentCreateList = new ArrayList<String>();
-			for(int i=0; i<m_seletctID.size(); i++)
+			for(int i=0; i<m_XSelectFilter.selectList().size(); i++)
 			{
-				String stockID = m_seletctID.get(i);
+				String stockID = m_XSelectFilter.selectList().get(i);
 				DAStock cDAStock = ctx.pool().get(stockID);
 
 				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
@@ -221,10 +217,9 @@ public class QS1711Strategy {
 		public void onDayFinish(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayFinish %s %s", ctx.date(), ctx.time());
 			
-			m_seletctID.clear();
+			m_XSelectFilter.clearSelect();
 			
 			// select strategy
-			List<SelectResult> cSelectResultList = new ArrayList<SelectResult>();
 			for(int i=0; i<ctx.pool().size(); i++)
 			{
 				DAStock cDAStock = ctx.pool().get(i);
@@ -247,46 +242,19 @@ public class QS1711Strategy {
 								&& cStockDayBefore1.close < cStockDayBefore2.close
 								)
 						{
-							SelectResult cSelectResult = new SelectResult();
-							cSelectResult.stockID = cDAStock.ID();
-							cSelectResult.fPriority = cStockDayBefore2.close - cStockDayCur.close;
-							cSelectResultList.add(cSelectResult);
+							m_XSelectFilter.addSelect(cDAStock.ID(), cStockDayBefore2.close - cStockDayCur.close);
 						}
 					}
 					
 				}
 			}
-			Collections.sort(cSelectResultList, new SelectResult.SelectResultCompare());
+			m_XSelectFilter.saveValidSelectCount(3);
 			
-			int maxSelectCnt = 3;
-			int iSelectCount = cSelectResultList.size();
-			int iAddCount = iSelectCount>maxSelectCnt?maxSelectCnt:iSelectCount;
-			for(int i=0; i<iAddCount; i++)
-			{
-				m_seletctID.add(cSelectResultList.get(i).stockID);
-			}
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XSelectFilter.dumpSelect());
 			
-			// output Selected log
-			String logStr = "";
-			logStr += String.format("Selected (%d) [ ", iAddCount);
-			if(iAddCount == 0) logStr += "null ";
-			for(int i=0; i< iAddCount; i++)
-			{
-				String stockId = m_seletctID.get(i);
-				logStr += String.format("%s ", stockId);
-				if (i >= 7 && m_seletctID.size()-1 > 8) {
-					logStr += String.format("... ", stockId);
-					break;
-				}
-			}
-			logStr += String.format("]");
-			CLog.output("TEST", "%s", logStr);
-			// output acc info
-			String accInfo = ctx.ap().dump();
-			CLog.output("TEST", "dump account\n%s", accInfo);
 		}
 		
-		private List<String> m_seletctID;
+		private XSelectFilter m_XSelectFilter;
 	}
 	
 	public void run()

@@ -15,8 +15,7 @@ import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.PricePosChecker;
 import utils.PricePosChecker.ResultLongDropParam;
-import utils.SelectResult;
-import utils.XBSStockManager;
+import utils.XSelectFilter;
 import utils.ZCZXChecker;
 import utils.ZCZXChecker.ResultDYCheck;
 
@@ -30,13 +29,13 @@ public class FastTest {
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XBSStockManager = new XBSStockManager(ctx.ap());
+			m_XSelectFilter = new XSelectFilter(ctx.ap());
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
-			super.addCurrentDayInterestMinuteDataIDs(m_XBSStockManager.selectList());
-			CLog.output("TEST", "%s", m_XBSStockManager.dumpSelect());
+			super.addCurrentDayInterestMinuteDataIDs(m_XSelectFilter.selectList());
+			CLog.output("TEST", "%s", m_XSelectFilter.dumpSelect());
 			
 			for(int i=0; i<super.getCurrentDayInterestMinuteDataIDs().size(); i++)
 			{
@@ -48,9 +47,9 @@ public class FastTest {
 		public void onMinuteData(QuantContext ctx) {
 			
 			// buy
-//			for(int iStock=0; iStock<m_XBSStockManager.selectList().size(); iStock++)
+//			for(int iStock=0; iStock<m_XSelectFilter.selectList().size(); iStock++)
 //			{
-//				String stockID = m_XBSStockManager.selectList().get(iStock);
+//				String stockID = m_XSelectFilter.selectList().get(iStock);
 //				DAStock cDAStock = ctx.pool().get(stockID);
 //				
 //				{
@@ -71,7 +70,7 @@ public class FastTest {
 		@Override
 		public void onDayFinish(QuantContext ctx) {
 
-			m_XBSStockManager.clearSelect();;
+			m_XSelectFilter.clearSelect();;
 
 			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
@@ -97,19 +96,19 @@ public class FastTest {
 						if(cResultDYCheck.bCheck)
 						{
 							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-							m_XBSStockManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+							m_XSelectFilter.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 						}
 					}
 				}
 			}
 			
-			m_XBSStockManager.saveValidSelectCount(5);
+			m_XSelectFilter.saveValidSelectCount(5);
 			
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XBSStockManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XSelectFilter.dumpSelect());
 		}
 		
-		private XBSStockManager m_XBSStockManager;
+		private XSelectFilter m_XSelectFilter;
 	}
 	
 	public static void main(String[] args) throws Exception {

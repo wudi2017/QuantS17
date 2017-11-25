@@ -8,15 +8,15 @@ import pers.di.quantplatform.*;
 /*
  * 互斥买卖股票管理器
  */
-public class XBSStockManager {
+public class XSelectFilter {
 	
-	public static class SelectResult {
+	public static class SelectItem {
 		// 优先级从大到小排序
-		public static class SelectResultCompare implements Comparator 
+		public static class SelectItemCompare implements Comparator 
 		{
 			public int compare(Object object1, Object object2) {
-				SelectResult c1 = (SelectResult)object1;
-				SelectResult c2 = (SelectResult)object2;
+				SelectItem c1 = (SelectItem)object1;
+				SelectItem c2 = (SelectItem)object2;
 				int iCmp = Double.compare(c1.dPriority, c2.dPriority);
 				if(iCmp > 0) 
 					return -1;
@@ -27,7 +27,7 @@ public class XBSStockManager {
 			}
 		}
 		
-		public SelectResult(){
+		public SelectItem(){
 			stockID = "";
 			dPriority = 0.0f;
 		}
@@ -35,13 +35,13 @@ public class XBSStockManager {
 		public double dPriority;
 	}
 	
-	public XBSStockManager(AccountProxy ap)
+	public XSelectFilter(AccountProxy ap)
 	{
 		m_ap = ap;
 		m_ctnCommissionOrderList = new ArrayList<CommissionOrder>();
 		m_ctnHoldStockList = new ArrayList<HoldStock>();
 		
-		m_SelectResultList = new ArrayList<SelectResult>();
+		m_SelectItemList = new ArrayList<SelectItem>();
 		
 	}
 	
@@ -49,19 +49,19 @@ public class XBSStockManager {
 	{
 		if(!existCommissionOrder(stockID) && !existHoldStock(stockID))
 		{
-			SelectResult cSelectResult = new SelectResult();
-			cSelectResult.stockID = stockID;
-			cSelectResult.dPriority = priority;
-			m_SelectResultList.add(cSelectResult);
-			Collections.sort(m_SelectResultList, new SelectResult.SelectResultCompare());
+			SelectItem cSelectItem = new SelectItem();
+			cSelectItem.stockID = stockID;
+			cSelectItem.dPriority = priority;
+			m_SelectItemList.add(cSelectItem);
+			Collections.sort(m_SelectItemList, new SelectItem.SelectItemCompare());
 		}
 	}
 	public void saveValidSelectCount(int count)
 	{
-		Collections.sort(m_SelectResultList, new SelectResult.SelectResultCompare());
-		if(m_SelectResultList.size() > count)
+		Collections.sort(m_SelectItemList, new SelectItem.SelectItemCompare());
+		if(m_SelectItemList.size() > count)
 		{
-			Iterator<SelectResult> iter = m_SelectResultList.listIterator(count);
+			Iterator<SelectItem> iter = m_SelectItemList.listIterator(count);
 			while (iter.hasNext()) {
 				iter.next();
 				iter.remove();
@@ -70,17 +70,17 @@ public class XBSStockManager {
 	}
 	public List<String> selectList()
 	{
-		Collections.sort(m_SelectResultList, new SelectResult.SelectResultCompare());
+		Collections.sort(m_SelectItemList, new SelectItem.SelectItemCompare());
 		List<String> selectList = new ArrayList<String>();
-		for(int i=0; i<m_SelectResultList.size(); i++)
+		for(int i=0; i<m_SelectItemList.size(); i++)
 		{
-			selectList.add(m_SelectResultList.get(i).stockID);
+			selectList.add(m_SelectItemList.get(i).stockID);
 		}
 		return selectList;
 	}
 	public void clearSelect()
 	{
-		m_SelectResultList.clear();
+		m_SelectItemList.clear();
 	}
 	public String dumpSelect()
 	{
@@ -134,5 +134,5 @@ public class XBSStockManager {
 	List<CommissionOrder> m_ctnCommissionOrderList;
 	List<HoldStock> m_ctnHoldStockList;
 	
-	private List<SelectResult> m_SelectResultList;
+	private List<SelectItem> m_SelectItemList;
 }
