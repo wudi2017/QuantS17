@@ -38,15 +38,21 @@ public class XSelectFilter {
 	public XSelectFilter(AccountProxy ap)
 	{
 		m_ap = ap;
-		m_ctnCommissionOrderList = new ArrayList<CommissionOrder>();
-		m_ctnHoldStockList = new ArrayList<HoldStock>();
-		
 		m_SelectItemList = new ArrayList<SelectItem>();
 		
 	}
 	
 	public void addSelect(String stockID, double priority)
 	{
+		// 不重复添加
+		for(int i=0; i<m_SelectItemList.size(); i++)
+		{
+			if(m_SelectItemList.get(i).stockID.equals(stockID))
+			{
+				return;
+			}
+		}
+		// 不添加已经提交委托或持有的
 		if(!existCommissionOrder(stockID) && !existHoldStock(stockID))
 		{
 			SelectItem cSelectItem = new SelectItem();
@@ -103,11 +109,11 @@ public class XSelectFilter {
 	
 	private boolean existCommissionOrder(String stockID)
 	{
-		m_ctnCommissionOrderList.clear();
-		m_ap.getCommissionOrderList(m_ctnCommissionOrderList);
-		for(int i=0; i<m_ctnCommissionOrderList.size(); i++)
+		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
+		m_ap.getCommissionOrderList(ctnCommissionOrderList);
+		for(int i=0; i<ctnCommissionOrderList.size(); i++)
 		{
-			if(m_ctnCommissionOrderList.get(i).stockID.equals(stockID))
+			if(ctnCommissionOrderList.get(i).stockID.equals(stockID))
 			{
 				return true;
 			}
@@ -117,11 +123,11 @@ public class XSelectFilter {
 	
 	private boolean existHoldStock(String stockID)
 	{
-		m_ctnHoldStockList.clear();
-		m_ap.getHoldStockList(m_ctnHoldStockList);
-		for(int i=0; i<m_ctnHoldStockList.size(); i++)
+		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
+		m_ap.getHoldStockList(ctnHoldStockList);
+		for(int i=0; i<ctnHoldStockList.size(); i++)
 		{
-			if(m_ctnHoldStockList.get(i).stockID.equals(stockID))
+			if(ctnHoldStockList.get(i).stockID.equals(stockID))
 			{
 				return true;
 			}
@@ -131,8 +137,6 @@ public class XSelectFilter {
 	
 	
 	private AccountProxy m_ap;
-	List<CommissionOrder> m_ctnCommissionOrderList;
-	List<HoldStock> m_ctnHoldStockList;
-	
+
 	private List<SelectItem> m_SelectItemList;
 }
