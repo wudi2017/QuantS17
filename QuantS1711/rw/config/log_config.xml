@@ -1,0 +1,8 @@
+<config>
+	<tag name='COMMON' output='0' />
+	<tag name='TEST' output='1' />
+	<tag name='ACCOUNT' output='1' />
+	<tag name='DATAAPI' output='0' />
+	<tag name='DENGINE' output='0' />
+	<tag name='QENGINE' output='0' />
+</config>

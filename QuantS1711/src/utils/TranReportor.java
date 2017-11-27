@@ -24,9 +24,8 @@ public class TranReportor {
 	
 	public TranReportor(String name)
 	{
-		String imgFileName = CSystem.getRunSessionRoot() + "\\report_" + name + ".jpg";
+		m_imgFileName = CSystem.getRunSessionRoot() + "\\report_" + name + ".jpg";
 		m_cDailyReportList = new ArrayList<DailyReport>();
-		m_imgReport = new CImageCurve(2560,1920,imgFileName);
 	}
 	
 	public void InfoCollector(String date, double dTotalAssets, double dSHComposite)
@@ -40,7 +39,7 @@ public class TranReportor {
 		m_cDailyReportList.add(cDailyReportNew);
 		
 		// create image
-		m_imgReport.clear();
+		CImageCurve cCImageCurve = new CImageCurve(2560,1920,m_imgFileName);
 		List<CurvePoint> cCurvePointList_TotalAssets = new ArrayList<CurvePoint>();
 		List<CurvePoint> cCurvePointList_SHComposite = new ArrayList<CurvePoint>();
 		for(int i =0; i< m_cDailyReportList.size(); i++)
@@ -50,11 +49,11 @@ public class TranReportor {
 			cCurvePointList_SHComposite.add(new CurvePoint(i, cDailyReport.dSHComposite));
 		}
 		
-		m_imgReport.addLogicCurveSameRatio(cCurvePointList_SHComposite, 1);
-		m_imgReport.addLogicCurveSameRatio(cCurvePointList_TotalAssets, 2);
-		m_imgReport.GenerateImage();
+		cCImageCurve.addLogicCurveSameRatio(cCurvePointList_SHComposite, 1);
+		cCImageCurve.addLogicCurveSameRatio(cCurvePointList_TotalAssets, 2);
+		cCImageCurve.GenerateImage();
 	}
 	
 	private List<DailyReport> m_cDailyReportList;
-	private CImageCurve m_imgReport;
+	private String m_imgFileName;
 }
