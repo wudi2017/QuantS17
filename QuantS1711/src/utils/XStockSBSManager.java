@@ -203,7 +203,7 @@ public class XStockSBSManager {
 	//-----------------------------------------------------------------------------------------
 	// private help
 	
-	private boolean existCommissionOrder(String stockID)
+	public boolean existCommissionOrder(String stockID)
 	{
 		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
 		m_ap.getCommissionOrderList(ctnCommissionOrderList);
@@ -217,7 +217,7 @@ public class XStockSBSManager {
 		return false;
 	}
 	
-	private boolean existHoldStock(String stockID)
+	public boolean existHoldStock(String stockID)
 	{
 		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 		m_ap.getHoldStockList(ctnHoldStockList);

@@ -4,6 +4,7 @@ import java.util.*;
 
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
+import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
 import pers.di.dataapi.common.*;
@@ -16,6 +17,7 @@ import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.PricePosChecker;
 import utils.PricePosChecker.ResultLongDropParam;
+import utils.TranDaysChecker;
 import utils.XStockSBSManager;
 import utils.ZCZXChecker;
 import utils.ZCZXChecker.ResultDYCheck;
@@ -41,23 +43,26 @@ public class FastTest {
 		@Override
 		public void onMinuteData(QuantContext ctx) {
 			
-			// buy
-			m_XStockSBSManager.clearBuy();
+			//-------------------------------------
+			// buy check
 			for(int iStock=0; iStock<m_XStockSBSManager.selectList().size(); iStock++)
 			{
 				String stockID = m_XStockSBSManager.selectList().get(iStock);
-				DAStock cDAStock = ctx.pool().get(stockID);
 				
+				DAStock cDAStock = ctx.pool().get(stockID);
+				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
+				double fNowPrice = cDAStock.price();
+				
+				boolean bBuyFlag = false;
+				do
 				{
-					double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
-					double fNowPrice = cDAStock.price();
-					
 					// 跌停不买进
 					double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
 					double fDieTing = CUtilsMath.saveNDecimal(fYC*0.9f, 2);
 					if(0 == Double.compare(fDieTing, fNowPrice))
 					{
-						continue;
+						bBuyFlag = false;
+						break;
 					}
 					
 					// 计算买入参数
@@ -89,20 +94,84 @@ public class FastTest {
 						double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
 						if(fZhang > 0.08)
 						{
-							continue;
+							bBuyFlag = false;
+							break;
 						}
 					}
 					
-					// 添加建仓项
-					m_XStockSBSManager.addBuy(stockID, 0);
+					bBuyFlag = true;
+				} while(false);
+				
+				if(bBuyFlag 
+						&& !m_XStockSBSManager.existCommissionOrder(stockID)
+						&& !m_XStockSBSManager.existHoldStock(stockID))
+				{
+					CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
+					ctx.ap().getTotalAssets(ctnTotalAssets);
+					CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
+					ctx.ap().getMoney(ctnMoney);
+					double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/3)?ctnTotalAssets.get()/3:ctnMoney.get();
+					int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
+					if(iCreateAmount > 0)
+					{
+						ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
+					}
 				}
 			}
-			
-			if(ctx.time().equals("15:00:00") && m_XStockSBSManager.buyList().size() > 0)
+
+			//-------------------------------------
+			// sell check
+			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
+			ctx.ap().getHoldStockList(ctnHoldStockList);
+			for(int i=0; i<ctnHoldStockList.size(); i++)
 			{
-				CLog.output("TEST", "dump buy\n %s\n", m_XStockSBSManager.dumpBuy());
+				HoldStock cHoldStock = ctnHoldStockList.get(i);
+
+				DAStock cDAStock = ctx.pool().get(cHoldStock.stockID);
+				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
+				double fNowPrice = cDAStock.price();
+				
+				boolean bSellFlag = false;
+				do
+				{
+					if(cHoldStock.availableAmount <= 0)
+					{
+						bSellFlag = false;
+						break;
+					}
+					
+					// 涨停不卖出
+					double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
+					double fZhangTing = CUtilsMath.saveNDecimal(fYC*1.1f, 2);
+					if(0 == Double.compare(fZhangTing, fNowPrice))
+					{
+						bSellFlag = false;
+						break;
+					}
+					
+					// 持股超时卖出
+					long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
+					if(lHoldDays >= 30) 
+					{
+						bSellFlag = true;
+						break;
+					}
+					
+					// 止盈止损卖出
+					if(cHoldStock.refProfitRatio() > 0.1 || cHoldStock.refProfitRatio() < -0.12) 
+					{
+						bSellFlag = true;
+						break;
+					}
+				} while(false);
+					
+				if(bSellFlag)
+				{
+					ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+				}	
 			}
 		}
+		
 		@Override
 		public void onDayFinish(QuantContext ctx) {
 
