@@ -39,6 +39,7 @@ public class FastTest {
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
+			m_XStockSelectManager.loadFromFile();
 			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectList(10));
 			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		}
@@ -217,6 +218,7 @@ public class FastTest {
 					}
 				}
 			}
+			m_XStockSelectManager.saveToFile();
 			
 			// report
 			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
