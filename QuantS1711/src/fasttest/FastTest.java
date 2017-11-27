@@ -106,15 +106,21 @@ public class FastTest {
 						&& !m_XStockSBSManager.existCommissionOrder(stockID)
 						&& !m_XStockSBSManager.existHoldStock(stockID))
 				{
-					CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-					ctx.ap().getTotalAssets(ctnTotalAssets);
-					CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-					ctx.ap().getMoney(ctnMoney);
-					double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/3)?ctnTotalAssets.get()/3:ctnMoney.get();
-					int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
-					if(iCreateAmount > 0)
+					
+					List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
+					ctx.ap().getHoldStockList(ctnHoldStockList);
+					if(ctnHoldStockList.size() < 3)
 					{
-						ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
+						CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
+						ctx.ap().getTotalAssets(ctnTotalAssets);
+						CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
+						ctx.ap().getMoney(ctnMoney);
+						double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/3)?ctnTotalAssets.get()/3:ctnMoney.get();
+						int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
+						if(iCreateAmount > 0)
+						{
+							ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
+						}
 					}
 				}
 			}
