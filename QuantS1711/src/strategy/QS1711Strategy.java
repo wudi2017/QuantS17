@@ -11,7 +11,7 @@ import pers.di.dataapi_test.TestCommonHelper;
 import pers.di.dataengine.*;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.*;
-import utils.XSelectFilter;
+import utils.XStockSBSManager;
 
 public class QS1711Strategy {
 	
@@ -24,22 +24,22 @@ public class QS1711Strategy {
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XSelectFilter = new XSelectFilter(ctx.ap());
+			m_XStockSBSManager = new XStockSBSManager(ctx.ap());
 		}
 	
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
-			super.addCurrentDayInterestMinuteDataIDs(m_XSelectFilter.selectList());
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSBSManager.selectList());
 		}
 		
 		public void onHandleBuy(QuantContext ctx)
 		{
 			// find want create IDs
 			List<String> cIntentCreateList = new ArrayList<String>();
-			for(int i=0; i<m_XSelectFilter.selectList().size(); i++)
+			for(int i=0; i<m_XStockSBSManager.selectList().size(); i++)
 			{
-				String stockID = m_XSelectFilter.selectList().get(i);
+				String stockID = m_XStockSBSManager.selectList().get(i);
 				DAStock cDAStock = ctx.pool().get(stockID);
 
 				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
@@ -217,7 +217,7 @@ public class QS1711Strategy {
 		public void onDayFinish(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayFinish %s %s", ctx.date(), ctx.time());
 			
-			m_XSelectFilter.clearSelect();
+			m_XStockSBSManager.clearSelect();
 			
 			// select strategy
 			for(int i=0; i<ctx.pool().size(); i++)
@@ -242,19 +242,19 @@ public class QS1711Strategy {
 								&& cStockDayBefore1.close < cStockDayBefore2.close
 								)
 						{
-							m_XSelectFilter.addSelect(cDAStock.ID(), cStockDayBefore2.close - cStockDayCur.close);
+							m_XStockSBSManager.addSelect(cDAStock.ID(), cStockDayBefore2.close - cStockDayCur.close);
 						}
 					}
 					
 				}
 			}
-			m_XSelectFilter.saveValidSelectCount(3);
+			m_XStockSBSManager.saveValidSelectCount(3);
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XSelectFilter.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSBSManager.dumpSelect());
 			
 		}
 		
-		private XSelectFilter m_XSelectFilter;
+		private XStockSBSManager m_XStockSBSManager;
 	}
 	
 	public void run()

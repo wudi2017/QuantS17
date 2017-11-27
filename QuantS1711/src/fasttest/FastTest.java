@@ -16,8 +16,7 @@ import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.PricePosChecker;
 import utils.PricePosChecker.ResultLongDropParam;
-import utils.XBuyFilter;
-import utils.XSelectFilter;
+import utils.XStockSBSManager;
 import utils.ZCZXChecker;
 import utils.ZCZXChecker.ResultDYCheck;
 
@@ -31,23 +30,22 @@ public class FastTest {
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XSelectFilter = new XSelectFilter(ctx.ap());
-			m_XBuyFilter = new XBuyFilter(ctx.ap());
+			m_XStockSBSManager = new XStockSBSManager(ctx.ap());
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
-			super.addCurrentDayInterestMinuteDataIDs(m_XSelectFilter.selectList());
-			CLog.output("TEST", "%s", m_XSelectFilter.dumpSelect());
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSBSManager.selectList());
+			CLog.output("TEST", "%s", m_XStockSBSManager.dumpSelect());
 		}
 		@Override
 		public void onMinuteData(QuantContext ctx) {
 			
 			// buy
-			m_XBuyFilter.clearBuy();
-			for(int iStock=0; iStock<m_XSelectFilter.selectList().size(); iStock++)
+			m_XStockSBSManager.clearBuy();
+			for(int iStock=0; iStock<m_XStockSBSManager.selectList().size(); iStock++)
 			{
-				String stockID = m_XSelectFilter.selectList().get(iStock);
+				String stockID = m_XStockSBSManager.selectList().get(iStock);
 				DAStock cDAStock = ctx.pool().get(stockID);
 				
 				{
@@ -96,19 +94,19 @@ public class FastTest {
 					}
 					
 					// Ìí¼Ó½¨²ÖÏî
-					m_XBuyFilter.addBuy(stockID, 0);
+					m_XStockSBSManager.addBuy(stockID, 0);
 				}
 			}
 			
-			if(ctx.time().equals("15:00:00") && m_XBuyFilter.buyList().size() > 0)
+			if(ctx.time().equals("15:00:00") && m_XStockSBSManager.buyList().size() > 0)
 			{
-				CLog.output("TEST", "dump buy\n %s\n", m_XBuyFilter.dumpBuy());
+				CLog.output("TEST", "dump buy\n %s\n", m_XStockSBSManager.dumpBuy());
 			}
 		}
 		@Override
 		public void onDayFinish(QuantContext ctx) {
 
-			m_XSelectFilter.clearSelect();;
+			m_XStockSBSManager.clearSelect();;
 
 			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
@@ -134,20 +132,19 @@ public class FastTest {
 						if(cResultDYCheck.bCheck)
 						{
 							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-							m_XSelectFilter.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+							m_XStockSBSManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 						}
 					}
 				}
 			}
 			
-			m_XSelectFilter.saveValidSelectCount(5);
+			m_XStockSBSManager.saveValidSelectCount(5);
 			
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XSelectFilter.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSBSManager.dumpSelect());
 		}
 		
-		private XSelectFilter m_XSelectFilter;
-		private XBuyFilter m_XBuyFilter;
+		private XStockSBSManager m_XStockSBSManager;
 	}
 	
 	public static void main(String[] args) throws Exception {
