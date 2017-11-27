@@ -18,7 +18,7 @@ import pers.di.quantplatform.QuantStrategy;
 import utils.PricePosChecker;
 import utils.PricePosChecker.ResultLongDropParam;
 import utils.TranDaysChecker;
-import utils.XStockSBSManager;
+import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 import utils.ZCZXChecker.ResultDYCheck;
 
@@ -32,22 +32,21 @@ public class FastTest {
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XStockSBSManager = new XStockSBSManager(ctx.ap());
+			m_XStockSelectManager = new XStockSelectManager(ctx.ap());
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
-			super.addCurrentDayInterestMinuteDataIDs(m_XStockSBSManager.selectList());
-			CLog.output("TEST", "%s", m_XStockSBSManager.dumpSelect());
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectList(10));
+			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		}
-		@Override
-		public void onMinuteData(QuantContext ctx) {
-			
-			//-------------------------------------
-			// buy check
-			for(int iStock=0; iStock<m_XStockSBSManager.selectList().size(); iStock++)
+		
+		public void onBuyCheck(QuantContext ctx)
+		{
+			List<String> validSelectList = m_XStockSelectManager.validSelectList(10);
+			for(int iStock=0; iStock<validSelectList.size(); iStock++)
 			{
-				String stockID = m_XStockSBSManager.selectList().get(iStock);
+				String stockID = validSelectList.get(iStock);
 				
 				DAStock cDAStock = ctx.pool().get(stockID);
 				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
@@ -102,11 +101,8 @@ public class FastTest {
 					bBuyFlag = true;
 				} while(false);
 				
-				if(bBuyFlag 
-						&& !m_XStockSBSManager.existCommissionOrder(stockID)
-						&& !m_XStockSBSManager.existHoldStock(stockID))
+				if(bBuyFlag)
 				{
-					
 					List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 					ctx.ap().getHoldStockList(ctnHoldStockList);
 					if(ctnHoldStockList.size() < 3)
@@ -124,9 +120,10 @@ public class FastTest {
 					}
 				}
 			}
-
-			//-------------------------------------
-			// sell check
+		}
+		
+		public void onSellCheck(QuantContext ctx)
+		{
 			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 			ctx.ap().getHoldStockList(ctnHoldStockList);
 			for(int i=0; i<ctnHoldStockList.size(); i++)
@@ -179,9 +176,15 @@ public class FastTest {
 		}
 		
 		@Override
+		public void onMinuteData(QuantContext ctx) {
+			onBuyCheck(ctx);
+			onSellCheck(ctx);
+		}
+		
+		@Override
 		public void onDayFinish(QuantContext ctx) {
 
-			m_XStockSBSManager.clearSelect();;
+			m_XStockSelectManager.clearSelect();;
 
 			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
@@ -207,19 +210,16 @@ public class FastTest {
 						if(cResultDYCheck.bCheck)
 						{
 							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-							m_XStockSBSManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+							m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 						}
 					}
 				}
 			}
 			
-			m_XStockSBSManager.saveValidSelectCount(5);
-			
-			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSBSManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
 		}
 		
-		private XStockSBSManager m_XStockSBSManager;
+		private XStockSelectManager m_XStockSelectManager;
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -240,7 +240,5 @@ public class FastTest {
 		
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();
-		
-		
 	}
 }
