@@ -84,7 +84,8 @@ public class XStockSelectManager {
 		cInnerSelectStockItem.dPriority = priority;
 		m_SelectItemList.add(cInnerSelectStockItem);
 	}
-	public List<String> validSelectList(int maxCount)
+	// 有效选择列表，S1-先过滤掉无效后剩余最大maxCount个
+	public List<String> validSelectListS1(int maxCount)
 	{
 		List<String> selectList = new ArrayList<String>();
 		
@@ -109,19 +110,50 @@ public class XStockSelectManager {
 		}
 		return selectList;
 	}
+	// 有效选择列表，S2-先选择maxCount数目，再过滤掉无效的
+	public List<String> validSelectListS2(int maxCount)
+	{
+		List<String> selectList = new ArrayList<String>();
+		
+		// 按优先级排序
+		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
+		
+		int iAddCount = 0;
+		for(int i=0; i<m_SelectItemList.size(); i++)
+		{
+			String stockID = m_SelectItemList.get(i).stockID;
+			selectList.add(stockID);
+			iAddCount++;
+			if(iAddCount >= maxCount )
+			{
+				break;
+			}
+		}
+		
+		// 排除已经提交和持有的
+		Iterator<String> iter = selectList.iterator();
+		while (iter.hasNext()) {
+			String stockID = iter.next();
+			if(existCommissionOrder(stockID)
+					|| existHoldStock(stockID))
+			{
+				iter.remove();
+            }
+        }		
+		return selectList;
+	}
 	public void clearSelect()
 	{
 		m_SelectItemList.clear();
 	}
 
-	public String dumpSelect(int count)
+	public String dumpSelect()
 	{
-		List<String> validSelectList = validSelectList(20);
+		List<String> validSelectList = validSelectListS1(20);
 		int iAddCount = validSelectList.size();
 		String logStr = "";
 		logStr += String.format("Selected (%d) [ ", iAddCount);
 		if(iAddCount == 0) logStr += "null ";
-		iAddCount = iAddCount>count?count:iAddCount;
 		for(int i=0; i< iAddCount; i++)
 		{
 			String stockId = validSelectList.get(i);

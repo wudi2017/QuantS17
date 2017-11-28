@@ -48,13 +48,13 @@ public class QS1601StdTest {
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
-			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectList(3));
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS2(3));
 		}
 		
 		public void onHandleBuy(QuantContext ctx)
 		{
 			// find want create IDs
-			List<String> validSelectList = m_XStockSelectManager.validSelectList(5);
+			List<String> validSelectList = m_XStockSelectManager.validSelectListS2(3);
 			List<String> cIntentCreateList = new ArrayList<String>();
 			for(int i=0; i<validSelectList.size(); i++)
 			{
@@ -268,7 +268,7 @@ public class QS1601StdTest {
 				}
 			}
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect(3));
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
 			
 		}
 		
