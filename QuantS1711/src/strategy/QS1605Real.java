@@ -1,4 +1,4 @@
-package fasttest;
+package strategy;
 
 import java.util.*;
 
@@ -23,7 +23,7 @@ import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 import utils.ZCZXChecker.ResultDYCheck;
 
-public class FastTest {
+public class QS1605Real {
 
 	public static class FastTestStrategy extends QuantStrategy
 	{

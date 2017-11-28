@@ -9,11 +9,29 @@ import pers.di.dataapi.StockDataApi;
 import pers.di.dataapi.common.*;
 import pers.di.dataapi_test.TestCommonHelper;
 import pers.di.dataengine.*;
-import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.*;
 import utils.XStockSelectManager;
 
-public class QS1711Strategy {
+public class QS1601StdTest {
+	
+	public static double s_transactionCostsRatioBuy = 0.0016f;
+	public static double s_transactionCostsRatioSell = 0.0f;
+	
+	public static class MockMarketOpe extends IMarketOpe
+	{
+		@Override
+		public int postTradeRequest(TRANACT tranact, String id, int amount, double price) {
+			if(tranact == TRANACT.BUY)
+			{
+				super.dealReply(tranact, id, amount, price, amount*price*s_transactionCostsRatioBuy);
+			}
+			else if(tranact == TRANACT.SELL)
+			{
+				super.dealReply(tranact, id, amount, price, amount*price*s_transactionCostsRatioSell);
+			}
+			return 0;
+		}
+	}
 	
 	public static class TestStrategy extends QuantStrategy
 	{
@@ -260,7 +278,7 @@ public class QS1711Strategy {
 	public void run()
 	{
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		if(0 != cAccoutDriver.load("mock001" ,  new MockAccountOpe(), true)
+		if(0 != cAccoutDriver.load("mock001" ,  new MockMarketOpe(), true)
 				|| 0 != cAccoutDriver.reset(10*10000f))
 		{
 			CLog.error("TEST", "SampleTestStrategy AccoutDriver ERR!");
@@ -279,8 +297,8 @@ public class QS1711Strategy {
 		
 		CLog.output("TEST", "QuantS1711 main");
 		
-		QS1711Strategy cQS1711Strategy = new QS1711Strategy();
-		cQS1711Strategy.run();
+		QS1601StdTest cQS1601StdTest = new QS1601StdTest();
+		cQS1601StdTest.run();
 		
 		CSystem.stop();
 	}
