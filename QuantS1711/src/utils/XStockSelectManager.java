@@ -114,13 +114,14 @@ public class XStockSelectManager {
 		m_SelectItemList.clear();
 	}
 
-	public String dumpSelect()
+	public String dumpSelect(int count)
 	{
 		List<String> validSelectList = validSelectList(20);
 		int iAddCount = validSelectList.size();
 		String logStr = "";
 		logStr += String.format("Selected (%d) [ ", iAddCount);
 		if(iAddCount == 0) logStr += "null ";
+		iAddCount = iAddCount>count?count:iAddCount;
 		for(int i=0; i< iAddCount; i++)
 		{
 			String stockId = validSelectList.get(i);

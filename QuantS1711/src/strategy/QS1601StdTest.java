@@ -48,7 +48,7 @@ public class QS1601StdTest {
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
-			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectList(5));
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectList(3));
 		}
 		
 		public void onHandleBuy(QuantContext ctx)
@@ -268,7 +268,7 @@ public class QS1601StdTest {
 				}
 			}
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect(3));
 			
 		}
 		

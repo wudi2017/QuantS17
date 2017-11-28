@@ -41,7 +41,7 @@ public class QS1605Real {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
 			m_XStockSelectManager.loadFromFile();
 			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectList(10));
-			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
+			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect(10));
 		}
 		
 		public void onBuyCheck(QuantContext ctx)
@@ -225,7 +225,7 @@ public class QS1605Real {
 			ctx.ap().getTotalAssets(ctnTotalAssets);
 			double dSH = ctx.pool().get("999999").price();
 			m_TranReportor.InfoCollector(ctx.date(), ctnTotalAssets.get(), dSH);
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect(10));
 		}
 		
 		private XStockSelectManager m_XStockSelectManager;
