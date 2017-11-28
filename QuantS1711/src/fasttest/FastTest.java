@@ -243,7 +243,7 @@ public class FastTest {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-01-01 2017-01-01", 
+				"HistoryTest 2016-01-01 2017-01-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new FastTestStrategy());
 		qSession.run();
