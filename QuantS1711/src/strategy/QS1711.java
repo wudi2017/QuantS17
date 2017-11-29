@@ -16,6 +16,7 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
+import utils.DayKLineLongLowerShadowChecker;
 import utils.PricePosChecker;
 import utils.TranDaysChecker;
 import utils.TranReportor;
@@ -50,7 +51,7 @@ public class QS1711 {
 				
 				// 过滤：股票ID集合，当天检查
 				boolean bCheckX = false;
-				if(cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("0000200") <= 0 
+				if(cDAStock.ID().compareTo("000668") >= 0 && cDAStock.ID().compareTo("000668") <= 0 
 					&& cDAStock.dayKLines().size()>60
 					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 					&& cDAStock.circulatedMarketValue() < 1000.0) 
@@ -60,13 +61,19 @@ public class QS1711 {
 				
 				if(bCheckX)
 				{
-					// 5天内存在早晨之星
 					int iEnd = cDAStock.dayKLines().size()-1;
+					
 					ResultDYCheck cResultDYCheck = ZCZXChecker.check(cDAStock.dayKLines(),iEnd);
 					if(cResultDYCheck.bCheck)
 					{
 						CLog.output("TEST", "Date:%s ID:%s", ctx.date(), cDAStock.ID());
 					}
+					
+//					boolean bCheck = DayKLineLongLowerShadowChecker.check(cDAStock.dayKLines(), iEnd);
+//					if(bCheck)
+//					{
+//						CLog.output("TEST", "Date:%s ID:%s", ctx.date(), cDAStock.ID());
+//					}
 				}
 				
 			}
@@ -84,7 +91,7 @@ public class QS1711 {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2017-01-01 2017-06-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-11-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QS1711Strategy());
 		qSession.run();
