@@ -40,7 +40,7 @@ public class QS1605Real {
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
 			m_XStockSelectManager.loadFromFile();
-			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(10));
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(30));
 			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		}
 		
@@ -108,13 +108,13 @@ public class QS1605Real {
 				{
 					List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 					ctx.ap().getHoldStockList(ctnHoldStockList);
-					if(ctnHoldStockList.size() < 3)
+					if(ctnHoldStockList.size() < 5)
 					{
 						CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
 						ctx.ap().getTotalAssets(ctnTotalAssets);
 						CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
 						ctx.ap().getMoney(ctnMoney);
-						double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/3)?ctnTotalAssets.get()/3:ctnMoney.get();
+						double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/5)?ctnTotalAssets.get()/5:ctnMoney.get();
 						int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
 						if(iCreateAmount > 0)
 						{
@@ -195,10 +195,11 @@ public class QS1605Real {
 				
 				// 过滤：股票ID集合，当天检查
 				boolean bCheckX = false;
-				if(cDAStock.dayKLines().size()>60
-						//&&cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
-						&& cDAStock.dayKLines().lastDate().equals(ctx.date())
-						&& cDAStock.circulatedMarketValue() < 1000.0) {	
+				if(
+					//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
+					cDAStock.dayKLines().size()>60
+					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
+					&& cDAStock.circulatedMarketValue() < 1000.0) {	
 					bCheckX = true;
 				}
 				
@@ -243,7 +244,7 @@ public class QS1605Real {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-01-01 2017-01-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-01-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new FastTestStrategy());
 		qSession.run();
