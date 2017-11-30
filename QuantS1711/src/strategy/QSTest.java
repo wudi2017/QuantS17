@@ -1,62 +1,37 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
-import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
-import pers.di.common.CObjectContainer;
 import pers.di.common.CSystem;
-import pers.di.common.CUtilsMath;
-import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.DKMidDropChecker;
-import utils.DayKLineLongLowerShadowChecker;
-import utils.PricePosChecker;
-import utils.TranDaysChecker;
-import utils.TranReportor;
-import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultLongDropParam;
 
-public class QS1711 {
-
-	public static class QS1711Strategy extends QuantStrategy
+public class QSTest {
+	
+	public static class QSTestStrategy extends QuantStrategy
 	{
-		public QS1711Strategy()
+		public QSTestStrategy()
 		{
 		}
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XStockSelectManager = new XStockSelectManager(ctx.ap());
-			m_XStockSelectManager.clearSelect();
-			m_XStockSelectManager.saveToFile();
-			
-			m_TranReportor = new TranReportor("R");
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
-//			m_XStockSelectManager.loadFromFile();
-//			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(30));
-//			CLog.output("TEST", "onDayStart \n%s", m_XStockSelectManager.dumpSelect());
 		}
 		@Override
 		public void onMinuteData(QuantContext ctx) {
-			List<String> validSelectList = m_XStockSelectManager.validSelectListS1(10);
 		}
 		
 		@Override
 		public void onDayFinish(QuantContext ctx) {
-			
-			m_XStockSelectManager.clearSelect();
-			
 			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
 				DAStock cDAStock = ctx.pool().get(iStock);
@@ -85,24 +60,17 @@ public class QS1711 {
 						CLog.output("TEST", "   %b %b", 
 								bcheckVolume, bDKMidDropChecker);
 						
-						// m_XStockSelectManager.addSelect(cDAStock.ID(), 0);
-						
 					}
+					
+//					boolean bCheck = DayKLineLongLowerShadowChecker.check(cDAStock.dayKLines(), iEnd);
+//					if(bCheck)
+//					{
+//						CLog.output("TEST", "Date:%s ID:%s", ctx.date(), cDAStock.ID());
+//					}
 				}
+				
 			}
-			
-//			m_XStockSelectManager.saveToFile();
-//			
-//			// report
-//			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-//			ctx.ap().getTotalAssets(ctnTotalAssets);
-//			double dSH = ctx.pool().get("999999").price();
-//			m_TranReportor.InfoCollector(ctx.date(), ctnTotalAssets.get(), dSH);
-//			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
 		}
-		
-		private XStockSelectManager m_XStockSelectManager;
-		private TranReportor m_TranReportor;
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -113,12 +81,13 @@ public class QS1711 {
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
 		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
+		cAccoutDriver.reset(100000);
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1711Strategy());
+				new QSTestStrategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

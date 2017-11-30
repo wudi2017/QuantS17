@@ -187,7 +187,7 @@ public class QS1605Real {
 		@Override
 		public void onDayFinish(QuantContext ctx) {
 
-			m_XStockSelectManager.clearSelect();;
+			m_XStockSelectManager.clearSelect();
 
 			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{

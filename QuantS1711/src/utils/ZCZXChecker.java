@@ -8,6 +8,9 @@ import pers.di.dataengine.*;
  */
 public class ZCZXChecker {
 
+	/*
+	 * 早晨之星3日K线检查
+	 */
 	public static boolean check(DAKLines kLines, int iCheck)
 	{
 		int iBegin = iCheck-2;
@@ -107,6 +110,38 @@ public class ZCZXChecker {
 			}
 		}
 	
+		return true;
+	}
+	
+	/*
+	 * 早晨之星3日量检查
+	 */
+	public static boolean check_volume(DAKLines kLines, int iCheck)
+	{
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iBegin<0)
+		{
+			return false;
+		}
+		
+		KLine cCurStockDay = kLines.get(iEnd);
+		KLine cStockDayMid = kLines.get(iMid);
+		KLine cCurStockBegin = kLines.get(iBegin);
+		
+		if(cCurStockDay.volume < cStockDayMid.volume
+				|| cCurStockBegin.volume < cStockDayMid.volume)
+		{
+			return false;
+		}
+		
+		if(cCurStockDay.volume < cCurStockBegin.volume*0.85)
+		{
+			return false;
+		}
+		
+		
 		return true;
 	}
 }
