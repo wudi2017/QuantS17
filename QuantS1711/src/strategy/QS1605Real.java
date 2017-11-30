@@ -21,7 +21,6 @@ import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.ZCZXChecker.ResultDYCheck;
 
 public class QS1605Real {
 
@@ -69,6 +68,7 @@ public class QS1605Real {
 					
 					// 计算买入参数
 					boolean bCheckFlg = false;
+					int iZCZXFindEnd = -1;
 					double fStarHigh = 0.0;
 					double fStarLow = 0.0;
 					DAKLines list = cDAStock.dayKLines();
@@ -79,20 +79,19 @@ public class QS1605Real {
 					
 					for(int i=iEnd;i>=iBegin;i--)
 					{
-						ResultDYCheck cResultDYCheck = ZCZXChecker.check(list,i);
-						if(cResultDYCheck.bCheck)
+						if(ZCZXChecker.check(list,i))
 						{
 							bCheckFlg = true;
-							fStarHigh = cResultDYCheck.fStarHigh;
-							fStarLow = cResultDYCheck.fStarLow;
+							iZCZXFindEnd = i;
 							break;
 						}
 					}
 					
 					// 近期涨幅过大不买进
-					if(bCheckFlg)
+					if(bCheckFlg && -1!=iZCZXFindEnd)
 					{
-						double fStdPaZCZX = (fStarHigh + fStarLow)/2;
+						KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
+						double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
 						double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
 						if(fZhang > 0.08)
 						{
@@ -102,6 +101,7 @@ public class QS1605Real {
 					}
 					
 					bBuyFlag = true;
+					
 				} while(false);
 				
 				if(bBuyFlag)
@@ -210,8 +210,7 @@ public class QS1605Real {
 					int iEnd = cDAStock.dayKLines().size()-1;
 					for(int i=iEnd;i>=iBegin;i--)
 					{
-						ResultDYCheck cResultDYCheck = ZCZXChecker.check(cDAStock.dayKLines(),i);
-						if(cResultDYCheck.bCheck)
+						if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 						{
 							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 							m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);

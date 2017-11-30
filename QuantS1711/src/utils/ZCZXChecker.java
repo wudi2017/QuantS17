@@ -4,30 +4,18 @@ import pers.di.dataapi.common.*;
 import pers.di.dataengine.*;
 
 /*
- * 早晨之星
+ * 早晨之星K线组合
  */
 public class ZCZXChecker {
-	public static class ResultDYCheck
+
+	public static boolean check(DAKLines kLines, int iCheck)
 	{
-		public ResultDYCheck()
-		{
-			bCheck = false;
-		}
-		public boolean bCheck;
-		public double fStarHigh;
-		public double fStarLow;
-	}
-	
-	public static ResultDYCheck check(DAKLines kLines, int iCheck)
-	{
-		ResultDYCheck cResultDYCheck = new ResultDYCheck();
-		
 		int iBegin = iCheck-2;
 		int iMid = iCheck-1;
 		int iEnd = iCheck;
 		if(iBegin<0)
 		{
-			return cResultDYCheck;
+			return false;
 		}
 		
 		double dAveWave = DayKLinePriceWaveChecker.check(kLines, iCheck);
@@ -53,7 +41,7 @@ public class ZCZXChecker {
 			}
 			else
 			{
-				return cResultDYCheck;
+				return false;
 			}
 		}
 
@@ -71,7 +59,7 @@ public class ZCZXChecker {
 			}
 			else
 			{
-				return cResultDYCheck;
+				return false;
 			}
 		}
 		
@@ -90,7 +78,7 @@ public class ZCZXChecker {
 			}
 			else
 			{
-				return cResultDYCheck;
+				return false;
 			}
 		}
 		
@@ -104,7 +92,7 @@ public class ZCZXChecker {
 			}
 			else
 			{
-				return cResultDYCheck;
+				return false;
 			}
 			
 			// 最后一天收复大部分第一天实体
@@ -115,13 +103,10 @@ public class ZCZXChecker {
 			}
 			else
 			{
-				return cResultDYCheck;
+				return false;
 			}
 		}
-		
-		cResultDYCheck.bCheck = true;
-		cResultDYCheck.fStarHigh = cCurStockDay.entityHigh();
-		cResultDYCheck.fStarLow = cCurStockDay.entityLow();
-		return cResultDYCheck;
+	
+		return true;
 	}
 }

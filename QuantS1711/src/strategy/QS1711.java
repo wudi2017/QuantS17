@@ -16,6 +16,7 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
+import utils.DKMidDropChecker;
 import utils.DayKLineLongLowerShadowChecker;
 import utils.PricePosChecker;
 import utils.TranDaysChecker;
@@ -23,7 +24,6 @@ import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 import utils.PricePosChecker.ResultLongDropParam;
-import utils.ZCZXChecker.ResultDYCheck;
 
 public class QS1711 {
 
@@ -51,7 +51,7 @@ public class QS1711 {
 				
 				// 过滤：股票ID集合，当天检查
 				boolean bCheckX = false;
-				if(cDAStock.ID().compareTo("000668") >= 0 && cDAStock.ID().compareTo("000668") <= 0 
+				if(cDAStock.ID().compareTo("000955") >= 0 && cDAStock.ID().compareTo("000955") <= 0 
 					&& cDAStock.dayKLines().size()>60
 					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 					&& cDAStock.circulatedMarketValue() < 1000.0) 
@@ -63,10 +63,13 @@ public class QS1711 {
 				{
 					int iEnd = cDAStock.dayKLines().size()-1;
 					
-					ResultDYCheck cResultDYCheck = ZCZXChecker.check(cDAStock.dayKLines(),iEnd);
-					if(cResultDYCheck.bCheck)
+					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd))
 					{
-						CLog.output("TEST", "Date:%s ID:%s", ctx.date(), cDAStock.ID());
+						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s", ctx.date(), cDAStock.ID());
+						
+						
+						boolean bDKMidDropChecker = DKMidDropChecker.check(cDAStock.dayKLines(),iEnd);
+						
 					}
 					
 //					boolean bCheck = DayKLineLongLowerShadowChecker.check(cDAStock.dayKLines(), iEnd);
