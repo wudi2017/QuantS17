@@ -131,17 +131,11 @@ public class ZCZXChecker {
 		KLine cCurStockBegin = kLines.get(iBegin);
 		
 		if(cCurStockDay.volume < cStockDayMid.volume
-				|| cCurStockBegin.volume < cStockDayMid.volume)
+				|| cCurStockDay.volume < cCurStockBegin.volume*0.85)
 		{
 			return false;
 		}
-		
-		if(cCurStockDay.volume < cCurStockBegin.volume*0.85)
-		{
-			return false;
-		}
-		
-		
+
 		return true;
 	}
 }

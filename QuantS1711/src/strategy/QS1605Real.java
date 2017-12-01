@@ -22,6 +22,24 @@ import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 
+/*
+ * 选股策略：
+ *   @1000亿流通盘以内
+ *   @最近5太难内存在，3日K线组合早晨之星
+ *   @按照2年内最大跌幅排序，跌幅大的靠前
+ *   
+ * 买入策略:
+ *   @选出的前10个进行检查
+ *   @跌停不买进
+ *   @近期涨幅过大不买进（高于最近早晨之星中点8个点以上）
+ *   @买入量为2成仓位，最大持股不超过5只
+ *   
+ * 卖出策略：
+ *   @涨停不卖出
+ *   @持股超过30天卖出
+ *   @止盈10个点卖出，止损12个点卖出
+ * 
+ */
 public class QS1605Real {
 
 	public static class FastTestStrategy extends QuantStrategy
@@ -57,7 +75,7 @@ public class QS1605Real {
 				boolean bBuyFlag = false;
 				do
 				{
-					// 跌停不买进
+					// 1-跌停不买进
 					double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
 					double fDieTing = CUtilsMath.saveNDecimal(fYC*0.9f, 2);
 					if(0 == Double.compare(fDieTing, fNowPrice))
@@ -66,11 +84,9 @@ public class QS1605Real {
 						break;
 					}
 					
-					// 计算买入参数
+					// 2-近期涨幅过大不买进（根据选股条件计算买入参数）
 					boolean bCheckFlg = false;
 					int iZCZXFindEnd = -1;
-					double fStarHigh = 0.0;
-					double fStarLow = 0.0;
 					DAKLines list = cDAStock.dayKLines();
 					int iCheck = list.size()-2;
 					
@@ -87,7 +103,6 @@ public class QS1605Real {
 						}
 					}
 					
-					// 近期涨幅过大不买进
 					if(bCheckFlg && -1!=iZCZXFindEnd)
 					{
 						KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
@@ -99,7 +114,13 @@ public class QS1605Real {
 							break;
 						}
 					}
+					else
+					{
+						break;
+					}
 					
+					
+					// 买入标记
 					bBuyFlag = true;
 					
 				} while(false);
@@ -243,7 +264,7 @@ public class QS1605Real {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2017-01-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new FastTestStrategy());
 		qSession.run();

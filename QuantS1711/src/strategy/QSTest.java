@@ -16,8 +16,10 @@ public class QSTest {
 	
 	public static class QSTestStrategy extends QuantStrategy
 	{
+		public boolean m_bEnableTran;
 		public QSTestStrategy()
 		{
+			m_bEnableTran = false;
 		}
 		
 		@Override
@@ -38,7 +40,7 @@ public class QSTest {
 				
 				// 过滤：股票ID集合，当天检查
 				boolean bCheckX = false;
-				if(cDAStock.ID().compareTo("000955") >= 0 && cDAStock.ID().compareTo("000955") <= 0 
+				if(cDAStock.ID().compareTo("000923") == 0
 					&& cDAStock.dayKLines().size()>60
 					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 					&& cDAStock.circulatedMarketValue() < 1000.0) 
@@ -85,7 +87,7 @@ public class QSTest {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2017-11-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QSTestStrategy());
 		qSession.run();

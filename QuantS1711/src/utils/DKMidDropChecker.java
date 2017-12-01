@@ -16,10 +16,10 @@ public class DKMidDropChecker {
 			return false;
 		}
 		
-		double dCheck1 = DKAvePriceChecker.check(kLines, iCheck-40, iCheck-20);
+		double dCheck1 = DKAvePriceChecker.check(kLines, iCheck-30, iCheck-10);
 		double dCheck2 = DKAvePriceChecker.check(kLines, iCheck-20, iCheck-0);
 				
-		CLog.output("TEST", "    DKMidDropChecker dCheck1:%f dCheck2:%f", dCheck1, dCheck2);
+		// CLog.output("TEST", "    DKMidDropChecker dCheck1:%f dCheck2:%f", dCheck1, dCheck2);
 		
 		if(dCheck1<=dCheck2)
 		{
