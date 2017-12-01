@@ -42,9 +42,9 @@ import utils.ZCZXChecker;
  */
 public class QS1605Real {
 
-	public static class FastTestStrategy extends QuantStrategy
+	public static class QS1605RealStrategy extends QuantStrategy
 	{
-		public FastTestStrategy()
+		public QS1605RealStrategy()
 		{
 		}
 		
@@ -266,7 +266,7 @@ public class QS1605Real {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new FastTestStrategy());
+				new QS1605RealStrategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

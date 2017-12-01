@@ -30,9 +30,9 @@ import utils.PricePosChecker.ResultLongDropParam;
  * Ñ¡¹É
  */
 public class QS1711 {
-	public static class FastTestStrategy extends QuantStrategy
+	public static class QS1711Strategy extends QuantStrategy
 	{
-		public FastTestStrategy()
+		public QS1711Strategy()
 		{
 		}
 		
@@ -259,7 +259,7 @@ public class QS1711 {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new FastTestStrategy());
+				new QS1711Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

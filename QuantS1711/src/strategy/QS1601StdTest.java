@@ -33,9 +33,9 @@ public class QS1601StdTest {
 		}
 	}
 	
-	public static class TestStrategy extends QuantStrategy
+	public static class QS1601StdTestStrategy extends QuantStrategy
 	{
-		public TestStrategy()
+		public QS1601StdTestStrategy()
 		{
 			
 		}
@@ -288,7 +288,7 @@ public class QS1601StdTest {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2016-03-01 2016-04-01", 
 				cAccoutDriver, 
-				new TestStrategy());
+				new QS1601StdTestStrategy());
 		qSession.run();
 	}
 	
