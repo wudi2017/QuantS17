@@ -11,7 +11,7 @@ public class DayKLineLongLowerShadowChecker {
 	public static boolean check(DAKLines kLines, int iCheck)
 	{
 		// 最小天数检查
-		if(kLines.size() < 30)
+		if(kLines.size() < 60)
 		{
 			return false;
 		}

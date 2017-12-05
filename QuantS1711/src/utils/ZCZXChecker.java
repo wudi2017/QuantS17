@@ -29,16 +29,19 @@ public class ZCZXChecker {
 		
 		//BLog.output("TEST", "%s fAveWave %.3f\n", cCurStockDay.date(), fAveWave);
 		
-		// 一天中长阴线
+		// 第begin天中长阴
+		double dBshiti = 0.0;
+		double dBMaxWave = 0.0;
 		{
 			double shangying = cCurStockBegin.high - cCurStockBegin.entityHigh();
 			double xiaying = cCurStockBegin.entityLow() - cCurStockBegin.low;
 			double shiti = cCurStockBegin.entityHigh() - cCurStockBegin.entityLow();
 			double shitiRatio = shiti/cCurStockBegin.low;
-			if(cCurStockBegin.open > cCurStockBegin.close
-					&& shangying < shiti/3*2 
-					&& xiaying < shiti/3*2 
-					&& shitiRatio > dAveWave*0.5)
+			if(cCurStockBegin.open > cCurStockBegin.close // 阴线
+					&& shitiRatio > dAveWave*0.5 // 实体比例相对近期比较大
+					&& shangying < shiti/3*2 // 上影线长度比较小
+					&& xiaying < shiti/3*2  // 下影线长度比较小
+					)
 			{
 				
 			}
@@ -46,8 +49,34 @@ public class ZCZXChecker {
 			{
 				return false;
 			}
+			
+			dBshiti = shiti;
+			dBMaxWave = cCurStockBegin.high - cCurStockBegin.low;
 		}
 
+		// 第end天中长阳
+		double dEshiti = 0.0;
+		double dEMaxWave = 0.0;
+		{
+			double shangying = cCurStockDay.high - cCurStockDay.entityHigh();
+			double xiaying = cCurStockDay.entityLow() - cCurStockDay.low;
+			double shiti = cCurStockDay.entityHigh() - cCurStockDay.entityLow();
+			double shitiRatio = shiti/cCurStockDay.low;
+			if(cCurStockDay.open < cCurStockDay.close // 阳线
+					&& shitiRatio > dAveWave*0.5 // 实体比例相对近期比较大
+					&& shangying < shiti/3*2  // 上影线长度比较小
+					&& xiaying < shiti/3*2 // 下影线长度比较小
+					) 
+			{
+				
+			}
+			else
+			{
+				return false;
+			}
+			dEshiti = shiti;
+			dEMaxWave = cCurStockDay.high - cCurStockDay.low;
+		}
 		
 		// 中间横盘十字星
 		{
@@ -55,27 +84,12 @@ public class ZCZXChecker {
 			double xiaying = cStockDayMid.entityLow() - cStockDayMid.low;
 			double shiti = cStockDayMid.entityHigh() - cStockDayMid.entityLow();
 			double shitiRatio = shiti/cStockDayMid.low;
-			if((shangying > shiti/3 || xiaying > shiti/3)
-					&& shitiRatio < dAveWave)
-			{
-				
-			}
-			else
-			{
-				return false;
-			}
-		}
-		
-		// 最后中长阳
-		{
-			double shangying = cCurStockDay.high - cCurStockDay.entityHigh();
-			double xiaying = cCurStockDay.entityLow() - cCurStockDay.low;
-			double shiti = cCurStockDay.entityHigh() - cCurStockDay.entityLow();
-			double shitiRatio = shiti/cCurStockDay.low;
-			if(cCurStockDay.open < cCurStockDay.close
-					&& shangying < shiti/3*2  
-					&& xiaying < shiti/3*2 
-					&& shitiRatio > dAveWave*0.5)
+			double dMaxWave = cStockDayMid.high - cStockDayMid.low;
+			double refshiti = (dBshiti+dEshiti)/2;
+			double refAveMaxwave = (dBMaxWave+dEMaxWave)/2;
+			if(shitiRatio < dAveWave // 实体波动相对近期较小
+					&& shiti < refshiti/2 // 实体比两边线小很多
+					)
 			{
 				
 			}
@@ -130,8 +144,8 @@ public class ZCZXChecker {
 		KLine cStockDayMid = kLines.get(iMid);
 		KLine cCurStockBegin = kLines.get(iBegin);
 		
-		if(cCurStockDay.volume < cStockDayMid.volume
-				|| cCurStockDay.volume < cCurStockBegin.volume*0.85)
+		if(cCurStockDay.volume < cStockDayMid.volume // 最后天量小于中间日
+				|| cCurStockDay.volume < cCurStockBegin.volume*0.5) // 最后天量小于第一天
 		{
 			return false;
 		}

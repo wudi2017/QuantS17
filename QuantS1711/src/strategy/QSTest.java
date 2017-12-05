@@ -9,7 +9,9 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
+import utils.DK1LineCross3Ave;
 import utils.DKMidDropChecker;
+import utils.DayKLineLongLowerShadowChecker;
 import utils.ZCZXChecker;
 
 public class QSTest {
@@ -40,7 +42,7 @@ public class QSTest {
 				
 				// 过滤：股票ID集合，当天检查
 				boolean bCheckX = false;
-				if(cDAStock.ID().compareTo("000923") == 0
+				if(cDAStock.ID().compareTo("000544") == 0
 					&& cDAStock.dayKLines().size()>60
 					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 					&& cDAStock.circulatedMarketValue() < 1000.0) 
@@ -52,16 +54,12 @@ public class QSTest {
 				{
 					int iEnd = cDAStock.dayKLines().size()-1;
 					
-					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd))
+					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd)
+							&& ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd))
 					{
+						
 						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s", ctx.date(), cDAStock.ID());
-						
-						boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd);
-						boolean bDKMidDropChecker = DKMidDropChecker.check(cDAStock.dayKLines(),iEnd);
-						
-						CLog.output("TEST", "   %b %b", 
-								bcheckVolume, bDKMidDropChecker);
-						
+
 					}
 					
 //					boolean bCheck = DayKLineLongLowerShadowChecker.check(cDAStock.dayKLines(), iEnd);
@@ -87,7 +85,7 @@ public class QSTest {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-06-05", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QSTestStrategy());
 		qSession.run();

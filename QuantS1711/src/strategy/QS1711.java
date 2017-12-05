@@ -221,9 +221,8 @@ public class QS1711 {
 					{
 						if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 						{
-							boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd);
-							boolean bDKMidDropChecker = DKMidDropChecker.check(cDAStock.dayKLines(),iEnd);
-							if(bcheckVolume && bDKMidDropChecker)
+							boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
+							if(bcheckVolume)
 							{
 								ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 								m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
