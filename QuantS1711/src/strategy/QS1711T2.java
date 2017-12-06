@@ -111,7 +111,7 @@ public class QS1711T2 {
 						KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
 						double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
 						double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
-						if(fZhang > 0.08)
+						if(fZhang > 0.03)
 						{
 							break;
 						}
@@ -161,14 +161,14 @@ public class QS1711T2 {
 					
 					// 持股超时卖出
 					long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-					if(lHoldDays >= 30) 
+					if(lHoldDays >= 10) 
 					{
 						bSellFlag = true;
 						break;
 					}
 					
 					// 止盈止损卖出
-					if(cHoldStock.refProfitRatio() > 0.1 || cHoldStock.refProfitRatio() < -0.12) 
+					if(cHoldStock.refProfitRatio() > 0.03 || cHoldStock.refProfitRatio() < -0.05) 
 					{
 						bSellFlag = true;
 						break;
