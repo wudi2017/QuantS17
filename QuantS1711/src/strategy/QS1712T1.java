@@ -24,18 +24,14 @@ import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 import utils.PricePosChecker.ResultLongDropParam;
 
-/*
- * 当出现早晨之星直接尾盘冲进，第二天必须卖出
- */
-public class QS1711T1 {
-	public static class QS1711Strategy extends QuantStrategy
+public class QS1712T1 {
+	public static class QS1712Strategy extends QuantStrategy
 	{
-		public QS1711Strategy()
+		public QS1712Strategy()
 		{
 		}
 		
-		
-		public void doBuy(QuantContext ctx, String stockID)
+		public void raiseBuySignal(QuantContext ctx, String stockID)
 		{
 			DAStock cDAStock = ctx.pool().get(stockID);
 			double fNowPrice = cDAStock.price();
@@ -65,10 +61,76 @@ public class QS1711T1 {
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
+			m_XStockSelectManager.loadFromFile();
+			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(30));
+			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		}
 		
-		@Override
-		public void onMinuteData(QuantContext ctx) {
+		public void onBuyCheck(QuantContext ctx)
+		{
+			List<String> validSelectList = m_XStockSelectManager.validSelectListS1(10);
+			for(int iStock=0; iStock<validSelectList.size(); iStock++)
+			{
+				String stockID = validSelectList.get(iStock);
+				
+				DAStock cDAStock = ctx.pool().get(stockID);
+				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
+				double fNowPrice = cDAStock.price();
+				
+				do
+				{
+					// 1-跌停不买进
+					double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
+					double fDieTing = CUtilsMath.saveNDecimal(fYC*0.9f, 2);
+					if(0 == Double.compare(fDieTing, fNowPrice))
+					{
+						break;
+					}
+					
+					// 2-近期涨幅过大不买进（根据选股条件计算买入参数）
+					boolean bCheckFlg = false;
+					int iZCZXFindEnd = -1;
+					DAKLines list = cDAStock.dayKLines();
+					int iCheck = list.size()-2;
+					
+					int iBegin = iCheck-5;
+					int iEnd = iCheck;
+					
+					for(int i=iEnd;i>=iBegin;i--)
+					{
+						if(ZCZXChecker.check(list,i))
+						{
+							bCheckFlg = true;
+							iZCZXFindEnd = i;
+							break;
+						}
+					}
+					
+					if(bCheckFlg && -1!=iZCZXFindEnd)
+					{
+						KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
+						double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
+						double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
+						if(fZhang > 0.08)
+						{
+							break;
+						}
+					}
+					else
+					{
+						break;
+					}
+					
+					
+					// 买入标记
+					raiseBuySignal(ctx, stockID);
+					
+				} while(false);
+			}
+		}
+		
+		public void onSellCheck(QuantContext ctx)
+		{
 			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 			ctx.ap().getHoldStockList(ctnHoldStockList);
 			for(int i=0; i<ctnHoldStockList.size(); i++)
@@ -97,15 +159,16 @@ public class QS1711T1 {
 						break;
 					}
 					
-					// 当天结束必须卖出
-					if(ctx.time().compareTo("14:54:00") >= 0)
+					// 持股超时卖出
+					long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
+					if(lHoldDays >= 30) 
 					{
 						bSellFlag = true;
 						break;
 					}
 					
 					// 止盈止损卖出
-					if(cHoldStock.refProfitRatio() > 0.01 || cHoldStock.refProfitRatio() < -0.02) 
+					if(cHoldStock.refProfitRatio() > 0.1 || cHoldStock.refProfitRatio() < -0.12) 
 					{
 						bSellFlag = true;
 						break;
@@ -120,6 +183,12 @@ public class QS1711T1 {
 		}
 		
 		@Override
+		public void onMinuteData(QuantContext ctx) {
+			onBuyCheck(ctx);
+			onSellCheck(ctx);
+		}
+		
+		@Override
 		public void onDayFinish(QuantContext ctx) {
 
 			m_XStockSelectManager.clearSelect();
@@ -131,7 +200,7 @@ public class QS1711T1 {
 				// 过滤：股票ID集合，当天检查
 				boolean bCheckX = false;
 				if(
-					//cDAStock.ID().compareTo("000040") == 0 &&
+					//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
 					cDAStock.dayKLines().size()>60
 					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 					&& cDAStock.circulatedMarketValue() < 1000.0) {	
@@ -140,32 +209,24 @@ public class QS1711T1 {
 				
 				if(bCheckX)
 				{
-					// 早晨之星
+					// 5天内存在早晨之星
+					int iBegin = cDAStock.dayKLines().size()-1-5;
 					int iEnd = cDAStock.dayKLines().size()-1;
-					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd))
+					for(int i=iEnd;i>=iBegin;i--)
 					{
-						boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd);
-						if(bcheckVolume)
+						if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 						{
-							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-							m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+							boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
+							if(bcheckVolume)
+							{
+								ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+								m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+							}
 						}
 					}
-					
 				}
 			}
-	
-			List<String> validSelectList = m_XStockSelectManager.validSelectListS1(10);
-			for(int iStock=0; iStock<validSelectList.size(); iStock++)
-			{
-				String stockID = validSelectList.get(iStock);
-				
-				DAStock cDAStock = ctx.pool().get(stockID);
-				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
-				double fNowPrice = cDAStock.price();
-				
-				doBuy(ctx, stockID);
-			}
+			m_XStockSelectManager.saveToFile();
 			
 			// report
 			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
@@ -188,13 +249,12 @@ public class QS1711T1 {
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
 		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
 		cAccoutDriver.reset(100000);
-		
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1711Strategy());
+				new QS1712Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");
