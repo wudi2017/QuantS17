@@ -24,7 +24,7 @@ import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 import utils.PricePosChecker.ResultLongDropParam;
 
-public class QS1712T1 {
+public class QS1711T2 {
 	public static class QS1712Strategy extends QuantStrategy
 	{
 		public QS1712Strategy()
