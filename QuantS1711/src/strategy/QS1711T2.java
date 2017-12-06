@@ -22,7 +22,7 @@ import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultLongDropParam;
+import utils.PricePosChecker.ResultDropParam;
 
 public class QS1711T2 {
 	public static class QS1712Strategy extends QuantStrategy
@@ -111,7 +111,7 @@ public class QS1711T2 {
 						KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
 						double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
 						double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
-						if(fZhang > 0.03)
+						if(fZhang > 0.08)
 						{
 							break;
 						}
@@ -161,14 +161,14 @@ public class QS1711T2 {
 					
 					// 持股超时卖出
 					long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-					if(lHoldDays >= 10) 
+					if(lHoldDays >= 30) 
 					{
 						bSellFlag = true;
 						break;
 					}
 					
 					// 止盈止损卖出
-					if(cHoldStock.refProfitRatio() > 0.03 || cHoldStock.refProfitRatio() < -0.05) 
+					if(cHoldStock.refProfitRatio() > 0.10 || cHoldStock.refProfitRatio() < -0.12) 
 					{
 						bSellFlag = true;
 						break;
@@ -193,6 +193,7 @@ public class QS1711T2 {
 
 			m_XStockSelectManager.clearSelect();
 
+			// 第一次优先级筛选， 1满足早晨之星 2按照长期跌幅排序
 			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
 				DAStock cDAStock = ctx.pool().get(iStock);
@@ -219,13 +220,27 @@ public class QS1711T2 {
 							boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
 							if(bcheckVolume)
 							{
-								ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+								ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 								m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 							}
 						}
 					}
 				}
 			}
+			
+			// 第二次优先级筛选， 按照30日跌幅排序
+			List<String> select2 = m_XStockSelectManager.validSelectListS1(20);
+			m_XStockSelectManager.clearSelect();
+			for(int iStock=0; iStock<select2.size(); iStock++)
+			{
+				String stockID = select2.get(iStock);
+				DAStock cDAStock = ctx.pool().get(stockID);
+				ResultDropParam cResult30DropParam = PricePosChecker.getDropParam(30, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+				
+				m_XStockSelectManager.addSelect(cDAStock.ID(), -cResult30DropParam.refHigh);
+			}
+			
+			
 			m_XStockSelectManager.saveToFile();
 			
 			// report

@@ -22,7 +22,7 @@ import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultLongDropParam;
+import utils.PricePosChecker.ResultDropParam;
 
 /*
  * 当出现早晨之星直接尾盘冲进，第二天必须卖出
@@ -147,7 +147,7 @@ public class QS1711T1 {
 						boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd);
 						if(bcheckVolume)
 						{
-							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+							ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 							m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 						}
 					}

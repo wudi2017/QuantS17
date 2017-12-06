@@ -24,7 +24,7 @@ import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultLongDropParam;
+import utils.PricePosChecker.ResultDropParam;
 
 /*
  * Ñ¡¹É
@@ -224,7 +224,7 @@ public class QS1711 {
 							boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
 							if(bcheckVolume)
 							{
-								ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+								ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 								m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 							}
 						}

@@ -16,7 +16,7 @@ import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.PricePosChecker;
-import utils.PricePosChecker.ResultLongDropParam;
+import utils.PricePosChecker.ResultDropParam;
 import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
@@ -233,7 +233,7 @@ public class QS1605Real {
 					{
 						if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 						{
-							ResultLongDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+							ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 							m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 						}
 					}
