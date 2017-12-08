@@ -140,7 +140,6 @@ public class QS1711T2 {
 				DAStock cDAStock = ctx.pool().get(cHoldStock.stockID);
 				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 				double fNowPrice = cDAStock.price();
-				
 				boolean bSellFlag = false;
 				do
 				{

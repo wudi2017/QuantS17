@@ -71,7 +71,6 @@ public class QS1605Real {
 				DAStock cDAStock = ctx.pool().get(stockID);
 				double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 				double fNowPrice = cDAStock.price();
-				
 				boolean bBuyFlag = false;
 				do
 				{

@@ -4,7 +4,9 @@ import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
+import pers.di.dataapi.common.TimePrice;
 import pers.di.dataengine.DAStock;
+import pers.di.dataengine.DATimePrices;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
@@ -12,6 +14,8 @@ import pers.di.quantplatform.QuantStrategy;
 import utils.DK1LineCross3Ave;
 import utils.DKMidDropChecker;
 import utils.DayKLineLongLowerShadowChecker;
+import utils.ETDropStable;
+import utils.ETDropStable.ResultDropStable;
 import utils.ZCZXChecker;
 
 public class QSTest {
@@ -19,9 +23,11 @@ public class QSTest {
 	public static class QSTestStrategy extends QuantStrategy
 	{
 		public boolean m_bEnableTran;
+		public String m_selectID;
 		public QSTestStrategy()
 		{
-			m_bEnableTran = false;
+			m_bEnableTran = true;
+			m_selectID="";
 		}
 		
 		@Override
@@ -29,47 +35,56 @@ public class QSTest {
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
+			//if(ctx.date().equals("2016-06-13"))
+				super.addCurrentDayInterestMinuteDataID("000544");
 		}
 		@Override
 		public void onMinuteData(QuantContext ctx) {
+
+			//if(ctx.date().equals("2016-06-13"))
+			{
+				DAStock cDAStock = ctx.pool().get("000544");
+				DATimePrices cDATimePrices = cDAStock.timePrices();
+				//CLog.output("TEST", "%s %.3f", ctx.time(), cDAStock.price());
+				
+				ResultDropStable cResultDropStable = ETDropStable.checkDropStable(cDAStock.timePrices(), cDAStock.timePrices().size()-1, 0.05);
+				if(cResultDropStable.bCheck)
+				{
+					CLog.output("TEST", "%s %s %.3f !!!!", ctx.date(), ctx.time(), cDAStock.price());
+				}
+			}
 		}
 		
 		@Override
 		public void onDayFinish(QuantContext ctx) {
-			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
-			{
-				DAStock cDAStock = ctx.pool().get(iStock);
-				
-				// 过滤：股票ID集合，当天检查
-				boolean bCheckX = false;
-				if(cDAStock.ID().compareTo("000544") == 0
-					&& cDAStock.dayKLines().size()>60
-					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
-					&& cDAStock.circulatedMarketValue() < 1000.0) 
-				{	
-					bCheckX = true;
-				}
-				
-				if(bCheckX)
-				{
-					int iEnd = cDAStock.dayKLines().size()-1;
-					
-					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd)
-							&& ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd))
-					{
-						
-						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s", ctx.date(), cDAStock.ID());
-
-					}
-					
-//					boolean bCheck = DayKLineLongLowerShadowChecker.check(cDAStock.dayKLines(), iEnd);
-//					if(bCheck)
+			
+//			m_selectID = "";
+//			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
+//			{
+//				DAStock cDAStock = ctx.pool().get(iStock);
+//				
+//				// 过滤：股票ID集合，当天检查
+//				boolean bCheckX = false;
+//				if(cDAStock.ID().compareTo("000544") == 0
+//					&& cDAStock.dayKLines().size()>60
+//					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
+//					&& cDAStock.circulatedMarketValue() < 1000.0) 
+//				{	
+//					bCheckX = true;
+//				}
+//				
+//				if(bCheckX)
+//				{
+//					int iEnd = cDAStock.dayKLines().size()-1;
+//					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd)
+//							&& ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd))
 //					{
-//						CLog.output("TEST", "Date:%s ID:%s", ctx.date(), cDAStock.ID());
+//						
+//						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s", ctx.date(), cDAStock.ID());
+//						m_selectID = cDAStock.ID();
 //					}
-				}
-				
-			}
+//				}
+//			}
 		}
 	}
 	
