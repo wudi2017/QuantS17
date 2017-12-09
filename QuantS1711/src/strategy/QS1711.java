@@ -37,10 +37,12 @@ public class QS1711 {
 			super(10, 5); // maxSelect=10 maxHold=5
 		}
 
+		@Override
 		void onStrateInit(QuantContext ctx)
 		{
 		}
 		
+		@Override
 		void onStrateDayStart(QuantContext ctx)
 		{
 		}
@@ -151,7 +153,7 @@ public class QS1711 {
 					if(bcheckVolume)
 					{
 						ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-						super.trySelect(ctx, cDAStock.ID(), -cResultLongDropParam.refHigh);
+						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
 					}
 				}
 			}

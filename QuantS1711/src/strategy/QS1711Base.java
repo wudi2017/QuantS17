@@ -27,9 +27,9 @@ public abstract class QS1711Base extends QuantStrategy {
 		m_iMaxHoldCount = iMaxHoldCount;
 	}
 	
-	public void trySelect(QuantContext ctx, String stockID,  double priority)
+	public XStockSelectManager getXStockSelectManager()
 	{
-		m_XStockSelectManager.addSelect(stockID, priority);
+		return m_XStockSelectManager;
 	}
 	
 	public void tryBuy(QuantContext ctx, String stockID)
@@ -142,7 +142,7 @@ public abstract class QS1711Base extends QuantStrategy {
 	abstract void onStrateDayStart(QuantContext ctx);
 	/*
 	 * 策略买入检查
-	 * 交易期间每分钟对每个选入股票进行回调
+	 * 交易期间每分钟对每个选入股票(getXStockSelectManager中的)进行回调
 	 * 用户调用tryBuy进行买入
 	 */
 	abstract void onStrateBuyCheck(QuantContext ctx, DAStock cDAStock);
@@ -155,7 +155,7 @@ public abstract class QS1711Base extends QuantStrategy {
 	/*
 	 * 策略选股
 	 * 每天交易结束更新数据后对市场所有股票进行回调
-	 * 用户调用trySelect进行选股
+	 * 用户调用getXStockSelectManager进行选股
 	 */
 	abstract void onStrateDayFinish(QuantContext ctx, DAStock cDAStock);
 
