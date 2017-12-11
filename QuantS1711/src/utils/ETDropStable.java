@@ -1,6 +1,7 @@
 package utils;
 
 import pers.di.dataengine.*;
+import utils.base.ETHighLowFind;
 
 public class ETDropStable {
 
@@ -60,9 +61,9 @@ public class ETDropStable {
 				return cResultDropStable;
 			}
 			
-			int indexHigh = DAStockUtils.indexTimePriceHigh(timePrices, iCheckBegin, iCheckEnd);
+			int indexHigh = ETHighLowFind.indexTimePriceHigh(timePrices, iCheckBegin, iCheckEnd);
 			double highPrice = timePrices.get(indexHigh).price;
-			int indexLow = DAStockUtils.indexTimePriceLow(timePrices, iCheckBegin, iCheckEnd);
+			int indexLow = ETHighLowFind.indexTimePriceLow(timePrices, iCheckBegin, iCheckEnd);
 			double lowPrice = timePrices.get(indexLow).price;
 			
 			/*

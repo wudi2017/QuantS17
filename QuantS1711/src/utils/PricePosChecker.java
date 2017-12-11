@@ -2,6 +2,7 @@ package utils;
 
 import pers.di.dataapi.common.*;
 import pers.di.dataengine.*;
+import utils.base.EKHighLowFind;
 
 public class PricePosChecker {
 	
@@ -28,9 +29,9 @@ public class PricePosChecker {
 		
 		KLine cCurStockDay = kLines.get(iEnd);
 		
-		int iIndexH = DAStockUtils.indexHigh(kLines, iBegin, iEnd);
+		int iIndexH = EKHighLowFind.indexHigh(kLines, iBegin, iEnd);
 		KLine cStockDayH = kLines.get(iIndexH);
-		int iIndexL = DAStockUtils.indexLow(kLines, iBegin, iEnd);
+		int iIndexL = EKHighLowFind.indexLow(kLines, iBegin, iEnd);
 		KLine cStockDayL = kLines.get(iIndexL);
 		
 		cResultLongDropParam.refHigh = (cCurStockDay.close - cStockDayH.close)/cStockDayH.close;
@@ -52,9 +53,9 @@ public class PricePosChecker {
 		
 		KLine cCurStockDay = kLines.get(iEnd);
 		
-		int iIndexH = DAStockUtils.indexHigh(kLines, iBegin, iEnd);
+		int iIndexH = EKHighLowFind.indexHigh(kLines, iBegin, iEnd);
 		KLine cStockDayH = kLines.get(iIndexH);
-		int iIndexL = DAStockUtils.indexLow(kLines, iBegin, iEnd);
+		int iIndexL = EKHighLowFind.indexLow(kLines, iBegin, iEnd);
 		KLine cStockDayL = kLines.get(iIndexL);
 		
 		cResultLongDropParam.refHigh = (cCurStockDay.close - cStockDayH.close)/cStockDayH.close;

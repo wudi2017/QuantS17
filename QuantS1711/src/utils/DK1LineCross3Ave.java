@@ -3,6 +3,7 @@ package utils;
 import pers.di.common.CLog;
 import pers.di.dataapi.common.KLine;
 import pers.di.dataengine.DAKLines;
+import utils.base.EKAvePrice;
 
 /*
  * 一阳向上穿3线
@@ -21,9 +22,9 @@ public class DK1LineCross3Ave {
 		
 		// 最后一天穿3线
 		boolean bLastCross = false;
-		double ma5 = DKAvePriceChecker.MA(kLines, iEnd, 5);
-		double ma10 = DKAvePriceChecker.MA(kLines, iEnd, 10);
-		double ma20 = DKAvePriceChecker.MA(kLines, iEnd, 20);
+		double ma5 = EKAvePrice.GetMA(kLines, iEnd, 5);
+		double ma10 = EKAvePrice.GetMA(kLines, iEnd, 10);
+		double ma20 = EKAvePrice.GetMA(kLines, iEnd, 20);
 		//CLog.output("TEST", "test ma5=%.3f ma10=%.3f ma20=%.3f", ma5, ma10, ma20);
 
 		if(cKLine.close > cKLine.open
@@ -35,9 +36,9 @@ public class DK1LineCross3Ave {
 		
 		// 前面一周左右是下跌趋势
 		boolean bDie = false;
-		double ma5x = DKAvePriceChecker.MA(kLines, iEnd-3, 5);
-		double ma10x = DKAvePriceChecker.MA(kLines, iEnd-3, 10);
-		double ma20x = DKAvePriceChecker.MA(kLines, iEnd-3, 20);
+		double ma5x = EKAvePrice.GetMA(kLines, iEnd-3, 5);
+		double ma10x = EKAvePrice.GetMA(kLines, iEnd-3, 10);
+		double ma20x = EKAvePrice.GetMA(kLines, iEnd-3, 20);
 		if(ma20x > ma5x)
 		{
 			bDie = true;

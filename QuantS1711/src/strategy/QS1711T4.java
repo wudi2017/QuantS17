@@ -20,12 +20,12 @@ import utils.ZCZXChecker;
 import utils.ETDropStable.ResultDropStable;
 import utils.PricePosChecker.ResultDropParam;
 
-public class QS1711T3 {
+public class QS1711T4 {
 	public static class QS1711Strategy extends QS1711Base
 	{
 		public QS1711Strategy()
 		{
-			super(20, 10); // maxSelect=10 maxHold=5
+			super(20, 5); // maxSelect maxHold
 		}
 
 		@Override
@@ -42,6 +42,12 @@ public class QS1711T3 {
 		void onStrateBuyCheck(QuantContext ctx, DAStock cDAStock) {
 			double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 			double fNowPrice = cDAStock.price();
+			
+			// 时间在下午
+			if(ctx.time().compareTo("13:30:00") < 0)
+			{
+				return;
+			}
 			
 			// 1-跌停不买进
 			double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
@@ -75,12 +81,20 @@ public class QS1711T3 {
 				KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
 				double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
 				double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
-				if(fZhang > 0.08)
+				if(fZhang > 0.03)
 				{
 					return;
 				}
 			}
 			else
+			{
+				return;
+			}
+			
+			// 当天分时不急跌不买进
+			double dWave = DayKLinePriceWaveChecker.check(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+			ResultDropStable cResultDropStable = ETDropStable.checkDropStable(cDAStock.timePrices(), cDAStock.timePrices().size()-1, dWave/3*2);
+			if(!cResultDropStable.bCheck)
 			{
 				return;
 			}
@@ -115,7 +129,7 @@ public class QS1711T3 {
 			}
 				
 			// 止盈止损卖出
-			if(cHoldStock.refProfitRatio() > 0.1 || cHoldStock.refProfitRatio() < -0.12) 
+			if(cHoldStock.refProfitRatio() > 0.06 || cHoldStock.refProfitRatio() < -0.05) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
@@ -134,7 +148,7 @@ public class QS1711T3 {
 			}
 				
 			// 5天内存在早晨之星
-			int iBegin = cDAStock.dayKLines().size()-1-5;
+			int iBegin = cDAStock.dayKLines().size()-1-10;
 			int iEnd = cDAStock.dayKLines().size()-1;
 			for(int i=iEnd;i>=iBegin;i--)
 			{
