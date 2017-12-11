@@ -74,7 +74,7 @@ public abstract class QS1711Base extends QuantStrategy {
 	@Override
 	public void onInit(QuantContext ctx) {
 		m_XStockSelectManager = new XStockSelectManager(ctx.ap());
-		m_TranReportor = new TranReportor("R");
+		m_TranReportor = new TranReportor(this.getClass().getSimpleName());
 		this.onStrateInit(ctx);
 	}
 	@Override

@@ -81,7 +81,7 @@ public class QS1711T4 {
 				KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
 				double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
 				double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
-				if(fZhang > 0.03)
+				if(fZhang > 0.05)
 				{
 					return;
 				}
@@ -129,7 +129,7 @@ public class QS1711T4 {
 			}
 				
 			// Ö¹Ó¯Ö¹ËðÂô³ö
-			if(cHoldStock.refProfitRatio() > 0.06 || cHoldStock.refProfitRatio() < -0.05) 
+			if(cHoldStock.refProfitRatio() > 0.03 || cHoldStock.refProfitRatio() < -0.04) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
