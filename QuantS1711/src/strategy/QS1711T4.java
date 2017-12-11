@@ -17,6 +17,7 @@ import utils.ETDropStable;
 import utils.PricePosChecker;
 import utils.TranDaysChecker;
 import utils.ZCZXChecker;
+import utils.base.EKAvePrice;
 import utils.ETDropStable.ResultDropStable;
 import utils.PricePosChecker.ResultDropParam;
 
@@ -43,11 +44,11 @@ public class QS1711T4 {
 			double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 			double fNowPrice = cDAStock.price();
 			
-			// 时间在下午
-			if(ctx.time().compareTo("13:30:00") < 0)
-			{
-				return;
-			}
+//			// 时间在下午
+//			if(ctx.time().compareTo("13:30:00") < 0)
+//			{
+//				return;
+//			}
 			
 			// 1-跌停不买进
 			double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
@@ -122,14 +123,14 @@ public class QS1711T4 {
 				
 			// 持股超时卖出
 			long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-			if(lHoldDays >= 30) 
+			if(lHoldDays >= 20) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
 			}
 				
 			// 止盈止损卖出
-			if(cHoldStock.refProfitRatio() > 0.03 || cHoldStock.refProfitRatio() < -0.04) 
+			if(cHoldStock.refProfitRatio() > 0.10 || cHoldStock.refProfitRatio() < -0.12) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
@@ -146,9 +147,19 @@ public class QS1711T4 {
 				|| cDAStock.circulatedMarketValue() > 1000.0) {	
 				return;
 			}
+			
+			// 季线向下，月线向上
+			double ave60now = EKAvePrice.GetMA(cDAStock.dayKLines(), 60, cDAStock.dayKLines().size()-1);
+			double ave60Pre = EKAvePrice.GetMA(cDAStock.dayKLines(), 60, cDAStock.dayKLines().size()-5);
+			double ave20now = EKAvePrice.GetMA(cDAStock.dayKLines(), 20, cDAStock.dayKLines().size()-1);
+			double ave20Pre = EKAvePrice.GetMA(cDAStock.dayKLines(), 20, cDAStock.dayKLines().size()-5);
+			if(ave60Pre < ave60now || ave20Pre > ave20now )
+			{
+				return;
+			}
 				
 			// 5天内存在早晨之星
-			int iBegin = cDAStock.dayKLines().size()-1-10;
+			int iBegin = cDAStock.dayKLines().size()-1-5;
 			int iEnd = cDAStock.dayKLines().size()-1;
 			for(int i=iEnd;i>=iBegin;i--)
 			{
