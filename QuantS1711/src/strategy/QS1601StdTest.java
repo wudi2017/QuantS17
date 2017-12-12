@@ -10,6 +10,7 @@ import pers.di.dataapi.common.*;
 import pers.di.dataapi_test.TestCommonHelper;
 import pers.di.dataengine.*;
 import pers.di.quantplatform.*;
+import utils.TranReportor;
 import utils.XStockSelectManager;
 
 public class QS1601StdTest {
@@ -43,6 +44,7 @@ public class QS1601StdTest {
 		@Override
 		public void onInit(QuantContext ctx) {
 			m_XStockSelectManager = new XStockSelectManager(ctx.ap());
+			m_TranReportor = new TranReportor(this.getClass().getSimpleName());
 		}
 	
 		@Override
@@ -270,9 +272,19 @@ public class QS1601StdTest {
 			
 			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
 			
+			// report
+			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
+			ctx.ap().getTotalAssets(ctnTotalAssets);
+			double dSH = ctx.pool().get("999999").price();
+			m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
+			m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
+			m_TranReportor.generateReport();
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+		
 		}
 		
 		private XStockSelectManager m_XStockSelectManager;
+		private TranReportor m_TranReportor;
 	}
 	
 	public void run()

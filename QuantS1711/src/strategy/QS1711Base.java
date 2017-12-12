@@ -126,7 +126,9 @@ public abstract class QS1711Base extends QuantStrategy {
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
 		ctx.ap().getTotalAssets(ctnTotalAssets);
 		double dSH = ctx.pool().get("999999").price();
-		m_TranReportor.InfoCollector(ctx.date(), ctnTotalAssets.get(), dSH);
+		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
+		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
+		m_TranReportor.generateReport();
 		CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
 	}
 	
