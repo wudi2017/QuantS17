@@ -27,7 +27,15 @@ import utils.ZCZXChecker;
 import utils.PricePosChecker.ResultDropParam;
 
 /*
- * 选股
+ * 策略概要：
+ * 选：近期早晨之星选股，长期跌幅排序，最多10个
+ * 买：涨幅不大买入，最多5个
+ * 卖：止盈10点，止损12点，持股30天
+ * 
+ * 回测结果：
+ * 时间区间：2010-01~2017-11（7年）
+ * 总体涨幅：218点
+ * 年均涨幅：18点
  */
 public class QS1711 {
 	public static class QS1711Strategy extends QS1711Base

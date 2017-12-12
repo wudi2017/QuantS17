@@ -25,12 +25,13 @@ import utils.ZCZXChecker;
 import utils.PricePosChecker.ResultDropParam;
 
 /*
+ * 策略概要：
  * 当出现早晨之星直接尾盘冲进，第二天必须卖出
  */
 public class QS1711T1 {
-	public static class QS1711Strategy extends QS1711Base
+	public static class QS1711T1Strategy extends QS1711Base
 	{
-		public QS1711Strategy()
+		public QS1711T1Strategy()
 		{
 			super(10, 5); // maxSelect=10 maxHold=5
 		}
@@ -141,7 +142,7 @@ public class QS1711T1 {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1711Strategy());
+				new QS1711T1Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

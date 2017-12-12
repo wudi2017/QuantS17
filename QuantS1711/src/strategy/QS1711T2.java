@@ -25,12 +25,13 @@ import utils.ZCZXChecker;
 import utils.PricePosChecker.ResultDropParam;
 
 /*
- * 当出现早晨之星选股阶段优化
+ * 策略概要：
+ * 当出现早晨之星选股阶段优化，按照30日跌幅二次排序
  */
 public class QS1711T2 {
-	public static class QS1712Strategy extends QS1711Base
+	public static class QS1712T2Strategy extends QS1711Base
 	{
-		public QS1712Strategy()
+		public QS1712T2Strategy()
 		{
 			super(10, 5); // maxSelect=10 maxHold=5
 		}
@@ -197,7 +198,7 @@ public class QS1711T2 {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1712Strategy());
+				new QS1712T2Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

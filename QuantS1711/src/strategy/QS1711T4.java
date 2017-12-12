@@ -22,9 +22,9 @@ import utils.ETDropStable.ResultDropStable;
 import utils.PricePosChecker.ResultDropParam;
 
 public class QS1711T4 {
-	public static class QS1711Strategy extends QS1711Base
+	public static class QS1711T4Strategy extends QS1711Base
 	{
-		public QS1711Strategy()
+		public QS1711T4Strategy()
 		{
 			super(20, 5); // maxSelect maxHold
 		}
@@ -190,7 +190,7 @@ public class QS1711T4 {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1711Strategy());
+				new QS1711T4Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

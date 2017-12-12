@@ -92,7 +92,7 @@ public class QSTest {
 		CSystem.start();
 		
 		CLog.output("TEST", "FastTest main begin");
-		
+
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
 		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
