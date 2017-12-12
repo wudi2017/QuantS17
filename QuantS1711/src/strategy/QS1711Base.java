@@ -34,6 +34,10 @@ public abstract class QS1711Base extends QuantStrategy {
 	
 	public void tryBuy(QuantContext ctx, String stockID)
 	{
+		tryBuy(ctx, stockID, 1);
+	}
+	public void tryBuy(QuantContext ctx, String stockID, double validRatio)
+	{
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
@@ -46,6 +50,10 @@ public abstract class QS1711Base extends QuantStrategy {
 			CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
 			ctx.ap().getMoney(ctnMoney);
 			double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/m_iMaxHoldCount)?ctnTotalAssets.get()/m_iMaxHoldCount:ctnMoney.get();
+			if(validRatio>=0 && validRatio<=1)
+			{
+				dCreateMoney = dCreateMoney*validRatio;
+			}
 			int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
 			if(iCreateAmount > 0)
 			{

@@ -14,6 +14,7 @@ import pers.di.quantplatform.QuantStrategy;
 import utils.DK1LineCross3Ave;
 import utils.DKMidDropChecker;
 import utils.DayKLineLongLowerShadowChecker;
+import utils.EKGlobalRisk;
 import utils.ETDropStable;
 import utils.ETDropStable.ResultDropStable;
 import utils.ZCZXChecker;
@@ -35,28 +36,35 @@ public class QSTest {
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
-			//if(ctx.date().equals("2016-06-13"))
-				super.addCurrentDayInterestMinuteDataID("000544");
+//			if(ctx.date().equals("2016-06-13"))
+//				super.addCurrentDayInterestMinuteDataID("000544");
 		}
 		@Override
 		public void onMinuteData(QuantContext ctx) {
 
-			//if(ctx.date().equals("2016-06-13"))
-			{
-				DAStock cDAStock = ctx.pool().get("000544");
-				DATimePrices cDATimePrices = cDAStock.timePrices();
-				//CLog.output("TEST", "%s %.3f", ctx.time(), cDAStock.price());
-				
-				ResultDropStable cResultDropStable = ETDropStable.checkDropStable(cDAStock.timePrices(), cDAStock.timePrices().size()-1, 0.05);
-				if(cResultDropStable.bCheck)
-				{
-					CLog.output("TEST", "%s %s %.3f !!!!", ctx.date(), ctx.time(), cDAStock.price());
-				}
-			}
+//			if(ctx.date().equals("2016-06-13"))
+//			{
+//				DAStock cDAStock = ctx.pool().get("000544");
+//				DATimePrices cDATimePrices = cDAStock.timePrices();
+//				//CLog.output("TEST", "%s %.3f", ctx.time(), cDAStock.price());
+//				
+//				ResultDropStable cResultDropStable = ETDropStable.checkDropStable(cDAStock.timePrices(), cDAStock.timePrices().size()-1, 0.05);
+//				if(cResultDropStable.bCheck)
+//				{
+//					CLog.output("TEST", "%s %s %.3f !!!!", ctx.date(), ctx.time(), cDAStock.price());
+//				}
+//			}
 		}
 		
 		@Override
 		public void onDayFinish(QuantContext ctx) {
+			
+			DAStock cDAStock = ctx.pool().get("999999");
+			boolean bLowRisk = EKGlobalRisk.isLowRisk(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+			if(bLowRisk)
+			{
+				CLog.output("TEST", "Date:%s", ctx.date());
+			}
 			
 //			m_selectID = "";
 //			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
