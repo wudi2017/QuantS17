@@ -90,16 +90,16 @@ public class TranReportor {
 			
 			 if(iSize <= 30)
 			 {
-				spanList.add(index/(double)iSize);
+				spanList.add(index/(double)iSize); // 小于30天 每天都有刻度
 			 }
-			 else if(iSize > 30 && iSize <= 600)
+			 else if(iSize > 30 && iSize <= 600)  // 大于30太难 小于 20个月， 每月都有刻度
 			 {
 				 if(!lastDate.substring(5, 7).equals(date.substring(5, 7)))
 				 {
 					 spanList.add(index/(double)iSize);
 				 }
 			 }
-			 else if(iSize > 600)
+			 else if(iSize > 600) // 大于20个月， 每年都有刻度
 			 {
 				 if(!lastDate.substring(0, 4).equals(date.substring(0, 4)))
 				 {
