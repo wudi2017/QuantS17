@@ -14,12 +14,12 @@ import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import utils.DayKLinePriceWaveChecker;
 import utils.ETDropStable;
-import utils.PricePosChecker;
 import utils.TranDaysChecker;
 import utils.ZCZXChecker;
 import utils.base.EKAvePrice;
+import utils.base.EKRefHistoryPos;
+import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 import utils.ETDropStable.ResultDropStable;
-import utils.PricePosChecker.ResultDropParam;
 
 public class QS1711T4 {
 	public static class QS1711T4Strategy extends QS1711Base
@@ -138,38 +138,42 @@ public class QS1711T4 {
 		}
 
 		@Override
-		void onStrateDayFinish(QuantContext ctx, DAStock cDAStock) {
-			// 过滤：股票ID集合，当天检查
-			if(
-				//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
-				cDAStock.dayKLines().size()<60
-				|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
-				|| cDAStock.circulatedMarketValue() > 1000.0) {	
-				return;
-			}
-			
-			// 季线向下，月线向上
-			double ave60now = EKAvePrice.GetMA(cDAStock.dayKLines(), 60, cDAStock.dayKLines().size()-1);
-			double ave60Pre = EKAvePrice.GetMA(cDAStock.dayKLines(), 60, cDAStock.dayKLines().size()-5);
-			double ave20now = EKAvePrice.GetMA(cDAStock.dayKLines(), 20, cDAStock.dayKLines().size()-1);
-			double ave20Pre = EKAvePrice.GetMA(cDAStock.dayKLines(), 20, cDAStock.dayKLines().size()-5);
-			if(ave60Pre < ave60now || ave20Pre > ave20now )
+		void onStrateDayFinish(QuantContext ctx) {
+			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
-				return;
-			}
+				DAStock cDAStock = ctx.pool().get(iStock);
+				// 过滤：股票ID集合，当天检查
+				if(
+					//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
+					cDAStock.dayKLines().size()<60
+					|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
+					|| cDAStock.circulatedMarketValue() > 1000.0) {	
+					continue;
+				}
 				
-			// 5天内存在早晨之星
-			int iBegin = cDAStock.dayKLines().size()-1-5;
-			int iEnd = cDAStock.dayKLines().size()-1;
-			for(int i=iEnd;i>=iBegin;i--)
-			{
-				if(ZCZXChecker.check(cDAStock.dayKLines(),i))
+				// 季线向下，月线向上
+				double ave60now = EKAvePrice.GetMA(cDAStock.dayKLines(), 60, cDAStock.dayKLines().size()-1);
+				double ave60Pre = EKAvePrice.GetMA(cDAStock.dayKLines(), 60, cDAStock.dayKLines().size()-5);
+				double ave20now = EKAvePrice.GetMA(cDAStock.dayKLines(), 20, cDAStock.dayKLines().size()-1);
+				double ave20Pre = EKAvePrice.GetMA(cDAStock.dayKLines(), 20, cDAStock.dayKLines().size()-5);
+				if(ave60Pre < ave60now || ave20Pre > ave20now )
 				{
-					boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
-					if(bcheckVolume)
+					continue;
+				}
+					
+				// 5天内存在早晨之星
+				int iBegin = cDAStock.dayKLines().size()-1-5;
+				int iEnd = cDAStock.dayKLines().size()-1;
+				for(int i=iEnd;i>=iBegin;i--)
+				{
+					if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 					{
-						ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+						boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
+						if(bcheckVolume)
+						{
+							EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+							super.getXStockSelectManager().addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refHigh);
+						}
 					}
 				}
 			}

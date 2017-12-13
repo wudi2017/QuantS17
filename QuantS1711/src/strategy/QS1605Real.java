@@ -15,12 +15,12 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
-import utils.PricePosChecker;
-import utils.PricePosChecker.ResultDropParam;
 import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
+import utils.base.EKRefHistoryPos;
+import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
 /*
  * Ñ¡¹É²ßÂÔ£º
@@ -232,8 +232,8 @@ public class QS1605Real {
 					{
 						if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 						{
-							ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-							m_XStockSelectManager.addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+							EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+							m_XStockSelectManager.addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refHigh);
 						}
 					}
 				}

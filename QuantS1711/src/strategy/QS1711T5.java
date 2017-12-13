@@ -1,5 +1,7 @@
 package strategy;
 
+import java.util.List;
+
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
 import pers.di.account.common.HoldStock;
@@ -13,17 +15,17 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import utils.EKGlobalRisk;
-import utils.PricePosChecker;
 import utils.TranDaysChecker;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultDropParam;
+import utils.base.EKRefHistoryPos;
+import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
 public class QS1711T5 {
 	public static class QS1711T5Strategy extends QS1711Base
 	{
 		public QS1711T5Strategy()
 		{
-			super(10, 5); // maxSelect=10 maxHold=5
+			super(20, 5); // maxSelect maxHold
 		}
 
 		@Override
@@ -73,7 +75,7 @@ public class QS1711T5 {
 				KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iZCZXFindEnd);
 				double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
 				double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
-				if(fZhang > 0.08)
+				if(fZhang > 0.05)
 				{
 					return;
 				}
@@ -89,7 +91,7 @@ public class QS1711T5 {
 			}
 			else
 			{
-				super.tryBuy(ctx, cDAStock.ID(), 0.5);	
+				super.tryBuy(ctx, cDAStock.ID(), 0.8);	
 			}
 		}
 
@@ -128,28 +130,83 @@ public class QS1711T5 {
 		}
 
 		@Override
-		void onStrateDayFinish(QuantContext ctx, DAStock cDAStock) {
-			// 过滤：股票ID集合，当天检查
-			if(
-				//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
-				cDAStock.dayKLines().size()<60
-				|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
-				|| cDAStock.circulatedMarketValue() > 1000.0) {	
-				return;
-			}
-				
-			// 5天内存在早晨之星
-			int iBegin = cDAStock.dayKLines().size()-1-5;
-			int iEnd = cDAStock.dayKLines().size()-1;
-			for(int i=iEnd;i>=iBegin;i--)
+		void onStrateDayFinish(QuantContext ctx) {
+			
+			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
-				if(ZCZXChecker.check(cDAStock.dayKLines(),i))
+				DAStock cDAStock = ctx.pool().get(iStock);
+				
+				// 过滤：股票ID集合，当天检查
+				if(
+					//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
+					cDAStock.dayKLines().size()<60
+					|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
+					|| cDAStock.circulatedMarketValue() > 1000.0) {	
+					continue;
+				}
+					
+				// 5天内存在早晨之星
+				int iBegin = cDAStock.dayKLines().size()-1-5;
+				int iEnd = cDAStock.dayKLines().size()-1;
+				for(int i=iEnd;i>=iBegin;i--)
 				{
-					boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
-					if(bcheckVolume)
+					if(ZCZXChecker.check(cDAStock.dayKLines(),i))
 					{
-						ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+						boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
+						if(bcheckVolume)
+						{
+							super.getXStockSelectManager().addSelect(cDAStock.ID(), 0);
+						}
+					}
+				}
+			}
+			
+			// 筛选，长期跌幅在前
+			{
+				int iSelectSise = super.getXStockSelectManager().sizeSelect();
+				List<String> selects = super.getXStockSelectManager().validSelectListS1(iSelectSise/2);
+				super.getXStockSelectManager().clearSelect();
+				for(int iStock=0; iStock<selects.size(); iStock++)
+				{
+					String stockID = selects.get(iStock);
+					DAStock cDAStock = ctx.pool().get(stockID);
+					EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+					if(cEKRefHistoryPosParam.bCheck)
+					{
+						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refHigh);
+					}
+				}
+			}
+			
+			// 筛选，长期涨幅靠后
+			{
+				int iSelectSise = super.getXStockSelectManager().sizeSelect();
+				List<String> selects = super.getXStockSelectManager().validSelectListS1(iSelectSise/2);
+				super.getXStockSelectManager().clearSelect();
+				for(int iStock=0; iStock<selects.size(); iStock++)
+				{
+					String stockID = selects.get(iStock);
+					DAStock cDAStock = ctx.pool().get(stockID);
+					EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+					if(cEKRefHistoryPosParam.bCheck)
+					{
+						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refLow);
+					}
+				}
+			}
+			
+			// 排序，近期跌幅较大
+			{
+				List<String> selects = super.getXStockSelectManager().validSelectListS1(10);
+				super.getXStockSelectManager().clearSelect();
+				for(int iStock=0; iStock<selects.size(); iStock++)
+				{
+					String stockID = selects.get(iStock);
+					DAStock cDAStock = ctx.pool().get(stockID);
+					EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(20, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+					if(cEKRefHistoryPosParam.bCheck)
+					{
+						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refHigh);
 					}
 				}
 			}

@@ -17,12 +17,12 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
-import utils.PricePosChecker;
 import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultDropParam;
+import utils.base.EKRefHistoryPos;
+import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
 /*
  * 策略概要：
@@ -96,28 +96,33 @@ public class QS1711T1 {
 		}
 		
 		@Override
-		void onStrateDayFinish(QuantContext ctx, DAStock cDAStock) {
-			// 过滤：股票ID集合，当天检查
-			if(
-				//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
-				cDAStock.dayKLines().size()<60
-				|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
-				|| cDAStock.circulatedMarketValue() > 1000.0) {	
-				return;
-			}
+		void onStrateDayFinish(QuantContext ctx) {
 			
-			// 早晨之星
-			int iEnd = cDAStock.dayKLines().size()-1;
-			if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd))
+			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
 			{
-				boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd);
-				if(bcheckVolume)
+				DAStock cDAStock = ctx.pool().get(iStock);
+				// 过滤：股票ID集合，当天检查
+				if(
+					//cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0 
+					cDAStock.dayKLines().size()<60
+					|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
+					|| cDAStock.circulatedMarketValue() > 1000.0) {	
+					continue;
+				}
+				
+				// 早晨之星
+				int iEnd = cDAStock.dayKLines().size()-1;
+				if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd))
 				{
-					ResultDropParam cResultLongDropParam = PricePosChecker.getLongDropParam(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-					super.getXStockSelectManager().addSelect(cDAStock.ID(), -cResultLongDropParam.refHigh);
+					boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd);
+					if(bcheckVolume)
+					{
+						EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refHigh);
+					}
 				}
 			}
-	
+			
 			List<String> validSelectList = super.getXStockSelectManager().validSelectListS1(20);
 			for(int iStock=0; iStock<validSelectList.size(); iStock++)
 			{

@@ -17,6 +17,8 @@ import utils.DayKLineLongLowerShadowChecker;
 import utils.EKGlobalRisk;
 import utils.ETDropStable;
 import utils.ETDropStable.ResultDropStable;
+import utils.base.EKRefHistoryPos;
+import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 import utils.ZCZXChecker;
 
 public class QSTest {
@@ -59,40 +61,43 @@ public class QSTest {
 		@Override
 		public void onDayFinish(QuantContext ctx) {
 			
-			DAStock cDAStock = ctx.pool().get("999999");
-			boolean bLowRisk = EKGlobalRisk.isLowRisk(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-			if(bLowRisk)
-			{
-				CLog.output("TEST", "Date:%s", ctx.date());
-			}
-			
-//			m_selectID = "";
-//			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
+//			DAStock cDAStock = ctx.pool().get("999999");
+//			boolean bLowRisk = EKGlobalRisk.isLowRisk(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+//			if(bLowRisk)
 //			{
-//				DAStock cDAStock = ctx.pool().get(iStock);
-//				
-//				// 过滤：股票ID集合，当天检查
-//				boolean bCheckX = false;
-//				if(cDAStock.ID().compareTo("000544") == 0
-//					&& cDAStock.dayKLines().size()>60
-//					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
-//					&& cDAStock.circulatedMarketValue() < 1000.0) 
-//				{	
-//					bCheckX = true;
-//				}
-//				
-//				if(bCheckX)
-//				{
-//					int iEnd = cDAStock.dayKLines().size()-1;
-//					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd)
-//							&& ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd))
-//					{
-//						
-//						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s", ctx.date(), cDAStock.ID());
-//						m_selectID = cDAStock.ID();
-//					}
-//				}
+//				CLog.output("TEST", "Date:%s", ctx.date());
 //			}
+			
+			m_selectID = "";
+			for(int iStock=0; iStock<ctx.pool().size(); iStock++)
+			{
+				DAStock cDAStock = ctx.pool().get(iStock);
+				
+				// 过滤：股票ID集合，当天检查
+				boolean bCheckX = false;
+				if(cDAStock.ID().compareTo("000544") == 0
+					&& cDAStock.dayKLines().size()>60
+					&& cDAStock.dayKLines().lastDate().equals(ctx.date())
+					&& cDAStock.circulatedMarketValue() < 1000.0) 
+				{	
+					bCheckX = true;
+				}
+				
+				if(bCheckX)
+				{
+					
+					
+					int iEnd = cDAStock.dayKLines().size()-1;
+					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd)
+							&& ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd))
+					{
+						
+						EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(20, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s !%.3f !%.3f", ctx.date(), cDAStock.ID(), cEKRefHistoryPosParam.refHigh, cEKRefHistoryPosParam.refLow);
+						m_selectID = cDAStock.ID();
+					}
+				}
+			}
 		}
 	}
 	

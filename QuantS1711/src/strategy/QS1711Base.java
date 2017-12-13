@@ -12,12 +12,10 @@ import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantStrategy;
-import utils.PricePosChecker;
 import utils.TranDaysChecker;
 import utils.TranReportor;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
-import utils.PricePosChecker.ResultDropParam;
 
 public abstract class QS1711Base extends QuantStrategy {
 	
@@ -122,11 +120,7 @@ public abstract class QS1711Base extends QuantStrategy {
 
 		m_XStockSelectManager.clearSelect();
 
-		for(int iStock=0; iStock<ctx.pool().size(); iStock++)
-		{
-			DAStock cDAStock = ctx.pool().get(iStock);
-			this.onStrateDayFinish(ctx, cDAStock);
-		}
+		this.onStrateDayFinish(ctx);
 
 		m_XStockSelectManager.saveToFile();
 		
@@ -164,10 +158,10 @@ public abstract class QS1711Base extends QuantStrategy {
 	abstract void onStrateSellCheck(QuantContext ctx, DAStock cDAStock, HoldStock cHoldStock);
 	/*
 	 * 策略选股
-	 * 每天交易结束更新数据后对市场所有股票进行回调
+	 * 每天交易结束更新数据后进行回调
 	 * 用户调用getXStockSelectManager进行选股
 	 */
-	abstract void onStrateDayFinish(QuantContext ctx, DAStock cDAStock);
+	abstract void onStrateDayFinish(QuantContext ctx);
 
 	private int m_iMaxSelectCount;
 	private int m_iMaxHoldCount;

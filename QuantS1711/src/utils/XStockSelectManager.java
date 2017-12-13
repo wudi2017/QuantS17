@@ -142,6 +142,10 @@ public class XStockSelectManager {
         }		
 		return selectList;
 	}
+	public int sizeSelect()
+	{
+		return m_SelectItemList.size();
+	}
 	public void clearSelect()
 	{
 		m_SelectItemList.clear();
