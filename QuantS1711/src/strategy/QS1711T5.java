@@ -14,9 +14,12 @@ import pers.di.dataengine.DAStock;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
+import utils.DayKLinePriceWaveChecker;
 import utils.EKGlobalRisk;
+import utils.ETDropStable;
 import utils.TranDaysChecker;
 import utils.ZCZXChecker;
+import utils.ETDropStable.ResultDropStable;
 import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
@@ -84,14 +87,22 @@ public class QS1711T5 {
 			{
 				return;
 			}
+			
+			// 当天分时不急跌不买进
+			double dWave = DayKLinePriceWaveChecker.check(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+			ResultDropStable cResultDropStable = ETDropStable.checkDropStable(cDAStock.timePrices(), cDAStock.timePrices().size()-1, dWave*1.2);
+			if(!cResultDropStable.bCheck)
+			{
+				return;
+			}
 
 			if(m_bGlobalLowRisk)
 			{
-				super.tryBuy(ctx, cDAStock.ID());	
+				super.tryBuy(ctx, cDAStock.ID());
 			}
 			else
 			{
-				super.tryBuy(ctx, cDAStock.ID(), 0.8);	
+				super.tryBuy(ctx, cDAStock.ID());
 			}
 		}
 
@@ -115,14 +126,14 @@ public class QS1711T5 {
 				
 			// 持股超时卖出
 			long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-			if(lHoldDays >= 30) 
+			if(lHoldDays >= 10) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
 			}
 				
 			// 止盈止损卖出
-			if(cHoldStock.refProfitRatio() > 0.1 || cHoldStock.refProfitRatio() < -0.12) 
+			if(cHoldStock.refProfitRatio() > 0.5 || cHoldStock.refProfitRatio() < -0.12) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
@@ -203,7 +214,7 @@ public class QS1711T5 {
 				{
 					String stockID = selects.get(iStock);
 					DAStock cDAStock = ctx.pool().get(stockID);
-					EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(20, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+					EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(12, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 					if(cEKRefHistoryPosParam.bCheck)
 					{
 						super.getXStockSelectManager().addSelect(cDAStock.ID(), -cEKRefHistoryPosParam.refHigh);
