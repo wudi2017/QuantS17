@@ -36,7 +36,6 @@ import pers.di.common.CFileSystem;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsXML;
 import pers.di.quantplatform.AccountProxy;
-import utils.XStockSelectManager.InnerSelectStockItem;
 
 public class XStockSelectManager {
 
