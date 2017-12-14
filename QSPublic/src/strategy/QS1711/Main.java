@@ -15,7 +15,7 @@ public class Main {
 		
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
+		cAccoutDriver.load("QS1711" ,  new MockAccountOpe(), true);
 		cAccoutDriver.reset(100000);
 		Account acc = cAccoutDriver.account();
 		
