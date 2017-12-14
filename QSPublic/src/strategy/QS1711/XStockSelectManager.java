@@ -1,4 +1,4 @@
-package utils;
+package strategy.QS1711;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -8,14 +8,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.*;
-
-import pers.di.account.common.CommissionOrder;
-import pers.di.account.common.HoldStock;
-import pers.di.common.CLog;
-import pers.di.common.CSystem;
-import pers.di.common.CUtilsXML;
-import pers.di.quantplatform.AccountProxy;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -32,6 +29,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import pers.di.account.common.CommissionOrder;
+import pers.di.account.common.HoldStock;
+import pers.di.common.CFileSystem;
+import pers.di.common.CSystem;
+import pers.di.common.CUtilsXML;
+import pers.di.quantplatform.AccountProxy;
+import utils.XStockSelectManager.InnerSelectStockItem;
 
 public class XStockSelectManager {
 
@@ -62,7 +67,9 @@ public class XStockSelectManager {
 	public XStockSelectManager(AccountProxy ap)
 	{
 		m_ap = ap;	
-		m_selectFileName = CSystem.getRWRoot() + "\\select.xml";
+		String strSelectPath = CSystem.getRWRoot() + "\\StockSelectManager";
+		CFileSystem.createDir(strSelectPath);
+		m_selectFileName = strSelectPath + "\\" + ap.ID() + "_Select.xml";
 		m_SelectItemList = new ArrayList<InnerSelectStockItem>();
 	}
 	

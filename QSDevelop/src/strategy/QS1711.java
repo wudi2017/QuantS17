@@ -152,7 +152,7 @@ public class QS1711 {
 					cDAStock.dayKLines().size()<60
 					|| !cDAStock.dayKLines().lastDate().equals(ctx.date())
 					|| cDAStock.circulatedMarketValue() > 1000.0) {	
-					return;
+					continue;
 				}
 					
 				// 5天内存在早晨之星

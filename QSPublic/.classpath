@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/DQuant.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/htmlparser-1.6.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/jeromq-0.3.4.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/json-20170516.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/protobuf-java-2.4.1.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/servlet-api.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/THSApi.jar"/>
+	<classpathentry kind="lib" path="C:/D/MyProg/QuantS17/external/xmlParserAPIs-2.0.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
