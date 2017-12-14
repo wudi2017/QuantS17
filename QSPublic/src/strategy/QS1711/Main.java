@@ -15,12 +15,12 @@ public class Main {
 		
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("QS1711" ,  new MockAccountOpe(), true);
+		cAccoutDriver.load("account_QS1711" ,  new MockAccountOpe(), true);
 		cAccoutDriver.reset(100000);
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-12-15", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QS1711Strategy());
 		qSession.run();
