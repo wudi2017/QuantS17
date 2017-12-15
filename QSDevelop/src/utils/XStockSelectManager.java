@@ -63,7 +63,7 @@ public class XStockSelectManager {
 	public XStockSelectManager(AccountProxy ap)
 	{
 		m_ap = ap;	
-		String strSelectPath = CSystem.getRWRoot() + "\\StockSelectManager";
+		String strSelectPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
 		CFileSystem.createDir(strSelectPath);
 		m_selectFileName = strSelectPath + "\\" + ap.ID() + "_Select.xml";
 		m_SelectItemList = new ArrayList<InnerSelectStockItem>();

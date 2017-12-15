@@ -1,13 +1,9 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
-import pers.di.common.CObjectContainer;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsMath;
 import pers.di.dataapi.common.KLine;
@@ -16,31 +12,16 @@ import pers.di.dataengine.DAStock;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
-import pers.di.quantplatform.QuantStrategy;
-import utils.DKMidDropChecker;
-import utils.DayKLineLongLowerShadowChecker;
 import utils.TranDaysChecker;
-import utils.TranReportor;
-import utils.XStockSelectManager;
+import utils.XStockHoldManager;
+import utils.XStockHoldManager.InnerHoldStockItem;
 import utils.ZCZXChecker;
 import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
-/*
- * 策略概要：
- * 选：近期早晨之星选股，长期跌幅排序，最多10个
- * 买：涨幅不大买入，最多5个
- * 卖：止盈10点，止损12点，持股30天
- * 
- * 回测结果：
- * 时间区间：2010-01~2017-11（7年）
- * 总体涨幅：218点
- * 年均涨幅：18点
- */
-public class QS1711 {
-	public static class QS1711Strategy extends QS1711Base
-	{
-		public QS1711Strategy()
+public class QS1711T6 {
+	public static class QS1711T6Strategy extends QS1711Base {
+		public QS1711T6Strategy()
 		{
 			super(10, 5); // maxSelect=10 maxHold=5
 		}
@@ -48,11 +29,13 @@ public class QS1711 {
 		@Override
 		void onStrateInit(QuantContext ctx)
 		{
+			m_XStockHoldManager = new XStockHoldManager(ctx.ap());
 		}
 		
 		@Override
 		void onStrateDayStart(QuantContext ctx)
 		{
+			m_XStockHoldManager.loadFromFile();
 		}
 		
 		@Override
@@ -102,6 +85,8 @@ public class QS1711 {
 				return;
 			}
 
+			m_XStockHoldManager.setHold(cDAStock.ID(), 0, -0.12, 10000, 0.1, 30);
+			m_XStockHoldManager.saveToFile();
 			super.tryBuy(ctx, cDAStock.ID());	
 		}
 
@@ -109,6 +94,8 @@ public class QS1711 {
 		void onStrateSellCheck(QuantContext ctx, DAStock cDAStock, HoldStock cHoldStock) {
 			double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 			double fNowPrice = cDAStock.price();
+			
+			InnerHoldStockItem cInnerHoldStockItem = m_XStockHoldManager.getHold(cDAStock.ID());
 			
 			if(cHoldStock.availableAmount <= 0)
 			{
@@ -125,14 +112,14 @@ public class QS1711 {
 				
 			// 持股超时卖出
 			long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-			if(lHoldDays >= 30) 
+			if(lHoldDays >= cInnerHoldStockItem.maxHoldDays) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
 			}
 				
 			// 止盈止损卖出
-			if(cHoldStock.refProfitRatio() > 0.1 || cHoldStock.refProfitRatio() < -0.12) 
+			if(cHoldStock.refProfitRatio() > cInnerHoldStockItem.targetProfitRatio || cHoldStock.refProfitRatio() < cInnerHoldStockItem.stopLossRatio) 
 			{
 				super.trySell(ctx, cHoldStock.stockID);
 				return;
@@ -173,7 +160,10 @@ public class QS1711 {
 			}
 			
 		}
+		
+		private XStockHoldManager m_XStockHoldManager;
 	}
+	
 	
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
@@ -182,14 +172,14 @@ public class QS1711 {
 		
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
+		cAccoutDriver.load("account_QS1711" ,  new MockAccountOpe(), true);
 		cAccoutDriver.reset(100000);
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2010-03-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1711Strategy());
+				new QS1711T6Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

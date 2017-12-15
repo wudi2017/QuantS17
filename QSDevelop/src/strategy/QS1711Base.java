@@ -14,6 +14,7 @@ import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantStrategy;
 import utils.TranDaysChecker;
 import utils.TranReportor;
+import utils.XStockHoldManager;
 import utils.XStockSelectManager;
 import utils.ZCZXChecker;
 
