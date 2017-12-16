@@ -1,5 +1,7 @@
 package strategy;
 
+import java.util.List;
+
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
 import pers.di.account.common.HoldStock;
@@ -12,19 +14,16 @@ import pers.di.dataengine.DAStock;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
-import utils.TranDaysChecker;
-import utils.XStockClearRuleManager;
-import utils.XStockClearRuleManager.InnerHoldStockItem;
 import utils.ZCZXChecker;
 import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
 /*
- * QS1711 策略的清仓规则增强版
+ * QS1711策略  + 个股历史盈利率检查
  */
-public class QS1711T6 {
-	public static class QS1711T6Strategy extends QS1711SCBase {
-		public QS1711T6Strategy()
+public class QS1711T7 {
+	public static class QS1711T7Strategy extends QS1711SCBase {
+		public QS1711T7Strategy()
 		{
 			super(10, 5); // maxSelect=10 maxHold=5
 		}
@@ -163,6 +162,24 @@ public class QS1711T6 {
 				}
 			}
 			
+			
+			// 筛选，盈利率
+			{
+				int iSelectSise = super.getXStockSelectManager().sizeSelect();
+				List<String> selects = super.getXStockSelectManager().validSelectListS1(iSelectSise/2);
+				super.getXStockSelectManager().clearSelect();
+				for(int iStock=0; iStock<selects.size(); iStock++)
+				{
+					String stockID = selects.get(iStock);
+					DAStock cDAStock = ctx.pool().get(stockID);
+					
+					double succRate = ZCZXChecker.check_history(cDAStock.dayKLines());
+					if(succRate > 0.65)
+					{
+						super.getXStockSelectManager().addSelect(cDAStock.ID(), succRate);
+					}
+				}
+			}
 		}
 	}
 	
@@ -174,14 +191,14 @@ public class QS1711T6 {
 		
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("account_QS1711T6" ,  new MockAccountOpe(), true);
+		cAccoutDriver.load("account_QS1711T7" ,  new MockAccountOpe(), true);
 		cAccoutDriver.reset(100000);
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2010-01-01 2017-12-15", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1711T6Strategy());
+				new QS1711T7Strategy());
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

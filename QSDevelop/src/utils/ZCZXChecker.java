@@ -1,7 +1,9 @@
 package utils;
 
+import pers.di.common.CLog;
 import pers.di.dataapi.common.*;
 import pers.di.dataengine.*;
+import utils.base.EKHighLowFind;
 
 /*
  * 早晨之星K线组合
@@ -151,5 +153,74 @@ public class ZCZXChecker {
 		}
 
 		return true;
+	}
+	
+	
+	/*
+	 * 历史检查：返回成功率
+	 */
+	public static double check_history(DAKLines kLines)
+	{
+		int iTimesSucc = 0;
+		int iTimesFail = 0;
+		for(int i=0; i<kLines.size(); i++)
+		{
+			if(ZCZXChecker.check(kLines, i) && ZCZXChecker.check_volume(kLines, i))
+			{
+				if(i+30 >= kLines.size()) continue;
+				
+				boolean bMockCheck = mocktran(kLines, i, i+30);
+				if(bMockCheck)
+				{
+					iTimesSucc++;
+				}
+				else
+				{
+					iTimesFail++;
+				}
+				
+				KLine cKLineIndex = kLines.get(i);
+				int iHigh = EKHighLowFind.indexHigh(kLines, i, i+30);
+				int iLow = EKHighLowFind.indexLow(kLines, i, i+30);
+				KLine cKLineH = kLines.get(iHigh);
+				KLine cKLineL = kLines.get(iLow);
+//				CLog.output("TEST", "ZCZX:%s H:%s L:%s MockTran:%b", 
+//						cKLineIndex.date, cKLineH.date, cKLineL.date, bMockCheck);
+			}
+		}
+		double succRate = 0;
+		if(iTimesSucc+iTimesFail>5)
+		{
+			succRate = iTimesSucc/(double)(iTimesSucc+iTimesFail);
+		}
+//		CLog.output("TEST", "succRate:%.3f", succRate);
+		return succRate;
+	}
+	
+	private static boolean mocktran(DAKLines kLines, int iB, int iE)
+	{
+		KLine cKLineIndex = kLines.get(iB);
+		double clearHigh = cKLineIndex.entityMidle()*1.1;
+		double clearLow = cKLineIndex.entityMidle()*0.9;
+		for(int i=iB; i<iE; i++)
+		{
+			KLine cKLineCk = kLines.get(i);
+			if(cKLineCk.low <= clearLow)
+			{
+				return false;
+			}
+			if(cKLineCk.high >= clearHigh)
+			{
+				return true;
+			}
+		}
+		if( kLines.get(iE).entityMidle() > cKLineIndex.entityMidle())
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }

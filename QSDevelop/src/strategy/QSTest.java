@@ -91,10 +91,12 @@ public class QSTest {
 					if(ZCZXChecker.check(cDAStock.dayKLines(),iEnd)
 							&& ZCZXChecker.check_volume(cDAStock.dayKLines(),iEnd))
 					{
-						
+						double succRate = ZCZXChecker.check_history(cDAStock.dayKLines());
 						EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(20, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s !%.3f !%.3f", ctx.date(), cDAStock.ID(), cEKRefHistoryPosParam.refHigh, cEKRefHistoryPosParam.refLow);
+						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s !%.3f !%.3f Succ:%.3f", ctx.date(), cDAStock.ID(), 
+								cEKRefHistoryPosParam.refHigh, cEKRefHistoryPosParam.refLow, succRate);
 						m_selectID = cDAStock.ID();
+						
 					}
 				}
 			}
