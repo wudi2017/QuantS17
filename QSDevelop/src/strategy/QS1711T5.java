@@ -24,7 +24,7 @@ import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
 public class QS1711T5 {
-	public static class QS1711T5Strategy extends QS1711Base
+	public static class QS1711T5Strategy extends QS1711SBase
 	{
 		public QS1711T5Strategy()
 		{

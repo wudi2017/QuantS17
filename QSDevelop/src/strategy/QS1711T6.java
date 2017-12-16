@@ -13,14 +13,17 @@ import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
 import utils.TranDaysChecker;
-import utils.XStockHoldManager;
-import utils.XStockHoldManager.InnerHoldStockItem;
+import utils.XStockClearRuleManager;
+import utils.XStockClearRuleManager.InnerHoldStockItem;
 import utils.ZCZXChecker;
 import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
+/*
+ * QS1711 策略的清仓规则增强版
+ */
 public class QS1711T6 {
-	public static class QS1711T6Strategy extends QS1711Base {
+	public static class QS1711T6Strategy extends QS1711SCBase {
 		public QS1711T6Strategy()
 		{
 			super(10, 5); // maxSelect=10 maxHold=5
@@ -29,13 +32,11 @@ public class QS1711T6 {
 		@Override
 		void onStrateInit(QuantContext ctx)
 		{
-			m_XStockHoldManager = new XStockHoldManager(ctx.ap());
 		}
 		
 		@Override
 		void onStrateDayStart(QuantContext ctx)
 		{
-			m_XStockHoldManager.loadFromFile();
 		}
 		
 		@Override
@@ -85,8 +86,9 @@ public class QS1711T6 {
 				return;
 			}
 
-			m_XStockHoldManager.setHold(cDAStock.ID(), 0, -0.12, 10000, 0.1, 30);
-			m_XStockHoldManager.saveToFile();
+			// 建立清仓规则
+			super.getXStockClearRuleManager().setHold(cDAStock.ID(), 0, -0.12, 10000, 0.1, 30);
+			// 下单买入
 			super.tryBuy(ctx, cDAStock.ID());	
 		}
 
@@ -94,14 +96,7 @@ public class QS1711T6 {
 		void onStrateSellCheck(QuantContext ctx, DAStock cDAStock, HoldStock cHoldStock) {
 			double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 			double fNowPrice = cDAStock.price();
-			
-			InnerHoldStockItem cInnerHoldStockItem = m_XStockHoldManager.getHold(cDAStock.ID());
-			
-			if(cHoldStock.availableAmount <= 0)
-			{
-				return;
-			}
-				
+
 			// 涨停不卖出
 			double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
 			double fZhangTing = CUtilsMath.saveNDecimal(fYC*1.1f, 2);
@@ -109,20 +104,12 @@ public class QS1711T6 {
 			{
 				return;
 			}
-				
-			// 持股超时卖出
-			long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-			if(lHoldDays >= cInnerHoldStockItem.maxHoldDays) 
+
+			// 满足清仓规则，全部卖出
+			boolean bClear = super.getXStockClearRuleManager().clearCheck(ctx, cDAStock, cHoldStock);
+			if(bClear)
 			{
 				super.trySell(ctx, cHoldStock.stockID);
-				return;
-			}
-				
-			// 止盈止损卖出
-			if(cHoldStock.refProfitRatio() > cInnerHoldStockItem.targetProfitRatio || cHoldStock.refProfitRatio() < cInnerHoldStockItem.stopLossRatio) 
-			{
-				super.trySell(ctx, cHoldStock.stockID);
-				return;
 			}
 		}
 
@@ -160,8 +147,6 @@ public class QS1711T6 {
 			}
 			
 		}
-		
-		private XStockHoldManager m_XStockHoldManager;
 	}
 	
 	

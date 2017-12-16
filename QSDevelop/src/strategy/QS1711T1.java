@@ -29,7 +29,7 @@ import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
  * 当出现早晨之星直接尾盘冲进，第二天必须卖出
  */
 public class QS1711T1 {
-	public static class QS1711T1Strategy extends QS1711Base
+	public static class QS1711T1Strategy extends QS1711SBase
 	{
 		public QS1711T1Strategy()
 		{

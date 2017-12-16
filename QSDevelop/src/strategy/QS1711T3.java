@@ -25,7 +25,7 @@ import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
  * 近期早晨之星选股，增加持股数量
  */
 public class QS1711T3 {
-	public static class QS1711T3Strategy extends QS1711Base
+	public static class QS1711T3Strategy extends QS1711SBase
 	{
 		public QS1711T3Strategy()
 		{

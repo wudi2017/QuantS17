@@ -6,21 +6,20 @@ import java.util.List;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
-import pers.di.common.CUtilsMath;
-import pers.di.dataapi.common.KLine;
-import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantStrategy;
-import utils.TranDaysChecker;
 import utils.TranReportor;
-import utils.XStockHoldManager;
+import utils.XStockClearRuleManager;
 import utils.XStockSelectManager;
-import utils.ZCZXChecker;
 
-public abstract class QS1711Base extends QuantStrategy {
-	
-	public QS1711Base(int iMaxSelectCount, int iMaxHoldCount)
+/*
+ * 策略基础
+ * 自带：选股功能增强，清仓规则增强
+ */
+public abstract class QS1711SCBase extends QuantStrategy  {
+
+	public QS1711SCBase(int iMaxSelectCount, int iMaxHoldCount)
 	{
 		m_iMaxSelectCount = iMaxSelectCount;
 		m_iMaxHoldCount = iMaxHoldCount;
@@ -29,6 +28,10 @@ public abstract class QS1711Base extends QuantStrategy {
 	public XStockSelectManager getXStockSelectManager()
 	{
 		return m_XStockSelectManager;
+	}
+	public XStockClearRuleManager getXStockClearRuleManager()
+	{
+		return m_XStockClearRuleManager;
 	}
 	
 	public void tryBuy(QuantContext ctx, String stockID)
@@ -60,8 +63,11 @@ public abstract class QS1711Base extends QuantStrategy {
 			}
 		}
 	}
-	
 	public void trySell(QuantContext ctx, String stockID)
+	{
+		trySell(ctx, stockID, 1);
+	}
+	public void trySell(QuantContext ctx, String stockID, double validRatio)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
@@ -73,6 +79,13 @@ public abstract class QS1711Base extends QuantStrategy {
 			HoldStock cHoldStock = ctnHoldStockList.get(i);
 			if(cHoldStock.stockID.equals(stockID))
 			{
+				long trySellAmount = (long)(cHoldStock.totalAmount*validRatio);
+				long realSellAmuont = trySellAmount>cHoldStock.availableAmount?cHoldStock.availableAmount:trySellAmount;
+				if(realSellAmuont <= 0)
+				{
+					return;
+				}
+				
 				ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
 			}
 		}
@@ -81,6 +94,7 @@ public abstract class QS1711Base extends QuantStrategy {
 	@Override
 	public void onInit(QuantContext ctx) {
 		m_XStockSelectManager = new XStockSelectManager(ctx.ap());
+		m_XStockClearRuleManager = new XStockClearRuleManager(ctx.ap());
 		m_TranReportor = new TranReportor(this.getClass().getSimpleName());
 		this.onStrateInit(ctx);
 	}
@@ -88,6 +102,7 @@ public abstract class QS1711Base extends QuantStrategy {
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
 		m_XStockSelectManager.loadFromFile();
+		m_XStockClearRuleManager.loadFromFile();
 		super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
 		CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		this.onStrateDayStart(ctx);
@@ -167,5 +182,6 @@ public abstract class QS1711Base extends QuantStrategy {
 	private int m_iMaxSelectCount;
 	private int m_iMaxHoldCount;
 	private XStockSelectManager m_XStockSelectManager;
+	private XStockClearRuleManager m_XStockClearRuleManager;
 	private TranReportor m_TranReportor;
 }

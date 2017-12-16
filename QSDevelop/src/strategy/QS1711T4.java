@@ -22,7 +22,7 @@ import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 import utils.ETDropStable.ResultDropStable;
 
 public class QS1711T4 {
-	public static class QS1711T4Strategy extends QS1711Base
+	public static class QS1711T4Strategy extends QS1711SBase
 	{
 		public QS1711T4Strategy()
 		{

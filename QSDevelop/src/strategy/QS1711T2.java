@@ -29,7 +29,7 @@ import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
  * 当出现早晨之星选股阶段优化，按照30日跌幅二次排序
  */
 public class QS1711T2 {
-	public static class QS1712T2Strategy extends QS1711Base
+	public static class QS1712T2Strategy extends QS1711SBase
 	{
 		public QS1712T2Strategy()
 		{

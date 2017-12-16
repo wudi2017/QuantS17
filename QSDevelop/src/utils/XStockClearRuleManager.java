@@ -28,18 +28,20 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import pers.di.account.common.HoldStock;
 import pers.di.common.CFileSystem;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsXML;
+import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.AccountProxy;
-import utils.XStockSelectManager.InnerSelectStockItem;
+import pers.di.quantplatform.QuantContext;
 
 /*
- * XStockHoldManager
+ * XStockClearRuleManager
  * 股票持有策略控制器
  * 止盈止损与持有时间
  */
-public class XStockHoldManager {
+public class XStockClearRuleManager {
 	
 	public static class InnerHoldStockItem {
 		public InnerHoldStockItem(){
@@ -58,7 +60,7 @@ public class XStockHoldManager {
 		public int maxHoldDays; // 最大持有天数
 	}
 	
-	public XStockHoldManager(AccountProxy ap)
+	public XStockClearRuleManager(AccountProxy ap)
 	{
 		m_ap = ap;	
 		String strHoldPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
@@ -96,8 +98,30 @@ public class XStockHoldManager {
 			cInnerHoldStockItem.targetProfitRatio = targetProfitRatio;
 			cInnerHoldStockItem.maxHoldDays = maxHoldDays;
 		}
+		
+		saveToFile();
 	}
-	public InnerHoldStockItem getHold(String stockID)
+	public boolean clearCheck(QuantContext ctx, DAStock cDAStock, HoldStock cHoldStock)
+	{
+		InnerHoldStockItem cInnerHoldStockItem = this.getHold(cDAStock.ID());
+		
+		// 持股超时卖出
+		long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
+		if(lHoldDays >= cInnerHoldStockItem.maxHoldDays) 
+		{
+			return true;
+		}
+			
+		// 止盈止损卖出
+		if(cHoldStock.refProfitRatio() > cInnerHoldStockItem.targetProfitRatio || cHoldStock.refProfitRatio() < cInnerHoldStockItem.stopLossRatio) 
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private InnerHoldStockItem getHold(String stockID)
 	{
 		InnerHoldStockItem cInnerHoldStockItem = null;
 		for(int i=0; i<m_HoldItemList.size(); i++)
