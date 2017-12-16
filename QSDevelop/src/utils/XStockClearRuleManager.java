@@ -49,16 +49,20 @@ public class XStockClearRuleManager {
 			stockID = "";
 			stopLossPrice = 0.0f;
 			stopLossRatio = 0.0f;
+			stopLossMoney = 0.0f;
 			targetProfitPrice = 0.0f;
 			targetProfitRatio = 0.0f;
+			targetProfitMoney = 0.0f;
 			maxHoldDays = 0;
 		}
 		public String stockID;
-		public double stopLossPrice; // 止损：股价
-		public double stopLossRatio; // 止损：亏损百分比
-		public double targetProfitPrice; // 止盈：股价
-		public double targetProfitRatio; // 止盈：盈利百分比
-		public int maxHoldDays; // 最大持有天数
+		public double stopLossPrice; // 止损：股价 (0表示无限制)
+		public double stopLossRatio; // 止损：亏损百分比 (0表示无限制)
+		public double stopLossMoney; // 止损：亏损金额(0表示无限制)
+		public double targetProfitPrice; // 止盈：股价 (0表示无限制)
+		public double targetProfitRatio; // 止盈：盈利百分比 (0表示无限制)
+		public double targetProfitMoney; // 止盈：盈利金额 (0表示无限制)
+		public int maxHoldDays; // 最大持有天数 (0表示无限制)
 	}
 	
 	public XStockClearRuleManager(AccountProxy ap)
@@ -71,8 +75,8 @@ public class XStockClearRuleManager {
 	}
 	
 	public void setRule(String stockID, 
-			double stopLossPrice, double stopLossRatio,
-			double targetProfitPrice, double targetProfitRatio,
+			double stopLossPrice, double stopLossRatio, double stopLossMoney,
+			double targetProfitPrice, double targetProfitRatio, double targetProfitMoney,
 			int maxHoldDays)
 	{
 		InnerHoldStockItem cInnerHoldStockItem = null;
@@ -95,8 +99,10 @@ public class XStockClearRuleManager {
 			cInnerHoldStockItem.stockID = stockID;
 			cInnerHoldStockItem.stopLossPrice = stopLossPrice;
 			cInnerHoldStockItem.stopLossRatio = stopLossRatio;
+			cInnerHoldStockItem.stopLossMoney = stopLossMoney;
 			cInnerHoldStockItem.targetProfitPrice = targetProfitPrice;
 			cInnerHoldStockItem.targetProfitRatio = targetProfitRatio;
+			cInnerHoldStockItem.targetProfitMoney = targetProfitMoney;
 			cInnerHoldStockItem.maxHoldDays = maxHoldDays;
 		}
 		
@@ -134,15 +140,52 @@ public class XStockClearRuleManager {
 	{
 		InnerHoldStockItem cInnerHoldStockItem = this.getRule(cDAStock.ID());
 		
-		// 持股超时卖出
-		long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
-		if(lHoldDays >= cInnerHoldStockItem.maxHoldDays) 
+		// 止损股价
+		if(0!=cInnerHoldStockItem.stopLossPrice &&
+				cDAStock.price() <= cInnerHoldStockItem.stopLossPrice) 
 		{
 			return true;
 		}
-			
-		// 止盈止损卖出
-		if(cHoldStock.refProfitRatio() > cInnerHoldStockItem.targetProfitRatio || cHoldStock.refProfitRatio() < cInnerHoldStockItem.stopLossRatio) 
+		
+		// 止损参考亏损比
+		if(0!=cInnerHoldStockItem.stopLossRatio &&
+				cHoldStock.refProfitRatio() <= cInnerHoldStockItem.stopLossRatio) 
+		{
+			return true;
+		}
+		
+		// 止损亏损金额
+		if(0!=cInnerHoldStockItem.stopLossMoney &&
+				(cDAStock.price() - cHoldStock.refPrimeCostPrice)*cHoldStock.totalAmount <= cInnerHoldStockItem.stopLossMoney) 
+		{
+			return true;
+		}
+		
+		// 止盈股价
+		if(0!=cInnerHoldStockItem.targetProfitPrice &&
+				cDAStock.price() >= cInnerHoldStockItem.targetProfitPrice) 
+		{
+			return true;
+		}
+		
+		// 止损参考盈利比
+		if(0!=cInnerHoldStockItem.targetProfitRatio &&
+				cHoldStock.refProfitRatio() >= cInnerHoldStockItem.targetProfitRatio) 
+		{
+			return true;
+		}
+		
+		// 止盈金额
+		if(0!=cInnerHoldStockItem.targetProfitMoney &&
+				(cDAStock.price() - cHoldStock.refPrimeCostPrice)*cHoldStock.totalAmount >= cInnerHoldStockItem.targetProfitMoney) 
+		{
+			return true;
+		}
+				
+		// 持股超时
+		long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
+		if(0!=cInnerHoldStockItem.maxHoldDays &&
+				lHoldDays>= cInnerHoldStockItem.maxHoldDays) 
 		{
 			return true;
 		}
@@ -202,16 +245,20 @@ public class XStockClearRuleManager {
 			String stockID = cInnerHoldStockItem.stockID;
 			String stopLossPrice = String.format("%.3f", cInnerHoldStockItem.stopLossPrice);
 			String stopLossRatio = String.format("%.3f", cInnerHoldStockItem.stopLossRatio);
+			String stopLossMoney = String.format("%.3f", cInnerHoldStockItem.stopLossMoney);
 			String targetProfitPrice = String.format("%.3f", cInnerHoldStockItem.targetProfitPrice); 
 			String targetProfitRatio = String.format("%.3f", cInnerHoldStockItem.targetProfitRatio); 
+			String targetProfitMoney = String.format("%.3f", cInnerHoldStockItem.targetProfitMoney); 
 			String maxHoldDays = String.format("%d", cInnerHoldStockItem.maxHoldDays); 
 			
     		Element Node_Stock = doc.createElement("Stock");
     		Node_Stock.setAttribute("stockID", stockID);
     		Node_Stock.setAttribute("stopLossPrice",stopLossPrice);
     		Node_Stock.setAttribute("stopLossRatio",stopLossRatio);
+    		Node_Stock.setAttribute("stopLossMoney",stopLossMoney);
     		Node_Stock.setAttribute("targetProfitPrice",targetProfitPrice);
     		Node_Stock.setAttribute("targetProfitRatio",targetProfitRatio);
+    		Node_Stock.setAttribute("targetProfitMoney",targetProfitMoney);
     		Node_Stock.setAttribute("maxHoldDays",maxHoldDays);
     		
     		root.appendChild(Node_Stock);
@@ -312,16 +359,20 @@ public class XStockClearRuleManager {
 	        		String stockID = ((Element)node_Select).getAttribute("stockID");
 	        		String stopLossPrice = ((Element)node_Select).getAttribute("stopLossPrice");
 	        		String stopLossRatio = ((Element)node_Select).getAttribute("stopLossRatio");
+	        		String stopLossMoney = ((Element)node_Select).getAttribute("stopLossMoney");
 	        		String targetProfitPrice = ((Element)node_Select).getAttribute("targetProfitPrice");
 	        		String targetProfitRatio = ((Element)node_Select).getAttribute("targetProfitRatio");
+	        		String targetProfitMoney = ((Element)node_Select).getAttribute("targetProfitMoney");
 	        		String maxHoldDays = ((Element)node_Select).getAttribute("maxHoldDays");
 
 	        		InnerHoldStockItem cInnerHoldStockItem = new InnerHoldStockItem();
 	        		cInnerHoldStockItem.stockID = stockID;
 	        		cInnerHoldStockItem.stopLossPrice = Double.parseDouble(stopLossPrice);
 	        		cInnerHoldStockItem.stopLossRatio = Double.parseDouble(stopLossRatio);
+	        		cInnerHoldStockItem.stopLossMoney = Double.parseDouble(stopLossMoney);
 	        		cInnerHoldStockItem.targetProfitPrice = Double.parseDouble(targetProfitPrice);
 	        		cInnerHoldStockItem.targetProfitRatio = Double.parseDouble(targetProfitRatio);
+	        		cInnerHoldStockItem.targetProfitMoney = Double.parseDouble(targetProfitMoney);
 	        		cInnerHoldStockItem.maxHoldDays = Integer.parseInt(maxHoldDays);
 	        		m_HoldItemList.add(cInnerHoldStockItem);
 	        	}

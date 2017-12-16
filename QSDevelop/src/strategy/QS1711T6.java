@@ -89,7 +89,10 @@ public class QS1711T6 {
 			if(super.tryBuy(ctx, cDAStock.ID()))
 			{
 				// 建立清仓规则
-				super.getXStockClearRuleManager().setRule(cDAStock.ID(), 0, -0.12, 10000, 0.1, 30);
+				super.getXStockClearRuleManager().setRule(cDAStock.ID(), 
+						0, -0.12, 0,
+						0, 0.1, 0,
+						30);
 			}
 		}
 
