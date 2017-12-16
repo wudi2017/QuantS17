@@ -86,10 +86,11 @@ public class QS1711T6 {
 				return;
 			}
 
-			// 建立清仓规则
-			super.getXStockClearRuleManager().setHold(cDAStock.ID(), 0, -0.12, 10000, 0.1, 30);
-			// 下单买入
-			super.tryBuy(ctx, cDAStock.ID());	
+			if(super.tryBuy(ctx, cDAStock.ID()))
+			{
+				// 建立清仓规则
+				super.getXStockClearRuleManager().setRule(cDAStock.ID(), 0, -0.12, 10000, 0.1, 30);
+			}
 		}
 
 		@Override

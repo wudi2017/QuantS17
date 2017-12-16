@@ -3,7 +3,9 @@ package strategy;
 import java.util.ArrayList;
 import java.util.List;
 
+import pers.di.account.common.CommissionOrder;
 import pers.di.account.common.HoldStock;
+import pers.di.account.common.TRANACT;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.dataengine.DAStock;
@@ -34,15 +36,30 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 		return m_XStockClearRuleManager;
 	}
 	
-	public void tryBuy(QuantContext ctx, String stockID)
+	public boolean tryBuy(QuantContext ctx, String stockID)
 	{
-		tryBuy(ctx, stockID, 1);
+		return tryBuy(ctx, stockID, 1);
 	}
-	public void tryBuy(QuantContext ctx, String stockID, double validRatio)
+	public boolean tryBuy(QuantContext ctx, String stockID, double validRatio)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
+		// multi commit check
+		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
+		ctx.ap().getCommissionOrderList(ctnCommissionOrderList);
+		for(int i=0; i<ctnCommissionOrderList.size(); i++)
+		{
+			CommissionOrder cCommissionOrder = ctnCommissionOrderList.get(i);
+			if(cCommissionOrder.stockID.equals(stockID) 
+					&& TRANACT.BUY == cCommissionOrder.tranAct
+					&& Math.abs((fNowPrice-cCommissionOrder.price)/cCommissionOrder.price) < 0.03)
+			{
+				// already commit similar today
+				return false;
+			}
+		}
+
 		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 		ctx.ap().getHoldStockList(ctnHoldStockList);
 		if(ctnHoldStockList.size() < m_iMaxHoldCount)
@@ -60,18 +77,36 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 			if(iCreateAmount > 0)
 			{
 				ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
+				return true;
 			}
 		}
+		
+		return false;
 	}
-	public void trySell(QuantContext ctx, String stockID)
+	public boolean trySell(QuantContext ctx, String stockID)
 	{
-		trySell(ctx, stockID, 1);
+		return trySell(ctx, stockID, 1);
 	}
-	public void trySell(QuantContext ctx, String stockID, double validRatio)
+	public boolean trySell(QuantContext ctx, String stockID, double validRatio)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
+		// multi commit check
+		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
+		ctx.ap().getCommissionOrderList(ctnCommissionOrderList);
+		for(int i=0; i<ctnCommissionOrderList.size(); i++)
+		{
+			CommissionOrder cCommissionOrder = ctnCommissionOrderList.get(i);
+			if(cCommissionOrder.stockID.equals(stockID) 
+					&& TRANACT.SELL == cCommissionOrder.tranAct
+					&& Math.abs((fNowPrice-cCommissionOrder.price)/cCommissionOrder.price) < 0.03)
+			{
+				// already commit similar today
+				return false;
+			}
+		}
+
 		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 		ctx.ap().getHoldStockList(ctnHoldStockList);
 		for(int i=0; i<ctnHoldStockList.size(); i++)
@@ -83,12 +118,15 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 				long realSellAmuont = trySellAmount>cHoldStock.availableAmount?cHoldStock.availableAmount:trySellAmount;
 				if(realSellAmuont <= 0)
 				{
-					return;
+					return false;
 				}
 				
 				ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+				return true;
 			}
 		}
+		
+		return false;
 	}
 	
 	@Override
@@ -101,10 +139,15 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
+		
+		// init select stock
 		m_XStockSelectManager.loadFromFile();
-		m_XStockClearRuleManager.loadFromFile();
 		super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
 		CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
+		
+		// init clear rule
+		m_XStockClearRuleManager.loadFromFile();
+
 		this.onStrateDayStart(ctx);
 	}
 	
@@ -134,11 +177,13 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 	@Override
 	public void onDayFinish(QuantContext ctx) {
 
+		// reset clear
 		m_XStockSelectManager.clearSelect();
-
 		this.onStrateDayFinish(ctx);
-
 		m_XStockSelectManager.saveToFile();
+		
+		// deleteRuleNotInHolds 
+		m_XStockClearRuleManager.deleteRuleNotInHolds();
 		
 		// report
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();

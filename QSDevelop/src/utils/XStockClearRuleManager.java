@@ -10,6 +10,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -69,7 +70,7 @@ public class XStockClearRuleManager {
 		m_HoldItemList = new ArrayList<InnerHoldStockItem>();
 	}
 	
-	public void setHold(String stockID, 
+	public void setRule(String stockID, 
 			double stopLossPrice, double stopLossRatio,
 			double targetProfitPrice, double targetProfitRatio,
 			int maxHoldDays)
@@ -101,9 +102,37 @@ public class XStockClearRuleManager {
 		
 		saveToFile();
 	}
+	public void deleteRuleNotInHolds()
+	{
+		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
+		m_ap.getHoldStockList(ctnHoldStockList);
+		
+		Iterator<InnerHoldStockItem> iter = m_HoldItemList.iterator();
+		while (iter.hasNext()) {
+			String stockIDRule = iter.next().stockID;
+			
+			boolean bExitInHold = false;
+			for(int i=0; i<ctnHoldStockList.size(); i++)
+			{
+				HoldStock cHoldStock = ctnHoldStockList.get(i);
+				if(stockIDRule.equals(cHoldStock.stockID))
+				{
+					bExitInHold = true;
+					break;
+				}
+			}
+			
+			if(!bExitInHold)
+			{
+				iter.remove();
+            }
+        }
+		saveToFile();
+	}
+	
 	public boolean clearCheck(QuantContext ctx, DAStock cDAStock, HoldStock cHoldStock)
 	{
-		InnerHoldStockItem cInnerHoldStockItem = this.getHold(cDAStock.ID());
+		InnerHoldStockItem cInnerHoldStockItem = this.getRule(cDAStock.ID());
 		
 		// 持股超时卖出
 		long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
@@ -121,7 +150,7 @@ public class XStockClearRuleManager {
 		return false;
 	}
 	
-	private InnerHoldStockItem getHold(String stockID)
+	private InnerHoldStockItem getRule(String stockID)
 	{
 		InnerHoldStockItem cInnerHoldStockItem = null;
 		for(int i=0; i<m_HoldItemList.size(); i++)
