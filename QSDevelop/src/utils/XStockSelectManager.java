@@ -16,6 +16,7 @@ import pers.di.common.CFileSystem;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsXML;
+import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.AccountProxy;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -55,9 +56,11 @@ public class XStockSelectManager {
 		public InnerSelectStockItem(){
 			stockID = "";
 			dPriority = 0.0f;
+			dRefCreatePrice = 0.0f; // 参考建仓价（0表示无效价格）
 		}
 		public String stockID;
 		public double dPriority;
+		public double dRefCreatePrice;
 	}
 	
 	public XStockSelectManager(AccountProxy ap)
@@ -71,8 +74,11 @@ public class XStockSelectManager {
 	
 	//-----------------------------------------------------------------------------------------
 	// select op
-		
 	public void addSelect(String stockID, double priority)
+	{
+		addSelect(stockID, priority, 0);
+	}
+	public void addSelect(String stockID, double priority, double refCreatePrice)
 	{
 		// 不重复添加
 		for(int i=0; i<m_SelectItemList.size(); i++)
@@ -85,6 +91,7 @@ public class XStockSelectManager {
 		InnerSelectStockItem cInnerSelectStockItem = new InnerSelectStockItem();
 		cInnerSelectStockItem.stockID = stockID;
 		cInnerSelectStockItem.dPriority = priority;
+		cInnerSelectStockItem.dRefCreatePrice = refCreatePrice;
 		m_SelectItemList.add(cInnerSelectStockItem);
 	}
 	// 有效选择列表，S1-先过滤掉无效后剩余最大maxCount个
@@ -145,6 +152,26 @@ public class XStockSelectManager {
         }		
 		return selectList;
 	}
+	public boolean checkLowerRefCreatePrice(DAStock cDAStock)
+	{
+		for(int i=0; i<m_SelectItemList.size(); i++)
+		{
+			InnerSelectStockItem cInnerSelectStockItem = m_SelectItemList.get(i);
+			if(cInnerSelectStockItem.stockID.equals(cDAStock.ID()))
+			{
+				
+				if(0 != Double.compare(cInnerSelectStockItem.dRefCreatePrice, 0.0))
+				{
+					if(cDAStock.price() < cInnerSelectStockItem.dRefCreatePrice)
+					{
+						return true;
+					}
+				}
+				break;
+			}
+		}
+		return false;
+	}
 	public int sizeSelect()
 	{
 		return m_SelectItemList.size();
@@ -203,10 +230,12 @@ public class XStockSelectManager {
 			InnerSelectStockItem cInnerSelectStockItem = m_SelectItemList.get(i);
     		String stockID = cInnerSelectStockItem.stockID;
     		String priority =String.format("%.3f", cInnerSelectStockItem.dPriority);
+    		String refCreatePrice =String.format("%.3f", cInnerSelectStockItem.dRefCreatePrice);
     		
     		Element Node_Stock = doc.createElement("Stock");
     		Node_Stock.setAttribute("ID", stockID);
     		Node_Stock.setAttribute("Pri", priority);
+    		Node_Stock.setAttribute("refCreatePrice", refCreatePrice);
     		
     		root.appendChild(Node_Stock);
     	}
@@ -305,10 +334,12 @@ public class XStockSelectManager {
 	        	{
 	        		String ID = ((Element)node_Select).getAttribute("ID");
 	        		String Pri = ((Element)node_Select).getAttribute("Pri");
+	        		String refCreatePrice = ((Element)node_Select).getAttribute("refCreatePrice");
 	        		
 	        		InnerSelectStockItem cInnerSelectStockItem = new InnerSelectStockItem();
 	        		cInnerSelectStockItem.stockID = ID;
 	        		cInnerSelectStockItem.dPriority = Double.parseDouble(Pri);
+	        		cInnerSelectStockItem.dRefCreatePrice = Double.parseDouble(refCreatePrice);
 	        		m_SelectItemList.add(cInnerSelectStockItem);
 	        	}
 	        }

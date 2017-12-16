@@ -43,6 +43,19 @@ public class QS1711T6 {
 		void onStrateBuyCheck(QuantContext ctx, DAStock cDAStock) {
 			double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 			double fNowPrice = cDAStock.price();
+
+			// 0-满足低于参考价直接建仓
+			if(super.getXStockSelectManager().checkLowerRefCreatePrice(cDAStock))
+			{
+				if(super.tryBuy(ctx, cDAStock.ID()))
+				{
+					// 建立清仓规则
+					super.getXStockClearRuleManager().setRule(cDAStock.ID(), 
+							0, -0.12, 0,
+							0, 0.1, 0,
+							30);
+				}
+			}
 			
 			// 1-跌停不买进
 			double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
@@ -166,7 +179,7 @@ public class QS1711T6 {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2010-03-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2017-12-15", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QS1711T6Strategy());
 		qSession.run();
