@@ -21,6 +21,10 @@ import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 import utils.ETDropStable.ResultDropStable;
 
+/*
+ * 早晨之星选股
+ * 分时线急跌买入
+ */
 public class QS1711T4 {
 	public static class QS1711T4Strategy extends QS1711SBase
 	{
