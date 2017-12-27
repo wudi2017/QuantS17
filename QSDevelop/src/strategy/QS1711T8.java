@@ -22,11 +22,8 @@ import utils.ETDropStable.ResultDropStable;
 import utils.base.EKRefHistoryPos;
 import utils.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
-/*
- * QS1711策略的SHC强化
- */
 public class QS1711T8 {
-	public static class QS1711T8Strategy extends QS1711SHCBase {
+	public static class QS1711T8Strategy extends QS1711SCBase {
 		public QS1711T8Strategy()
 		{
 			super(20, 5); // maxSelect maxHold
@@ -50,7 +47,7 @@ public class QS1711T8 {
 			// 0-满足低于参考价直接建仓
 			if(super.getXStockSelectManager().checkLowerRefCreatePrice(cDAStock))
 			{
-				if(super.signalBuy(ctx, cDAStock.ID()))
+				if(super.tryBuy(ctx, cDAStock.ID()))
 				{
 					// 建立清仓规则
 					super.getXStockClearRuleManager().setRule(cDAStock.ID(), 
