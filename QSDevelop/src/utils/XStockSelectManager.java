@@ -37,48 +37,15 @@ import org.xml.sax.InputSource;
 
 public class XStockSelectManager {
 
-	public static class InnerSelectStockItem {
-
-		public static class InnerSelectStockItemCompare implements Comparator 
-		{
-			public int compare(Object object1, Object object2) {
-				InnerSelectStockItem c1 = (InnerSelectStockItem)object1;
-				InnerSelectStockItem c2 = (InnerSelectStockItem)object2;
-				int iCmp = Double.compare(c1.dPriority, c2.dPriority);
-				if(iCmp > 0) 
-					return -1;
-				else if(iCmp < 0) 
-					return 1;
-				else
-					return 0;
-			}
-		}
-		public InnerSelectStockItem(){
-			stockID = "";
-			dPriority = 0.0f;
-			dRefCreatePrice = 0.0f; // 参考建仓价（0表示无效价格）
-		}
-		public String stockID;
-		public double dPriority;
-		public double dRefCreatePrice;
-	}
-	
-	public XStockSelectManager(AccountProxy ap)
+	public XStockSelectManager(String ID)
 	{
-		m_ap = ap;	
-		String strSelectPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
-		CFileSystem.createDir(strSelectPath);
-		m_selectFileName = strSelectPath + "\\" + ap.ID() + "_Select.xml";
+		String strStockStrategyHelperPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
+		CFileSystem.createDir(strStockStrategyHelperPath);
+		m_selectFileName = strStockStrategyHelperPath + "\\" + ID + "_Select.xml";
 		m_SelectItemList = new ArrayList<InnerSelectStockItem>();
 	}
 	
-	//-----------------------------------------------------------------------------------------
-	// select op
 	public void addSelect(String stockID, double priority)
-	{
-		addSelect(stockID, priority, 0);
-	}
-	public void addSelect(String stockID, double priority, double refCreatePrice)
 	{
 		// 不重复添加
 		for(int i=0; i<m_SelectItemList.size(); i++)
@@ -90,88 +57,53 @@ public class XStockSelectManager {
 		}
 		InnerSelectStockItem cInnerSelectStockItem = new InnerSelectStockItem();
 		cInnerSelectStockItem.stockID = stockID;
-		cInnerSelectStockItem.dPriority = priority;
-		cInnerSelectStockItem.dRefCreatePrice = refCreatePrice;
 		m_SelectItemList.add(cInnerSelectStockItem);
 	}
-	// 有效选择列表，S1-先过滤掉无效后剩余最大maxCount个
-	public List<String> validSelectListS1(int maxCount)
+	
+	public void filterOut(List<String> stockIDs)
 	{
-		List<String> selectList = new ArrayList<String>();
-		
-		// 按优先级排序
-		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
-		
-		int iAddCount = 0;
-		for(int i=0; i<m_SelectItemList.size(); i++)
-		{
-			String stockID = m_SelectItemList.get(i).stockID;
-			// 排除已经提交和持有的
-			if(!existCommissionOrder(stockID)
-					&& !existHoldStock(stockID))
-			{
-				selectList.add(m_SelectItemList.get(i).stockID);
-				iAddCount++;
-				if(iAddCount >= maxCount)
-				{
-					break;
-				}
-			}
-		}
-		return selectList;
-	}
-	// 有效选择列表，S2-先选择maxCount数目，再过滤掉无效的
-	public List<String> validSelectListS2(int maxCount)
-	{
-		List<String> selectList = new ArrayList<String>();
-		
-		// 按优先级排序
-		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
-		
-		int iAddCount = 0;
-		for(int i=0; i<m_SelectItemList.size(); i++)
-		{
-			String stockID = m_SelectItemList.get(i).stockID;
-			selectList.add(stockID);
-			iAddCount++;
-			if(iAddCount >= maxCount )
-			{
-				break;
-			}
-		}
-		
-		// 排除已经提交和持有的
-		Iterator<String> iter = selectList.iterator();
-		while (iter.hasNext()) {
-			String stockID = iter.next();
-			if(existCommissionOrder(stockID)
-					|| existHoldStock(stockID))
-			{
-				iter.remove();
+		Iterator<InnerSelectStockItem> iter = m_SelectItemList.iterator();
+        while (iter.hasNext()) {
+            String item = iter.next().stockID;
+            if (stockIDs.contains(item)) {
+                iter.remove();
             }
-        }		
-		return selectList;
+        }
 	}
-	public boolean checkLowerRefCreatePrice(DAStock cDAStock)
+	public void keepMaxCount(int maxCount)
 	{
+		// 按优先级排序
+		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
+		
+		int count = 0;
+		Iterator<InnerSelectStockItem> iter = m_SelectItemList.iterator();
+        while (iter.hasNext()) {
+        	if(count > maxCount)
+            {
+                iter.remove();
+            }
+        	else
+        	{
+        		count++;
+            	iter.next();
+        	}
+        }
+	}
+	
+	public List<String> selectList()
+	{
+		// 按优先级排序
+		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
+				
+		List<String> selectList = new ArrayList<String>();
 		for(int i=0; i<m_SelectItemList.size(); i++)
 		{
-			InnerSelectStockItem cInnerSelectStockItem = m_SelectItemList.get(i);
-			if(cInnerSelectStockItem.stockID.equals(cDAStock.ID()))
-			{
-				
-				if(0 != Double.compare(cInnerSelectStockItem.dRefCreatePrice, 0.0))
-				{
-					if(cDAStock.price() < cInnerSelectStockItem.dRefCreatePrice)
-					{
-						return true;
-					}
-				}
-				break;
-			}
+			String stockID = m_SelectItemList.get(i).stockID;
+			selectList.add(m_SelectItemList.get(i).stockID);
 		}
-		return false;
+		return selectList;
 	}
+	
 	public int sizeSelect()
 	{
 		return m_SelectItemList.size();
@@ -183,7 +115,7 @@ public class XStockSelectManager {
 
 	public String dumpSelect()
 	{
-		List<String> validSelectList = validSelectListS1(20);
+		List<String> validSelectList = this.selectList();
 		int iAddCount = validSelectList.size();
 		String logStr = "";
 		logStr += String.format("Selected (%d) [ ", iAddCount);
@@ -230,12 +162,10 @@ public class XStockSelectManager {
 			InnerSelectStockItem cInnerSelectStockItem = m_SelectItemList.get(i);
     		String stockID = cInnerSelectStockItem.stockID;
     		String priority =String.format("%.3f", cInnerSelectStockItem.dPriority);
-    		String refCreatePrice =String.format("%.3f", cInnerSelectStockItem.dRefCreatePrice);
     		
     		Element Node_Stock = doc.createElement("Stock");
     		Node_Stock.setAttribute("ID", stockID);
     		Node_Stock.setAttribute("Pri", priority);
-    		Node_Stock.setAttribute("refCreatePrice", refCreatePrice);
     		
     		root.appendChild(Node_Stock);
     	}
@@ -334,12 +264,10 @@ public class XStockSelectManager {
 	        	{
 	        		String ID = ((Element)node_Select).getAttribute("ID");
 	        		String Pri = ((Element)node_Select).getAttribute("Pri");
-	        		String refCreatePrice = ((Element)node_Select).getAttribute("refCreatePrice");
 	        		
 	        		InnerSelectStockItem cInnerSelectStockItem = new InnerSelectStockItem();
 	        		cInnerSelectStockItem.stockID = ID;
 	        		cInnerSelectStockItem.dPriority = Double.parseDouble(Pri);
-	        		cInnerSelectStockItem.dRefCreatePrice = Double.parseDouble(refCreatePrice);
 	        		m_SelectItemList.add(cInnerSelectStockItem);
 	        	}
 	        }
@@ -354,39 +282,92 @@ public class XStockSelectManager {
 			return;
 		}
 	}
+
 	
-	//-----------------------------------------------------------------------------------------
-	// private help
-	
-	private boolean existCommissionOrder(String stockID)
-	{
-		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
-		m_ap.getCommissionOrderList(ctnCommissionOrderList);
-		for(int i=0; i<ctnCommissionOrderList.size(); i++)
+	private static class InnerSelectStockItem {
+
+		public static class InnerSelectStockItemCompare implements Comparator 
 		{
-			if(ctnCommissionOrderList.get(i).stockID.equals(stockID))
-			{
-				return true;
+			public int compare(Object object1, Object object2) {
+				InnerSelectStockItem c1 = (InnerSelectStockItem)object1;
+				InnerSelectStockItem c2 = (InnerSelectStockItem)object2;
+				int iCmp = Double.compare(c1.dPriority, c2.dPriority);
+				if(iCmp > 0) 
+					return -1;
+				else if(iCmp < 0) 
+					return 1;
+				else
+					return 0;
 			}
 		}
-		return false;
-	}
-	
-	private boolean existHoldStock(String stockID)
-	{
-		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		m_ap.getHoldStockList(ctnHoldStockList);
-		for(int i=0; i<ctnHoldStockList.size(); i++)
-		{
-			if(ctnHoldStockList.get(i).stockID.equals(stockID))
-			{
-				return true;
-			}
+		public InnerSelectStockItem(){
+			stockID = "";
+			dPriority = 0.0f;
 		}
-		return false;
+		public String stockID;
+		public double dPriority;
 	}
 	
-	private AccountProxy m_ap;
 	private String m_selectFileName;
 	private List<InnerSelectStockItem> m_SelectItemList;
 }
+
+
+////有效选择列表，S1-先过滤掉无效后剩余最大maxCount个
+//	public List<String> validSelectList(int maxCount)
+//	{
+//		List<String> selectList = new ArrayList<String>();
+//		
+//		// 按优先级排序
+//		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
+//		
+//		int iAddCount = 0;
+//		for(int i=0; i<m_SelectItemList.size(); i++)
+//		{
+//			String stockID = m_SelectItemList.get(i).stockID;
+//			// 排除已经提交和持有的
+//			if(!existCommissionOrder(stockID)
+//					&& !existHoldStock(stockID))
+//			{
+//				selectList.add(m_SelectItemList.get(i).stockID);
+//				iAddCount++;
+//				if(iAddCount >= maxCount)
+//				{
+//					break;
+//				}
+//			}
+//		}
+//		return selectList;
+//	}
+//	// 有效选择列表，S2-先选择maxCount数目，再过滤掉无效的
+//	public List<String> validSelectListS2(int maxCount)
+//	{
+//		List<String> selectList = new ArrayList<String>();
+//		
+//		// 按优先级排序
+//		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
+//		
+//		int iAddCount = 0;
+//		for(int i=0; i<m_SelectItemList.size(); i++)
+//		{
+//			String stockID = m_SelectItemList.get(i).stockID;
+//			selectList.add(stockID);
+//			iAddCount++;
+//			if(iAddCount >= maxCount )
+//			{
+//				break;
+//			}
+//		}
+//		
+//		// 排除已经提交和持有的
+//		Iterator<String> iter = selectList.iterator();
+//		while (iter.hasNext()) {
+//			String stockID = iter.next();
+//			if(existCommissionOrder(stockID)
+//					|| existHoldStock(stockID))
+//			{
+//				iter.remove();
+//         }
+//     }		
+//		return selectList;
+//	}

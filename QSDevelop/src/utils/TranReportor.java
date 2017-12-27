@@ -22,9 +22,9 @@ public class TranReportor {
 		public double dSHComposite; // 当日上证指数
 	}
 	
-	public TranReportor(String name)
+	public TranReportor(String ID)
 	{
-		m_name = name;
+		m_name = ID;
 		m_cDailyReportTreeMap = new TreeMap<String, DailyReport>((o1, o2) -> {
 			String str1 = (String)o1;
 			String str2 = (String)o2;

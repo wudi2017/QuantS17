@@ -6,8 +6,11 @@ import java.util.List;
 import pers.di.account.common.CommissionOrder;
 import pers.di.account.common.HoldStock;
 import pers.di.account.common.TRANACT;
+import pers.di.common.CFileSystem;
+import pers.di.common.CL2Property;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
+import pers.di.common.CSystem;
 import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantStrategy;
@@ -15,29 +18,25 @@ import utils.TranReportor;
 import utils.XStockClearRuleManager;
 import utils.XStockPropertyManager;
 import utils.XStockSelectManager;
+import utils.XStockStrategyUtils;
 
 /*
  * 策略基础
- * 自带：选股功能增强，持股功能增强，清仓规则增强
+ * 自带：选股过滤功能，股票属性功能(股票属性Manual=1时，次股票属性则不受程序动态控制)
+ * 
  */
-public abstract class QS1711SHCBase extends QuantStrategy {
+public abstract class QS1711SPBase extends QuantStrategy {
 	
-	public QS1711SHCBase(int iMaxSelectCount, int iMaxHoldCount)
+	public QS1711SPBase(int iMaxSelectCount, int iMaxHoldCount)
 	{
 		m_iMaxSelectCount = iMaxSelectCount;
 		m_iMaxHoldCount = iMaxHoldCount;
 	}
 	
-	public XStockSelectManager getXStockSelectManager()
-	{
-		return m_XStockSelectManager;
-	}
-	
-	public XStockPropertyManager getXStockPropertyManager()
-	{
-		return m_XStockPropertyManager;
-	}
-	
+	/*
+	 * ***************************************************************************************
+	 * buy & sell signal
+	 */
 	public boolean signalBuy(QuantContext ctx, String stockID)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
@@ -122,19 +121,21 @@ public abstract class QS1711SHCBase extends QuantStrategy {
 	
 	@Override
 	public void onInit(QuantContext ctx) {
-		m_XStockSelectManager = new XStockSelectManager(ctx.ap());
-		m_XStockPropertyManager = new XStockPropertyManager(ctx.ap());
-		m_TranReportor = new TranReportor(this.getClass().getSimpleName());
+		// String derivedClsName = this.getClass().getSimpleName();
+		String accountIDName = ctx.ap().ID();
+		m_XStockSelectManager = new XStockSelectManager(accountIDName);
+		m_XStockPropertyManager = new XStockPropertyManager(accountIDName);
+		m_TranReportor = new TranReportor(accountIDName);
 		this.onStrateInit(ctx);
 	}
 	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
-		// init property
-		m_XStockPropertyManager.loadFormFile();
 		// init select stock
 		m_XStockSelectManager.loadFromFile();
-		super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
+		// init property
+				m_XStockPropertyManager.loadFormFile();
+		super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.selectList());
 		CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		
 		this.onStrateDayStart(ctx);
@@ -144,7 +145,7 @@ public abstract class QS1711SHCBase extends QuantStrategy {
 	public void onMinuteData(QuantContext ctx) {
 		
 		// buy check
-		List<String> validSelectList = m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount);
+		List<String> validSelectList = m_XStockSelectManager.selectList();
 		for(int iStock=0; iStock<validSelectList.size(); iStock++)
 		{
 			String selectStockID = validSelectList.get(iStock);
@@ -166,13 +167,17 @@ public abstract class QS1711SHCBase extends QuantStrategy {
 	@Override
 	public void onDayFinish(QuantContext ctx) {
 		
-		// clearStockIDNotInHolds 
-		m_XStockPropertyManager.clearStockIDNotInHolds();
-
 		// reset Select
 		m_XStockSelectManager.clearSelect();
 		this.onStrateDayFinish(ctx);
+		List<String> commissionIDs = XStockStrategyUtils.getCommissionOrderStockIDList(ctx.ap());
+		List<String> holdIDs = XStockStrategyUtils.getHoldStockIDList(ctx.ap());
+		m_XStockSelectManager.filterOut(commissionIDs);
+		m_XStockSelectManager.filterOut(holdIDs);
 		m_XStockSelectManager.saveToFile();
+		
+		// property reset， save valid
+		m_XStockPropertyManager.saveToFile();
 		
 		// report
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();

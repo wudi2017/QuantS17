@@ -43,19 +43,6 @@ public class QS1711T6 {
 		void onStrateBuyCheck(QuantContext ctx, DAStock cDAStock) {
 			double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 			double fNowPrice = cDAStock.price();
-
-			// 0-满足低于参考价直接建仓
-			if(super.getXStockSelectManager().checkLowerRefCreatePrice(cDAStock))
-			{
-				if(super.tryBuy(ctx, cDAStock.ID()))
-				{
-					// 建立清仓规则
-					super.getXStockClearRuleManager().setRule(cDAStock.ID(), 
-							0, -0.12, 0,
-							0, 0.1, 0,
-							30);
-				}
-			}
 			
 			// 1-跌停不买进
 			double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
