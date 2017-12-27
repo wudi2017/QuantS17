@@ -298,7 +298,7 @@ public class QS1601StdTest {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-03-01 2016-05-10", 
+				"HistoryTest 2016-03-01 2016-04-01", 
 				cAccoutDriver, 
 				new QS1601StdTestStrategy());
 		qSession.run();
