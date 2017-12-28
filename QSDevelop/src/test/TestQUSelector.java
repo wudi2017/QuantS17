@@ -1,4 +1,4 @@
-package teat;
+package test;
 
 import java.util.*;
 
@@ -17,31 +17,31 @@ public class TestQUSelector {
 		
 		QUSelector selector = new QUSelector("test");
 		
-		selector.addSelect("S1", 1);
-		selector.addSelect("S2", 9);
-		selector.addSelect("S3", 2);
-		selector.addSelect("S3.5", 3);
-		selector.addSelect("S4", 7);
-		selector.addSelect("S5", 4);
-		selector.addSelect("S6", 3);
-		selector.addSelect("S7", 11);
-		selector.addSelect("S8", 22);
-		selector.addSelect("S9", 19);
-		selector.addSelect("S10", 5);
+		selector.selectAdd("S1", 1);
+		selector.selectAdd("S2", 9);
+		selector.selectAdd("S3", 2);
+		selector.selectAdd("S3.5", 3);
+		selector.selectAdd("S4", 7);
+		selector.selectAdd("S5", 4);
+		selector.selectAdd("S6", 3);
+		selector.selectAdd("S7", 11);
+		selector.selectAdd("S8", 22);
+		selector.selectAdd("S9", 19);
+		selector.selectAdd("S10", 5);
 		CLog.output("TEST", "1: %s", selector.dumpSelect());
-		CTest.EXPECT_LONG_EQ(selector.sizeSelect(), 11);
+		CTest.EXPECT_LONG_EQ(selector.selectSize(), 11);
 		
-		List<String> filteroutList = new ArrayList<String>();
-		filteroutList.add("S2");
-		filteroutList.add("S3");
-		filteroutList.add("S10");
-		selector.filterOut(filteroutList);
+		List<String> rmList = new ArrayList<String>();
+		rmList.add("S2");
+		rmList.add("S3");
+		rmList.add("S10");
+		selector.selectRemove(rmList);
 		CLog.output("TEST", "2: %s", selector.dumpSelect());
-		CTest.EXPECT_LONG_EQ(selector.sizeSelect(), 8);
+		CTest.EXPECT_LONG_EQ(selector.selectSize(), 8);
 		
-		selector.keepMaxCount(5);
+		selector.selectKeepMaxCount(5);
 		CLog.output("TEST", "2: %s", selector.dumpSelect());
-		CTest.EXPECT_LONG_EQ(selector.sizeSelect(), 5);
+		CTest.EXPECT_LONG_EQ(selector.selectSize(), 5);
 		CTest.EXPECT_STR_EQ(selector.selectList().get(0), "S8");
 		
 	}

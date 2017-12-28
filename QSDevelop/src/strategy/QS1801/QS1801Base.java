@@ -20,14 +20,74 @@ import utils.QS1801.QUSelector;
 
 public abstract class QS1801Base extends QuantStrategy {
 	
-	public QS1801Base(int iMaxSelectCount, int iMaxHoldCount)
+	public QS1801Base(int iMaxHoldCount)
 	{
-		m_iMaxSelectCount = iMaxSelectCount;
 		m_iMaxHoldCount = iMaxHoldCount;
 	}
 	
 	/*
-	 * ***************************************************************************************
+	 * select stock utils
+	 */
+	public void selectAdd(String stockID, double priority)
+	{
+		m_QUSelector.selectAdd(stockID, priority);
+	}
+	public void selectRemove(List<String> stockIDs)
+	{
+		m_QUSelector.selectRemove(stockIDs);
+	}
+	public void selectKeepMaxCount(int maxCount)
+	{
+		m_QUSelector.selectKeepMaxCount(maxCount);
+	}
+	public List<String> selectList()
+	{
+		return m_QUSelector.selectList();
+	}
+	public int selectSize()
+	{
+		return m_QUSelector.selectSize();
+	}
+	public void selectClear()
+	{
+		m_QUSelector.selectClear();
+	}
+	
+	/*
+	 * property stock utils
+	 */
+	public void propertySetString(String stockID, String property, String value)
+	{
+		m_QUProperty.propertySet(stockID, property, value);
+	}
+	public String propertyGetString(String stockID, String property)
+	{
+		return m_QUProperty.propertyGet(stockID, property);
+	}
+	public void propertySetDouble(String stockID, String property, Double value)
+	{
+		m_QUProperty.propertySet(stockID, property, String.format("%.3f", value));
+	}
+	public Double propertyGetDouble(String stockID, String property)
+	{
+		Double value = null;
+		String strVal = m_QUProperty.propertyGet(stockID, property);
+		if(null != strVal)
+		{
+			value = Double.parseDouble(strVal);
+		}
+		return value;
+	}
+	public boolean propertyContains(String stockID)
+	{
+		return m_QUProperty.propertyContains(stockID);
+	}
+	public void propertyClear(String stockID)
+	{
+		m_QUProperty.propertyClear(stockID);
+	}
+	
+	/*
 	 * buy & sell signal
 	 */
 	public boolean signalBuy(QuantContext ctx, String stockID)
@@ -127,7 +187,8 @@ public abstract class QS1801Base extends QuantStrategy {
 		// init select stock
 		m_QUSelector.loadFromFile();
 		// init property
-				m_QUProperty.loadFormFile();
+		m_QUProperty.loadFormFile();
+		
 		super.addCurrentDayInterestMinuteDataIDs(m_QUSelector.selectList());
 		CLog.output("TEST", "%s", m_QUSelector.dumpSelect());
 		
@@ -137,39 +198,47 @@ public abstract class QS1801Base extends QuantStrategy {
 	@Override
 	public void onMinuteData(QuantContext ctx) {
 		
-		// buy check
-		List<String> validSelectList = m_QUSelector.selectList();
-		for(int iStock=0; iStock<validSelectList.size(); iStock++)
-		{
-			String selectStockID = validSelectList.get(iStock);
-			DAStock cDAStock = ctx.pool().get(selectStockID);
-			this.onStrateBuyCheck(ctx, cDAStock);
-		}
+		// callback to user with select&hold
+		// user will raise buy|sell signal
 		
-		// sell check
-		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		ctx.ap().getHoldStockList(ctnHoldStockList);
-		for(int i=0; i<ctnHoldStockList.size(); i++)
+		List<String> selectIDs = m_QUSelector.selectList();
+		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.ap());
+		
+		HashSet<String> hashSet = new HashSet<String>();
+		hashSet.addAll(selectIDs);
+		hashSet.addAll(holdIDs);
+		List<String> uniqueIDs = new ArrayList<String>();
+		uniqueIDs.addAll(hashSet);
+		
+		for(int iStock=0; iStock<uniqueIDs.size(); iStock++)
 		{
-			HoldStock cHoldStock = ctnHoldStockList.get(i);
-			DAStock cDAStock = ctx.pool().get(cHoldStock.stockID);
-			this.onStrateSellCheck(ctx, cDAStock, cHoldStock);
+			String stockID = uniqueIDs.get(iStock);
+			DAStock cDAStock = ctx.pool().get(stockID);
+			this.onStrateBuySellCheck(ctx, cDAStock);
 		}
 	}
 	
 	@Override
 	public void onDayFinish(QuantContext ctx) {
 		
-		// reset Select
-		m_QUSelector.clearSelect();
+		// fetch user select stocks
+		m_QUSelector.selectClear();
 		this.onStrateDayFinish(ctx);
-		List<String> commissionIDs = QUCommon.getCommissionOrderStockIDList(ctx.ap());
-		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.ap());
-		m_QUSelector.filterOut(commissionIDs);
-		m_QUSelector.filterOut(holdIDs);
 		m_QUSelector.saveToFile();
 		
-		// property reset， save valid
+		// property reset， remove it which not in select|hold
+		List<String> selectIDs = m_QUSelector.selectList();
+		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.ap());
+		List<String> propStockIDs = m_QUProperty.propertyList();
+		for(int i=0; i<propStockIDs.size(); i++)
+		{
+			String propStockID = propStockIDs.get(i);
+			if(!selectIDs.contains(propStockID)
+					&& !holdIDs.contains(propStockID))
+			{
+				m_QUProperty.propertyClear(propStockID);
+			}
+		}
 		m_QUProperty.saveToFile();
 		
 		// report
@@ -193,17 +262,12 @@ public abstract class QS1801Base extends QuantStrategy {
 	 */
 	abstract void onStrateDayStart(QuantContext ctx);
 	/*
-	 * 策略买入检查
-	 * 交易期间每分钟对每个选入股票(getXStockSelectManager中的)进行回调
-	 * 用户调用tryBuy进行买入
+	 * 策略买卖检查
+	 * 交易期间每分钟对每个选入|持有进行回调
+	 * 用户调用tryBuy trySell 进行买卖操作
 	 */
-	abstract void onStrateBuyCheck(QuantContext ctx, DAStock cDAStock);
-	/*
-	 * 策略卖出检查
-	 * 交易期间每分钟对每个持有股票进行回调
-	 * 用户调用trySell进行卖出
-	 */
-	abstract void onStrateSellCheck(QuantContext ctx, DAStock cDAStock, HoldStock cHoldStock);
+	abstract void onStrateBuySellCheck(QuantContext ctx, DAStock cDAStock);
+
 	/*
 	 * 策略选股
 	 * 每天交易结束更新数据后进行回调
@@ -211,7 +275,6 @@ public abstract class QS1801Base extends QuantStrategy {
 	 */
 	abstract void onStrateDayFinish(QuantContext ctx);
 
-	private int m_iMaxSelectCount;
 	private int m_iMaxHoldCount;
 	private QUSelector m_QUSelector;
 	private QUProperty m_QUProperty;

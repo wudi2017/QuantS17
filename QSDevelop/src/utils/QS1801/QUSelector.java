@@ -35,6 +35,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+/*
+ * Quant Utils Selector for Stocks
+ */
 public class QUSelector {
 	public QUSelector(String ID)
 	{
@@ -44,7 +47,7 @@ public class QUSelector {
 		m_SelectItemList = new ArrayList<InnerSelectStockItem>();
 	}
 	
-	public void addSelect(String stockID, double priority)
+	public void selectAdd(String stockID, double priority)
 	{
 		// 不重复添加
 		for(int i=0; i<m_SelectItemList.size(); i++)
@@ -60,7 +63,7 @@ public class QUSelector {
 		m_SelectItemList.add(cInnerSelectStockItem);
 	}
 	
-	public void filterOut(List<String> stockIDs)
+	public void selectRemove(List<String> stockIDs)
 	{	
 		Iterator<InnerSelectStockItem> iter = m_SelectItemList.iterator();
         while (iter.hasNext()) {
@@ -70,7 +73,7 @@ public class QUSelector {
             }
         }
 	}
-	public void keepMaxCount(int maxCount)
+	public void selectKeepMaxCount(int maxCount)
 	{
 		// 按优先级排序
 		Collections.sort(m_SelectItemList, new InnerSelectStockItem.InnerSelectStockItemCompare());
@@ -104,11 +107,11 @@ public class QUSelector {
 		return selectList;
 	}
 	
-	public int sizeSelect()
+	public int selectSize()
 	{
 		return m_SelectItemList.size();
 	}
-	public void clearSelect()
+	public void selectClear()
 	{
 		m_SelectItemList.clear();
 	}

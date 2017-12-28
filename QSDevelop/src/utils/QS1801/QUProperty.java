@@ -10,6 +10,9 @@ import pers.di.common.CSystem;
 import pers.di.common.CL2Property;
 import pers.di.quantplatform.AccountProxy;
 
+/*
+ * Quant Utils Property for Stocks
+ */
 public class QUProperty {
 	public QUProperty(String ID)
 	{
@@ -19,7 +22,7 @@ public class QUProperty {
 		m_CL2Property = new CL2Property(propertyFileName);
 	}
 	
-	public void set(String stockID, String property, String value) 
+	public void propertySet(String stockID, String property, String value) 
 	{
 		if(isManualStockProperty(stockID))
 		{
@@ -27,15 +30,15 @@ public class QUProperty {
 		}
 		m_CL2Property.setProperty(stockID, property, value);
 	}
-	public String get(String stockID, String property)
+	public String propertyGet(String stockID, String property)
 	{
 		return m_CL2Property.getProperty(stockID, property);
 	}
-	public boolean contains(String stockID)
+	public boolean propertyContains(String stockID)
 	{
 		return m_CL2Property.contains(stockID);
 	}
-	public void clear(String stockID)
+	public void propertyClear(String stockID)
 	{
 		if(isManualStockProperty(stockID))
 		{
@@ -43,6 +46,11 @@ public class QUProperty {
 		}
 		m_CL2Property.clear(stockID);
 	}
+	public List<String> propertyList()
+	{
+		return m_CL2Property.list();
+	}
+	
 	public void loadFormFile()
 	{
 		m_CL2Property.sync2mem();
