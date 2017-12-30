@@ -13,11 +13,14 @@ import pers.di.quantplatform.QuantSession;
 public class QS1801T1 extends QS1801Base {
 
 	public QS1801T1() {
-		super(3);
 	}
 
 	@Override
 	void onStrateInit(QuantContext ctx) {
+		super.setGlobalMaxHoldStockCount(1);
+		super.setGlobalStockMaxPosstion(0.5);
+		super.setGlobalStockOneCommitDefaultPossition(0.5);
+		super.setGlobalStockOneCommitInterval(10);
 	}
 
 	@Override

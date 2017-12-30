@@ -10,7 +10,9 @@ import pers.di.common.CL2Property;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.common.CSystem;
+import pers.di.common.CUtilsDateTime;
 import pers.di.dataengine.DAStock;
+import pers.di.quantplatform.AccountProxy;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantStrategy;
 import utils.QS1711.TranReportor;
@@ -20,13 +22,56 @@ import utils.QS1801.QUSelector;
 
 public abstract class QS1801Base extends QuantStrategy {
 	
-	public QS1801Base(int iMaxHoldCount)
+	public QS1801Base()
 	{
-		m_iMaxHoldCount = iMaxHoldCount;
 	}
 	
 	/*
+	 * ************************************************************************************
+	 * property global
+	 * ************************************************************************************
+	 */
+	// 最大持股数量
+	public void setGlobalMaxHoldStockCount(long count) 
+	{
+		m_QUProperty.propertySetLong("Global", "MaxHoldStockCount", count);
+	}
+	public Long getGlobalMaxHoldStockCount()
+	{
+		return m_QUProperty.propertyGetLong("Global", "MaxHoldStockCount");
+	}
+	// 单只股票最大仓位，用于首次建仓时生成个股最大满仓持股数量属性，此属性用户控制个股下单最大上限
+	public void setGlobalStockMaxPosstion(double dMaxPossition) 
+	{
+		m_QUProperty.propertySetDouble("Global", "StockMaxPosstion", dMaxPossition);
+	}
+	public Double getGlobalStockMaxPosstion()
+	{
+		return m_QUProperty.propertyGetDouble("Global", "StockMaxPosstion");
+	}
+	// 单只股票操作默相对仓位（相对最大满仓持股数量属性），用于首次建仓时生成个股单笔操作股票数量属性
+	public void setGlobalStockOneCommitDefaultPossition(double dDefaultCommit)
+	{
+		m_QUProperty.propertySetDouble("Global", "StockOneCommitDefaultPossition", dDefaultCommit);
+	}
+	public Double getGlobalStockOneCommitDefaultPossition()
+	{
+		return m_QUProperty.propertyGetDouble("Global", "StockOneCommitDefaultPossition");
+	}
+	// 股票提交最小时间间隔，用于限制提交频率
+	public void setGlobalStockOneCommitInterval(long min)
+	{
+		m_QUProperty.propertySetLong("Global", "StockOneCommitInterval", min);
+	}
+	public Long getGlobalStockOneCommitInterval()
+	{
+		return m_QUProperty.propertyGetLong("Global", "StockOneCommitInterval");
+	}
+	
+	/*
+	 * ************************************************************************************
 	 * select stock utils
+	 * ************************************************************************************
 	 */
 	public void selectAdd(String stockID, double priority)
 	{
@@ -54,132 +99,204 @@ public abstract class QS1801Base extends QuantStrategy {
 	}
 	
 	/*
-	 * property stock utils
+	 * ************************************************************************************
+	 * property stock
+	 * ************************************************************************************
 	 */
-	public void propertySetString(String stockID, String property, String value)
+	public void setStockPropertyString(String stockID, String property, String value)
 	{
-		m_QUProperty.propertySet(stockID, property, value);
+		m_QUProperty.propertySetString(stockID, "USER_"+property, value);
 	}
-	public String propertyGetString(String stockID, String property)
+	public String getStockPropertyString(String stockID, String property)
 	{
-		return m_QUProperty.propertyGet(stockID, property);
+		return m_QUProperty.propertyGetString(stockID, "USER_"+property);
 	}
-	public void propertySetDouble(String stockID, String property, Double value)
+	public void setStockPropertyDouble(String stockID, String property, Double value)
 	{
-		m_QUProperty.propertySet(stockID, property, String.format("%.3f", value));
+		m_QUProperty.propertySetDouble(stockID, "USER_"+property, value);
 	}
-	public Double propertyGetDouble(String stockID, String property)
+	public Double getStockPropertyDouble(String stockID, String property)
 	{
-		Double value = null;
-		String strVal = m_QUProperty.propertyGet(stockID, property);
-		if(null != strVal)
-		{
-			value = Double.parseDouble(strVal);
-		}
-		return value;
+		return m_QUProperty.propertyGetDouble(stockID, "USER_"+property);
 	}
-	public boolean propertyContains(String stockID)
+	public boolean stockPropertContains(String stockID)
 	{
 		return m_QUProperty.propertyContains(stockID);
 	}
-	public void propertyClear(String stockID)
+	public void stockPropertClear(String stockID)
 	{
 		m_QUProperty.propertyClear(stockID);
+	}
+	
+	
+	/*
+	 * ************************************************************************************
+	 * buy sell signal， amount
+	 * ************************************************************************************
+	 */
+	private void setStockPropertyFullHoldAmount(String stockID, long value)
+	{
+		m_QUProperty.propertySetLong(stockID, "FullHoldAmount", value);
+	}
+	private Long getStockPropertyFullHoldAmount(String stockID)
+	{
+		return m_QUProperty.propertyGetLong(stockID, "FullHoldAmount");
+	}
+	private void setStockPropertyOneCommitAmount(String stockID, long value)
+	{
+		m_QUProperty.propertySetLong(stockID, "OneCommitAmount", value);
+	}
+	private Long getStockPropertyOneCommitAmount(String stockID)
+	{
+		return m_QUProperty.propertyGetLong(stockID, "OneCommitAmount");
 	}
 	
 	/*
 	 * buy & sell signal
 	 */
-	public boolean signalBuy(QuantContext ctx, String stockID)
+	public boolean buySignalEmit(QuantContext ctx, String stockID)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
-		// multi commit check
-		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
-		ctx.ap().getCommissionOrderList(ctnCommissionOrderList);
-		for(int i=0; i<ctnCommissionOrderList.size(); i++)
+		// interval commit check
+		Long lStockOneCommitInterval = this.getGlobalStockOneCommitInterval();
+		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.ap(), stockID, TRANACT.BUY);
+		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
-			CommissionOrder cCommissionOrder = ctnCommissionOrderList.get(i);
-			if(cCommissionOrder.stockID.equals(stockID) 
-					&& TRANACT.BUY == cCommissionOrder.tranAct
-					&& Math.abs((fNowPrice-cCommissionOrder.price)/cCommissionOrder.price) < 0.03)
+			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
+			if(seconds < lStockOneCommitInterval*60)
 			{
-				// already commit similar today
+				CLog.output("TEST", "buySignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
 				return false;
 			}
 		}
 
-		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		ctx.ap().getHoldStockList(ctnHoldStockList);
-		if(ctnHoldStockList.size() < m_iMaxHoldCount)
+		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
+		ctx.ap().getTotalAssets(ctnTotalAssets);
+		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
+		ctx.ap().getMoney(ctnMoney);
+		
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		
+		if(null == cHoldStock) // first create
 		{
-			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-			ctx.ap().getTotalAssets(ctnTotalAssets);
-			CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-			ctx.ap().getMoney(ctnMoney);
-			double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/m_iMaxHoldCount)?ctnTotalAssets.get()/m_iMaxHoldCount:ctnMoney.get();
-			int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
-			if(iCreateAmount > 0)
+			// max hold count check
+			Long lMaxHoldStockCount = this.getGlobalMaxHoldStockCount();
+			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
+			ctx.ap().getHoldStockList(ctnHoldStockList);
+			if(ctnHoldStockList.size() > lMaxHoldStockCount)
 			{
-				ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
-				return true;
+				CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
+				return false;
 			}
+			
+			// define stock FullHoldAmount OneCommitAmount property
+			Long lFullHoldAmount = this.getStockPropertyFullHoldAmount(stockID);
+			if(null == lFullHoldAmount)
+			{
+				Double dGlobalStockMaxPosstion = this.getGlobalStockMaxPosstion();
+				double curFullPositionMoney = ctnTotalAssets.get()*dGlobalStockMaxPosstion;
+				long curFullPositionAmmount = (long)(curFullPositionMoney/fNowPrice);
+				this.setStockPropertyFullHoldAmount(stockID, curFullPositionAmmount);
+			}
+			Long lOneCommitAmount = this.getStockPropertyOneCommitAmount(stockID);
+			if(null == lOneCommitAmount)
+			{
+				Double dGlobalStockOneCommitDefaultPossition = this.getGlobalStockOneCommitDefaultPossition();
+				Long curFullPositionAmmount = this.getStockPropertyFullHoldAmount(stockID);
+				long curStockOneCommitDefaultPossitionAmmount = (long)(curFullPositionAmmount*dGlobalStockOneCommitDefaultPossition);
+				this.setStockPropertyOneCommitAmount(stockID, curStockOneCommitDefaultPossitionAmmount);
+			}	
 		}
 		
-		return false;
+		Long lAlreadyHoldAmount = null!=cHoldStock?cHoldStock.totalAmount:0L;
+		Long lFullHoldAmount = this.getStockPropertyFullHoldAmount(stockID);
+		Long lOneCommitAmount = this.getStockPropertyOneCommitAmount(stockID);
+		if(lAlreadyHoldAmount >= lFullHoldAmount) // FullHoldAmount AlreadyHoldAmount check
+		{
+			CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d", 
+					stockID, lAlreadyHoldAmount, lFullHoldAmount);
+			return false;
+		}
+		Long lCommitAmount = (lFullHoldAmount-lAlreadyHoldAmount)>lOneCommitAmount?lOneCommitAmount:lFullHoldAmount-lAlreadyHoldAmount;
+		lCommitAmount = lCommitAmount/100*100;
+		if(lCommitAmount < 100) // CommitAmount check
+		{
+			CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
+			return false;
+		}
+		double needCommitMoney = lCommitAmount*fNowPrice;
+		if(needCommitMoney > ctnMoney.get()) // CommitMoney check
+		{
+			CLog.output("TEST", "buySignalEmit %s ignore! needCommitMoney=%.3f ctnMoney=%.3f", stockID, needCommitMoney,ctnMoney.get());
+			return false;
+		}
+		
+		// post request
+		ctx.ap().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
+		return true;
 	}
 
-	public boolean signalSell(QuantContext ctx, String stockID)
+	public boolean sellSignalEmit(QuantContext ctx, String stockID)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
-		// multi commit check
-		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
-		ctx.ap().getCommissionOrderList(ctnCommissionOrderList);
-		for(int i=0; i<ctnCommissionOrderList.size(); i++)
+		// interval commit check
+		Long lStockOneCommitInterval = this.getGlobalStockOneCommitInterval();
+		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.ap(), stockID, TRANACT.SELL);
+		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
-			CommissionOrder cCommissionOrder = ctnCommissionOrderList.get(i);
-			if(cCommissionOrder.stockID.equals(stockID) 
-					&& TRANACT.SELL == cCommissionOrder.tranAct
-					&& Math.abs((fNowPrice-cCommissionOrder.price)/cCommissionOrder.price) < 0.03)
+			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
+			if(seconds < lStockOneCommitInterval*60)
 			{
-				// already commit similar today
+				CLog.output("TEST", "sellSignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
 				return false;
 			}
 		}
 
-		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		ctx.ap().getHoldStockList(ctnHoldStockList);
-		for(int i=0; i<ctnHoldStockList.size(); i++)
+		// hold check
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		if(null == cHoldStock || cHoldStock.availableAmount < 0)
 		{
-			HoldStock cHoldStock = ctnHoldStockList.get(i);
-			if(cHoldStock.stockID.equals(stockID))
-			{
-				long trySellAmount = (long)(cHoldStock.totalAmount);
-				long realSellAmuont = trySellAmount>cHoldStock.availableAmount?cHoldStock.availableAmount:trySellAmount;
-				if(realSellAmuont <= 0)
-				{
-					return false;
-				}
-				
-				ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
-				return true;
-			}
+			CLog.output("TEST", "sellSignalEmit %s ignore! not have availableAmount", stockID);
+			return false;
 		}
 		
-		return false;
+		Long lAvailableAmount = null!=cHoldStock?cHoldStock.availableAmount:0L;
+		Long lFullHoldAmount = this.getStockPropertyFullHoldAmount(stockID);
+		Long lOneCommitAmount = this.getStockPropertyOneCommitAmount(stockID);
+		
+		Long lCommitAmount = Math.min(lAvailableAmount, lOneCommitAmount);
+		if(lCommitAmount <= 0) // CommitAmount check
+		{
+			return false;
+		}
+		
+		// post request
+		ctx.ap().pushSellOrder(cHoldStock.stockID, lCommitAmount.intValue(), fNowPrice);
+		return true;
 	}
 	
 	@Override
 	public void onInit(QuantContext ctx) {
+		
 		// String derivedClsName = this.getClass().getSimpleName();
 		String accountIDName = ctx.ap().ID();
+		
 		m_QUSelector = new QUSelector(accountIDName);
+		m_QUSelector.loadFromFile();
+		
 		m_QUProperty = new QUProperty(accountIDName);
+		m_QUProperty.loadFormFile();
+		
 		m_TranReportor = new TranReportor(accountIDName);
+		
 		this.onStrateInit(ctx);
+		
+		m_QUSelector.saveToFile();
+		m_QUProperty.saveToFile();
 	}
 	@Override
 	public void onDayStart(QuantContext ctx) {
@@ -188,7 +305,7 @@ public abstract class QS1801Base extends QuantStrategy {
 		m_QUSelector.loadFromFile();
 		// init property
 		m_QUProperty.loadFormFile();
-		
+
 		super.addCurrentDayInterestMinuteDataIDs(m_QUSelector.selectList());
 		CLog.output("TEST", "%s", m_QUSelector.dumpSelect());
 		
@@ -275,7 +392,7 @@ public abstract class QS1801Base extends QuantStrategy {
 	 */
 	abstract void onStrateDayFinish(QuantContext ctx);
 
-	private int m_iMaxHoldCount;
+	private Long m_lMaxHoldCount;
 	private QUSelector m_QUSelector;
 	private QUProperty m_QUProperty;
 	private TranReportor m_TranReportor;

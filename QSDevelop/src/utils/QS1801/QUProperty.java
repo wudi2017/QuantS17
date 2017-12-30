@@ -22,29 +22,80 @@ public class QUProperty {
 		m_CL2Property = new CL2Property(propertyFileName);
 	}
 	
-	public void propertySet(String stockID, String property, String value) 
+	// stock boolean
+	public void propertySetBoolean(String main, String property, boolean value)
 	{
-		if(isManualStockProperty(stockID))
+		propertySetString(main, property, String.format("%b", value));
+	}
+	public Boolean propertyGetBoolean(String main, String property)
+	{
+		Boolean value = null;
+		String sVal = propertyGetString(main, property);
+		if(null != sVal)
+		{
+			value = Boolean.parseBoolean(sVal);
+		}
+		return value;
+	}
+	
+	// stock long
+	public void propertySetLong(String main, String property, long value)
+	{
+		propertySetString(main, property, String.format("%d", value));
+	}
+	public Long propertyGetLong(String main, String property)
+	{
+		Long value = null;
+		String sVal = propertyGetString(main, property);
+		if(null != sVal)
+		{
+			value = Long.parseLong(sVal);
+		}
+		return value;
+	}
+	
+	// stock double
+	public void propertySetDouble(String main, String property, double value)
+	{
+		propertySetString(main, property, String.format("%.3f", value));
+	}
+	public Double propertyGetDouble(String main, String property)
+	{
+		Double value = null;
+		String sVal = propertyGetString(main, property);
+		if(null != sVal)
+		{
+			value = Double.parseDouble(sVal);
+		}
+		return value;
+	}
+	
+	//*********************************************************************************************
+	// base
+	// stock String
+	public void propertySetString(String main, String property, String value) 
+	{
+		if(isManualStockProperty(main))
 		{
 			return;
 		}
-		m_CL2Property.setProperty(stockID, property, value);
+		m_CL2Property.setProperty(main, property, value);
 	}
-	public String propertyGet(String stockID, String property)
+	public String propertyGetString(String main, String property)
 	{
-		return m_CL2Property.getProperty(stockID, property);
+		return m_CL2Property.getProperty(main, property);
 	}
-	public boolean propertyContains(String stockID)
+	public boolean propertyContains(String main)
 	{
-		return m_CL2Property.contains(stockID);
+		return m_CL2Property.contains(main);
 	}
-	public void propertyClear(String stockID)
+	public void propertyClear(String main)
 	{
-		if(isManualStockProperty(stockID))
+		if(isManualStockProperty(main))
 		{
 			return;
 		}
-		m_CL2Property.clear(stockID);
+		m_CL2Property.clear(main);
 	}
 	public List<String> propertyList()
 	{
@@ -64,11 +115,11 @@ public class QUProperty {
 	 * ***********************************************************************************************************
 	 */
 	
-	private boolean isManualStockProperty(String stockID)
+	private boolean isManualStockProperty(String main)
 	{
-		if(m_CL2Property.contains(stockID, "Manual"))
+		if(m_CL2Property.contains(main, "Manual"))
 		{
-			String test = m_CL2Property.getProperty(stockID, "Manual");
+			String test = m_CL2Property.getProperty(main, "Manual");
 			if(null != test && test.equals("1"))
 			{
 				return true;

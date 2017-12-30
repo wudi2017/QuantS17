@@ -6,15 +6,34 @@ import pers.di.account.common.*;
 import pers.di.quantplatform.*;
 
 public class QUCommon {
-	public static CommissionOrder getCommissionOrder(AccountProxy ap, String stockID)
+	public static CommissionOrder getLatestCommissionOrder(AccountProxy ap, String stockID)
 	{
 		CommissionOrder cCommissionOrder = null;
 		
 		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
 		ap.getCommissionOrderList(ctnCommissionOrderList);
-		for(int i=0; i<ctnCommissionOrderList.size(); i++)
+		for(int i=ctnCommissionOrderList.size()-1; i>=0; i--)
 		{
 			if(ctnCommissionOrderList.get(i).stockID.equals(stockID))
+			{
+				cCommissionOrder = ctnCommissionOrderList.get(i);
+				break;
+			}
+		}
+		
+		return cCommissionOrder;
+	}
+	
+	public static CommissionOrder getLatestCommissionOrder(AccountProxy ap, String stockID, TRANACT tranAct)
+	{
+		CommissionOrder cCommissionOrder = null;
+		
+		List<CommissionOrder> ctnCommissionOrderList = new ArrayList<CommissionOrder>();
+		ap.getCommissionOrderList(ctnCommissionOrderList);
+		for(int i=ctnCommissionOrderList.size()-1; i>=0; i--)
+		{
+			if(ctnCommissionOrderList.get(i).stockID.equals(stockID)
+					&& ctnCommissionOrderList.get(i).tranAct.equals(tranAct))
 			{
 				cCommissionOrder = ctnCommissionOrderList.get(i);
 				break;
