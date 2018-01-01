@@ -19,9 +19,9 @@ public class QS1801T1 extends QS1801Base {
 	@Override
 	void onStrateInit(QuantContext ctx) {
 		super.setGlobalMaxHoldStockCount(2);
-		super.setGlobalStockMaxPosstion(0.3);
-		super.setGlobalStockOneCommitDefaultPossition(0.5);
-		super.setGlobalStockOneCommitInterval(10);
+		super.setGlobalStockMaxHoldPosstion(0.3);
+		super.setGlobalStockOneCommitPossition(0.5);
+		super.setGlobalStockMinCommitInterval(10);
 		super.setGlobalStockMaxHoldDays(20);
 		super.setGlobalStockTargetProfitRatio(0.1);
 		super.setGlobalStockStopLossRatio(0.12);
@@ -85,7 +85,7 @@ public class QS1801T1 extends QS1801Base {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-01-01 2017-01-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2017-01-01 2017-02-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QS1801T1());
 		qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
