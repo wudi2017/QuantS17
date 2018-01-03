@@ -170,13 +170,21 @@ public abstract class QS1801Base extends QuantStrategy {
 	{
 		return m_QUProperty.propertyGetString(stockID, "USER_"+property);
 	}
-	public void setStockPropertyDouble(String stockID, String property, Double value)
+	public void setStockPropertyDouble(String stockID, String property, double value)
 	{
 		m_QUProperty.propertySetDouble(stockID, "USER_"+property, value);
 	}
 	public Double getStockPropertyDouble(String stockID, String property)
 	{
 		return m_QUProperty.propertyGetDouble(stockID, "USER_"+property);
+	}
+	public void setStockPropertyLong(String stockID, String property, long value)
+	{
+		m_QUProperty.propertySetLong(stockID, "USER_"+property, value);
+	}
+	public Long getStockPropertyLong(String stockID, String property)
+	{
+		return m_QUProperty.propertyGetLong(stockID, "USER_"+property);
 	}
 	public boolean stockPropertContains(String stockID)
 	{
@@ -422,7 +430,7 @@ public abstract class QS1801Base extends QuantStrategy {
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
 			if(seconds < lStockOneCommitInterval*60)
 			{
-				CLog.output("TEST", "sellSignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
+				//CLog.output("TEST", "sellSignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
 				return false;
 			}
 		}
@@ -431,7 +439,7 @@ public abstract class QS1801Base extends QuantStrategy {
 		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
 		if(null == cHoldStock || cHoldStock.availableAmount < 0)
 		{
-			CLog.output("TEST", "sellSignalEmit %s ignore! not have availableAmount", stockID);
+			//CLog.output("TEST", "sellSignalEmit %s ignore! not have availableAmount", stockID);
 			return false;
 		}
 		
@@ -462,7 +470,7 @@ public abstract class QS1801Base extends QuantStrategy {
 		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
 		if(null == cHoldStock || cHoldStock.availableAmount <= 0)
 		{
-			CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
+			//CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
 			return;
 		}
 		
