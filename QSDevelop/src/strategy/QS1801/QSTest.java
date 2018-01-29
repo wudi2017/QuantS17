@@ -1,5 +1,7 @@
 package strategy.QS1801;
 
+import java.util.List;
+
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
 import pers.di.common.CLog;
@@ -8,6 +10,9 @@ import pers.di.dataengine.DAStock;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
+import utils.QS1711.ZCZXChecker;
+import utils.QS1711.base.EKRefHistoryPos;
+import utils.QS1711.base.EKRefHistoryPos.EKRefHistoryPosParam;
 
 public class QSTest extends QS1801Base {
 	public QSTest() {
@@ -29,7 +34,7 @@ public class QSTest extends QS1801Base {
 	}
 
 	@Override
-	void onStrateBuySellCheck(QuantContext ctx, DAStock cDAStock) {
+	void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
 //		String stockID = cDAStock.ID();
 //		double curPrice = cDAStock.price();
 //		double lastClose = super.getStockPropertyDouble(cDAStock.ID(), "lastClose");
@@ -53,18 +58,46 @@ public class QSTest extends QS1801Base {
 		{
 			DAStock cDAStock = ctx.pool().get(iStock);
 			if(
-				cDAStock.ID().compareTo("000060") >= 0 && cDAStock.ID().compareTo("000060") <= 0  
-				&& cDAStock.dayKLines().size() >= 60
+				//cDAStock.ID().compareTo("000060") >= 0 && cDAStock.ID().compareTo("000060") <= 0  &&
+				cDAStock.dayKLines().size() >= 60
 				&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 				&& cDAStock.circulatedMarketValue() <= 1000.0) {
 				
 				String stockID = cDAStock.ID();
 				
 				super.selectAdd(stockID, 0);
-				super.setStockPropertyDouble(cDAStock.ID(), "lastClose", cDAStock.price());
-				super.setStockPropertyString(cDAStock.ID(), "date", ctx.date());
 			}
 		}
+		
+		// 过滤：早晨之星
+		List<String> listSelect = super.selectList();
+		super.selectClear();
+		for(int iStock=0; iStock<listSelect.size(); iStock++)
+		{
+			String stockID = listSelect.get(iStock);
+			DAStock cDAStock = ctx.pool().get(stockID);
+			// 5天内存在早晨之星
+			int iBegin = cDAStock.dayKLines().size()-1-5;
+			int iEnd = cDAStock.dayKLines().size()-1;
+			for(int i=iEnd;i>=iBegin;i--)
+			{
+				if(ZCZXChecker.check(cDAStock.dayKLines(),i))
+				{
+					boolean bcheckVolume = ZCZXChecker.check_volume(cDAStock.dayKLines(),i);
+					if(bcheckVolume)
+					{
+						EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+						super.selectAdd(stockID, -cEKRefHistoryPosParam.refHigh);
+						super.setPrivateStockPropertyLong(stockID, "ZCZX_EndIndex", i);
+					}
+				}
+			}
+		}
+		
+		// 保留10
+		super.selectKeepMaxCount(10);
+		
+		super.selectDump();
 	}
 	
 	/*
@@ -84,7 +117,7 @@ public class QSTest extends QS1801Base {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2016-03-01 2016-04-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1801T1());
+				new QSTest());
 		qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		

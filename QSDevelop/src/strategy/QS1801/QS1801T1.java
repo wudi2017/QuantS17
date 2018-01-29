@@ -26,13 +26,13 @@ public class QS1801T1 extends QS1801Base {
 
 	@Override
 	void onStrateInit(QuantContext ctx) {
-		super.setGlobalMaxHoldStockCount(5);
+		super.setGlobalMaxHoldStockCount(5); 
 		super.setGlobalStockMaxHoldPosstion(0.2);
-		super.setGlobalStockOneCommitPossition(1);
+		super.setGlobalStockOneCommitPossition(1); 
 		super.setGlobalStockMinCommitInterval(30);
 		super.setGlobalStockMaxHoldDays(20);
 		super.setGlobalStockTargetProfitRatio(0.1);
-		super.setGlobalStockStopLossRatio(0.12);
+		super.setGlobalStockStopLossRatio(-0.12);
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class QS1801T1 extends QS1801Base {
 	}
 
 	@Override
-	void onStrateBuySellCheck(QuantContext ctx, DAStock cDAStock) {
+	void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
 		String stockID = cDAStock.ID();
 		double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 		double fNowPrice = cDAStock.price();
@@ -59,10 +59,8 @@ public class QS1801T1 extends QS1801Base {
 			boolean bZhangFuDa = false;
 			if(!bDieTing)
 			{
-				int iIndex = super.getStockPropertyLong(stockID, "ZCZX_EndIndex").intValue();
-				KLine cKLineZCZXEnd = cDAStock.dayKLines().get(iIndex);
-				double fStdPaZCZX = (cKLineZCZXEnd.entityHigh() + cKLineZCZXEnd.entityLow())/2;
-				double fZhang = (fNowPrice-fStdPaZCZX)/fStdPaZCZX;
+				double dStdPaZCZX = super.getPrivateStockPropertyDouble(stockID, "dStdPaZCZX");
+				double fZhang = (fNowPrice-dStdPaZCZX)/dStdPaZCZX;
 				if(fZhang > 0.08)
 				{
 					bZhangFuDa = true;
@@ -87,7 +85,7 @@ public class QS1801T1 extends QS1801Base {
 		{
 			DAStock cDAStock = ctx.pool().get(iStock);
 			if(
-				//cDAStock.ID().compareTo("000060") >= 0 && cDAStock.ID().compareTo("000060") <= 0  &&
+				//cDAStock.ID().compareTo("600606") >= 0 && cDAStock.ID().compareTo("600606") <= 0  &&
 				cDAStock.dayKLines().size() >= 60
 				&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 				&& cDAStock.circulatedMarketValue() <= 1000.0) {
@@ -117,7 +115,10 @@ public class QS1801T1 extends QS1801Base {
 					{
 						EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(500, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
 						super.selectAdd(stockID, -cEKRefHistoryPosParam.refHigh);
-						super.setStockPropertyLong(stockID, "ZCZX_EndIndex", i);
+						
+						KLine cKLineCur = cDAStock.dayKLines().get(i);
+						double dStdPaZCZX = (cKLineCur.entityHigh() + cKLineCur.entityLow())/2;
+						super.setPrivateStockPropertyDouble(stockID, "dStdPaZCZX", dStdPaZCZX);
 					}
 				}
 			}
@@ -142,10 +143,10 @@ public class QS1801T1 extends QS1801Base {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2017-03-01 2017-04-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2018-01-28", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QS1801T1());
-		qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
+		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

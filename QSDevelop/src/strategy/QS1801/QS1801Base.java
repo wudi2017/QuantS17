@@ -162,107 +162,107 @@ public abstract class QS1801Base extends QuantStrategy {
 	 * ************************************************************************************
 	 */
 	// 用户自定义部分
-	public void setStockPropertyString(String stockID, String property, String value)
+	public void setPrivateStockPropertyString(String stockID, String property, String value)
 	{
 		m_QUProperty.propertySetString(stockID, "USER_"+property, value);
 	}
-	public String getStockPropertyString(String stockID, String property)
+	public String getPrivateStockPropertyString(String stockID, String property)
 	{
 		return m_QUProperty.propertyGetString(stockID, "USER_"+property);
 	}
-	public void setStockPropertyDouble(String stockID, String property, double value)
+	public void setPrivateStockPropertyDouble(String stockID, String property, double value)
 	{
 		m_QUProperty.propertySetDouble(stockID, "USER_"+property, value);
 	}
-	public Double getStockPropertyDouble(String stockID, String property)
+	public Double getPrivateStockPropertyDouble(String stockID, String property)
 	{
 		return m_QUProperty.propertyGetDouble(stockID, "USER_"+property);
 	}
-	public void setStockPropertyLong(String stockID, String property, long value)
+	public void setPrivateStockPropertyLong(String stockID, String property, long value)
 	{
 		m_QUProperty.propertySetLong(stockID, "USER_"+property, value);
 	}
-	public Long getStockPropertyLong(String stockID, String property)
+	public Long getPrivateStockPropertyLong(String stockID, String property)
 	{
 		return m_QUProperty.propertyGetLong(stockID, "USER_"+property);
 	}
-	public boolean stockPropertContains(String stockID)
+	public boolean stockPrivatePropertContains(String stockID)
 	{
 		return m_QUProperty.propertyContains(stockID);
 	}
-	public void stockPropertClear(String stockID)
+	public void stockPrivatePropertClear(String stockID)
 	{
 		m_QUProperty.propertyClear(stockID);
 	}
 	// 股票全仓位时候的持股数量
-	public void setStockPropertyMaxHoldAmount(String stockID, long value)
+	public void setPrivateStockPropertyMaxHoldAmount(String stockID, long value)
 	{
 		m_QUProperty.propertySetLong(stockID, "MaxHoldAmount", value);
 	}
-	public Long getStockPropertyMaxHoldAmount(String stockID)
+	public Long getPrivateStockPropertyMaxHoldAmount(String stockID)
 	{
 		return m_QUProperty.propertyGetLong(stockID, "MaxHoldAmount");
 	}
 	// 股票一次提交的数量
-	public void setStockPropertyOneCommitAmount(String stockID, long value)
+	public void setPrivateStockPropertyOneCommitAmount(String stockID, long value)
 	{
 		m_QUProperty.propertySetLong(stockID, "OneCommitAmount", value);
 	}
-	public Long getStockPropertyOneCommitAmount(String stockID)
+	public Long getPrivateStockPropertyOneCommitAmount(String stockID)
 	{
 		return m_QUProperty.propertyGetLong(stockID, "OneCommitAmount");
 	}
 	// 提交频率
-	public void setStockPropertyMinCommitInterval(String stockID, long value)
+	public void setPrivateStockPropertyMinCommitInterval(String stockID, long value)
 	{
 		m_QUProperty.propertySetLong(stockID, "MinCommitInterval", value);
 	}
-	public Long getStockPropertyMinCommitInterval(String stockID)
+	public Long getPrivateStockPropertyMinCommitInterval(String stockID)
 	{
 		return m_QUProperty.propertyGetLong(stockID, "MinCommitInterval");
 	}
 	// 清仓条件：最大持有时间
-	public void setStockPropertyMaxHoldDays(String stockID, long value)
+	public void setPrivateStockPropertyMaxHoldDays(String stockID, long value)
 	{
 		m_QUProperty.propertySetLong(stockID, "MaxHoldDays", value);
 	}
-	public Long getStockPropertyMaxHoldDays(String stockID)
+	public Long getPrivateStockPropertyMaxHoldDays(String stockID)
 	{
 		return m_QUProperty.propertyGetLong(stockID, "MaxHoldDays");
 	}
 	// 清仓条件：目标止盈，盈利额
-	public void setStockPropertyTargetProfitMoney(String stockID, Double value)
+	public void setPrivateStockPropertyTargetProfitMoney(String stockID, Double value)
 	{
 		m_QUProperty.propertySetDouble(stockID, "TargetProfitMoney", value);
 	}
-	public Double getStockPropertyTargetProfitMoney(String stockID)
+	public Double getPrivateStockPropertyTargetProfitMoney(String stockID)
 	{
 		return m_QUProperty.propertyGetDouble(stockID, "TargetProfitMoney");
 	}
 	// 清仓条件：目标止盈，止盈价
-	public void setStockPropertyTargetProfitPrice(String stockID, Double value)
+	public void setPrivateStockPropertyTargetProfitPrice(String stockID, Double value)
 	{
 		m_QUProperty.propertySetDouble(stockID, "TargetProfitPrice", value);
 	}
-	public Double getStockPropertyTargetProfitPrice(String stockID)
+	public Double getPrivateStockPropertyTargetProfitPrice(String stockID)
 	{
 		return m_QUProperty.propertyGetDouble(stockID, "TargetProfitPrice");
 	}
 	// 清仓条件：目标止损，亏损额
-	public void setStockPropertyStopLossMoney(String stockID, Double value)
+	public void setPrivateStockPropertyStopLossMoney(String stockID, Double value)
 	{
 		m_QUProperty.propertySetDouble(stockID, "StopLossMoney", value);
 	}
-	public Double getStockPropertyStopLossMoney(String stockID)
+	public Double getPrivateStockPropertyStopLossMoney(String stockID)
 	{
 		return m_QUProperty.propertyGetDouble(stockID, "StopLossMoney");
 	}
 	// 清仓条件：目标止损，止损价
-	public void setStockPropertyStopLossPrice(String stockID, Double value)
+	public void setPrivateStockPropertyStopLossPrice(String stockID, Double value)
 	{
 		m_QUProperty.propertySetDouble(stockID, "StopLossPrice", value);
 	}
-	public Double getStockPropertyStopLossPrice(String stockID)
+	public Double getPrivateStockPropertyStopLossPrice(String stockID)
 	{
 		return m_QUProperty.propertyGetDouble(stockID, "StopLossPrice");
 	}
@@ -278,13 +278,13 @@ public abstract class QS1801Base extends QuantStrategy {
 		double fNowPrice = cDAStock.price();
 		
 		// interval commit check
-		Long lStockOneCommitInterval = this.getStockPropertyMinCommitInterval(stockID);
+		Long lStockOneCommitInterval = this.getPrivateStockPropertyMinCommitInterval(stockID);
 		if(null == lStockOneCommitInterval)
 		{
 			Long lMinCommitInterval =  this.getGlobalStockMinCommitInterval();
 			if(null != lMinCommitInterval)
 			{
-				this.setStockPropertyMinCommitInterval(stockID, lMinCommitInterval);
+				this.setPrivateStockPropertyMinCommitInterval(stockID, lMinCommitInterval);
 				lStockOneCommitInterval = lMinCommitInterval;
 			}
 		}
@@ -294,7 +294,7 @@ public abstract class QS1801Base extends QuantStrategy {
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
 			if(seconds < lStockOneCommitInterval*60)
 			{
-				CLog.output("TEST", "buySignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
+				//CLog.output("TEST", "buySignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
 				return false;
 			}
 		}
@@ -314,27 +314,27 @@ public abstract class QS1801Base extends QuantStrategy {
 			ctx.ap().getHoldStockList(ctnHoldStockList);
 			if(ctnHoldStockList.size() > lMaxHoldStockCount)
 			{
-				CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
+				//CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
 				return false;
 			}
 			
 			// define stock FullHoldAmount OneCommitAmount property
-			Long lFullHoldAmount = this.getStockPropertyMaxHoldAmount(stockID);
+			Long lFullHoldAmount = this.getPrivateStockPropertyMaxHoldAmount(stockID);
 			if(null == lFullHoldAmount)
 			{
 				Double dGlobalStockMaxPosstion = this.getGlobalStockMaxHoldPosstion();
 				double curFullPositionMoney = ctnTotalAssets.get()*dGlobalStockMaxPosstion;
 				long curFullPositionAmmount = (long)(curFullPositionMoney/fNowPrice);
-				this.setStockPropertyMaxHoldAmount(stockID, curFullPositionAmmount);
+				this.setPrivateStockPropertyMaxHoldAmount(stockID, curFullPositionAmmount);
 				lFullHoldAmount = curFullPositionAmmount;
 			}
-			Long lOneCommitAmount = this.getStockPropertyOneCommitAmount(stockID);
+			Long lOneCommitAmount = this.getPrivateStockPropertyOneCommitAmount(stockID);
 			if(null == lOneCommitAmount)
 			{
 				Double dGlobalStockOneCommitPossition = this.getGlobalStockOneCommitPossition();
-				Long curFullPositionAmmount = this.getStockPropertyMaxHoldAmount(stockID);
+				Long curFullPositionAmmount = this.getPrivateStockPropertyMaxHoldAmount(stockID);
 				long curStockOneCommitPossitionAmmount = (long)(curFullPositionAmmount*dGlobalStockOneCommitPossition);
-				this.setStockPropertyOneCommitAmount(stockID, curStockOneCommitPossitionAmmount);
+				this.setPrivateStockPropertyOneCommitAmount(stockID, curStockOneCommitPossitionAmmount);
 				lOneCommitAmount = curStockOneCommitPossitionAmmount;
 			}	
 			// 标准化
@@ -347,41 +347,40 @@ public abstract class QS1801Base extends QuantStrategy {
 			{
 				if(newlOneCommitAmount != lOneCommitAmount)
 				{
-					this.setStockPropertyOneCommitAmount(stockID, newlOneCommitAmount);
+					this.setPrivateStockPropertyOneCommitAmount(stockID, newlOneCommitAmount);
 				}
 				if(0 != lFullHoldAmount%newlOneCommitAmount)
 				{
 					lFullHoldAmount = (lFullHoldAmount/newlOneCommitAmount)*newlOneCommitAmount;
-					this.setStockPropertyMaxHoldAmount(stockID, lFullHoldAmount);
+					this.setPrivateStockPropertyMaxHoldAmount(stockID, lFullHoldAmount);
 				}
 			}
 			else
 			{
-				this.setStockPropertyOneCommitAmount(stockID, 0);
-				this.setStockPropertyMaxHoldAmount(stockID, 0);
+				this.setPrivateStockPropertyOneCommitAmount(stockID, 0);
+				this.setPrivateStockPropertyMaxHoldAmount(stockID, 0);
 			}
 		}
 		
 		Long lAlreadyHoldAmount = null!=cHoldStock?cHoldStock.totalAmount:0L;
-		Long lFullHoldAmount = this.getStockPropertyMaxHoldAmount(stockID);
-		Long lOneCommitAmount = this.getStockPropertyOneCommitAmount(stockID);
+		Long lFullHoldAmount = this.getPrivateStockPropertyMaxHoldAmount(stockID);
+		Long lOneCommitAmount = this.getPrivateStockPropertyOneCommitAmount(stockID);
 		if(lAlreadyHoldAmount >= lFullHoldAmount) // FullHoldAmount AlreadyHoldAmount check
 		{
-			CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d", 
-					stockID, lAlreadyHoldAmount, lFullHoldAmount);
+			//CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d",  stockID, lAlreadyHoldAmount, lFullHoldAmount);
 			return false;
 		}
 		Long lCommitAmount = Math.min(lFullHoldAmount-lAlreadyHoldAmount, lOneCommitAmount);
 		lCommitAmount = lCommitAmount/100*100;
 		if(lCommitAmount < 100) // CommitAmount check
 		{
-			CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
+			//CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
 			return false;
 		}
 		double needCommitMoney = lCommitAmount*fNowPrice;
 		if(needCommitMoney > ctnMoney.get()) // CommitMoney check
 		{
-			CLog.output("TEST", "buySignalEmit %s ignore! needCommitMoney=%.3f ctnMoney=%.3f", stockID, needCommitMoney,ctnMoney.get());
+			//CLog.output("TEST", "buySignalEmit %s ignore! needCommitMoney=%.3f ctnMoney=%.3f", stockID, needCommitMoney,ctnMoney.get());
 			return false;
 		}
 		
@@ -389,30 +388,30 @@ public abstract class QS1801Base extends QuantStrategy {
 		ctx.ap().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
 		
 		// create clear property
-		if(null == this.getStockPropertyMaxHoldDays(stockID))
+		if(null == this.getPrivateStockPropertyMaxHoldDays(stockID))
 		{
 			Long lStockMaxHoldDays = this.getGlobalStockMaxHoldDays();
 			if(null != lStockMaxHoldDays)
 			{
-				this.setStockPropertyMaxHoldDays(stockID, lStockMaxHoldDays);
+				this.setPrivateStockPropertyMaxHoldDays(stockID, lStockMaxHoldDays);
 			}
 		}
-		if(null == this.getStockPropertyTargetProfitMoney(stockID))
+		if(null == this.getPrivateStockPropertyTargetProfitMoney(stockID))
 		{
 			Double dTargetProfitRatio = this.getGlobalStockTargetProfitRatio();
 			if(null != dTargetProfitRatio)
 			{
 				Double dTargetProfitMoney = lFullHoldAmount*fNowPrice*dTargetProfitRatio;
-				this.setStockPropertyTargetProfitMoney(stockID, dTargetProfitMoney);
+				this.setPrivateStockPropertyTargetProfitMoney(stockID, dTargetProfitMoney);
 			}
 		}
-		if(null == this.getStockPropertyStopLossMoney(stockID))
+		if(null == this.getPrivateStockPropertyStopLossMoney(stockID))
 		{
 			Double dStockStopLossRatio = this.getGlobalStockStopLossRatio();
 			if(null != dStockStopLossRatio)
 			{
 				Double dStockStopLossMoney = lFullHoldAmount*fNowPrice*dStockStopLossRatio;
-				this.setStockPropertyStopLossMoney(stockID, dStockStopLossMoney);
+				this.setPrivateStockPropertyStopLossMoney(stockID, dStockStopLossMoney);
 			}
 		}
 		return true;
@@ -444,8 +443,8 @@ public abstract class QS1801Base extends QuantStrategy {
 		}
 		
 		Long lAvailableAmount = null!=cHoldStock?cHoldStock.availableAmount:0L;
-		Long lFullHoldAmount = this.getStockPropertyMaxHoldAmount(stockID);
-		Long lOneCommitAmount = this.getStockPropertyOneCommitAmount(stockID);
+		Long lFullHoldAmount = this.getPrivateStockPropertyMaxHoldAmount(stockID);
+		Long lOneCommitAmount = this.getPrivateStockPropertyOneCommitAmount(stockID);
 		
 		Long lCommitAmount = Math.min(lAvailableAmount, lOneCommitAmount);
 		if(lCommitAmount <= 0) // CommitAmount check
@@ -474,11 +473,11 @@ public abstract class QS1801Base extends QuantStrategy {
 			return;
 		}
 		
-		Double stopLossMoney = this.getStockPropertyStopLossMoney(stockID);
-		Double stopLossPrice = this.getStockPropertyStopLossPrice(stockID);
-		Double targetProfitMoney = this.getStockPropertyTargetProfitMoney(stockID);
-		Double targetProfitPrice = this.getStockPropertyTargetProfitPrice(stockID);
-		Long maxHoldDays = this.getStockPropertyMaxHoldDays(stockID);
+		Double stopLossMoney = this.getPrivateStockPropertyStopLossMoney(stockID);
+		Double stopLossPrice = this.getPrivateStockPropertyStopLossPrice(stockID);
+		Double targetProfitMoney = this.getPrivateStockPropertyTargetProfitMoney(stockID);
+		Double targetProfitPrice = this.getPrivateStockPropertyTargetProfitPrice(stockID);
+		Long maxHoldDays = this.getPrivateStockPropertyMaxHoldDays(stockID);
 		
 		boolean bCLearAll = false;
 		// 止损额度
@@ -579,7 +578,7 @@ public abstract class QS1801Base extends QuantStrategy {
 		{
 			String stockID = uniqueIDs.get(iStock);
 			DAStock cDAStock = ctx.pool().get(stockID);
-			this.onStrateBuySellCheck(ctx, cDAStock);
+			this.onStrateMinute(ctx, cDAStock);
 		}
 	}
 	
@@ -632,7 +631,7 @@ public abstract class QS1801Base extends QuantStrategy {
 	 * 交易期间每分钟对每个选入|持有进行回调
 	 * 用户调用tryBuy trySell 进行买卖操作
 	 */
-	abstract void onStrateBuySellCheck(QuantContext ctx, DAStock cDAStock);
+	abstract void onStrateMinute(QuantContext ctx, DAStock cDAStock);
 
 	/*
 	 * 策略选股
