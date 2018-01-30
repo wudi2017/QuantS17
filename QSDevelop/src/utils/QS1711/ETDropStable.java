@@ -39,9 +39,9 @@ public class ETDropStable {
 	{
 		ResultDropStable cResultDropStable = new ResultDropStable();
 		
-		double param_checkDieFu = -refWave/2; // 检查跌幅
+		double param_checkDieFu = -refWave/3; // 检查跌幅
 		double param_checkMaxTimeSpan = 20; // 最大检查时间段
-		double param_checkMaxHighLowTimeSpan = 10; // 高低点最大差距时间段
+		double param_checkMaxHighLowTimeSpan = 15; // 高低点最大差距时间段
 		
 		int iCheckSpan = 5;
 		int iCheckBegin = iCheck;

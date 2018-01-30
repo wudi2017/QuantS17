@@ -54,6 +54,9 @@ public class QS1605Real {
 			m_TranReportor = new TranReportor("R");
 		}
 		@Override
+		public void onUnInit(QuantContext ctx) {
+		}
+		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
 			m_XStockSelectManager.loadFromFile();

@@ -46,6 +46,10 @@ public class QS1601StdTest {
 			m_XStockSelectManager = new XStockSelectManager(ctx.ap());
 			m_TranReportor = new TranReportor(this.getClass().getSimpleName());
 		}
+		
+		@Override
+		public void onUnInit(QuantContext ctx) {
+		}
 	
 		@Override
 		public void onDayStart(QuantContext ctx) {

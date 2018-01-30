@@ -87,6 +87,9 @@ public abstract class QS1711SBase extends QuantStrategy {
 		this.onStrateInit(ctx);
 	}
 	@Override
+	public void onUnInit(QuantContext ctx) {
+	}
+	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
 		m_XStockSelectManager.loadFromFile();

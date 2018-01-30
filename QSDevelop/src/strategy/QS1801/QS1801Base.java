@@ -11,6 +11,7 @@ import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsDateTime;
+import pers.di.common.CConsole;
 import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.AccountProxy;
 import pers.di.quantplatform.QuantContext;
@@ -21,7 +22,7 @@ import utils.QS1801.QUCommon;
 import utils.QS1801.QUProperty;
 import utils.QS1801.QUSelector;
 
-public abstract class QS1801Base extends QuantStrategy {
+public abstract class QS1801Base extends QuantStrategy implements CConsole.IHandler {
 	
 	public QS1801Base()
 	{
@@ -544,10 +545,20 @@ public abstract class QS1801Base extends QuantStrategy {
 		
 		m_QUSelector.saveToFile();
 		m_QUProperty.saveToFile();
+		
+		m_Console = new CConsole();
+		m_Console.Start(this);
 	}
+	
+	@Override
+	public void onUnInit(QuantContext ctx) {
+		m_Console.Stop();
+	}
+	
 	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
+
 		// init select stock
 		m_QUSelector.loadFromFile();
 		// init property
@@ -616,6 +627,15 @@ public abstract class QS1801Base extends QuantStrategy {
 		CLog.output("TEST", "onDayFinish %s dump account&select\n %s\n    -%s", ctx.date(), ctx.ap().dump(), m_QUSelector.dumpSelect());
 	}
 	
+	@Override
+	public void command(String cmd)
+	{
+		CLog.output("TEST", "command %s", cmd);
+		if(cmd.equals("pa"))
+		{
+		}
+	}
+	
 	/*
 	 * 策略初始化
 	 * 程序启动时只调用一次
@@ -640,7 +660,7 @@ public abstract class QS1801Base extends QuantStrategy {
 	 */
 	abstract void onStrateDayFinish(QuantContext ctx);
 
-	private Long m_lMaxHoldCount;
+	private CConsole m_Console;
 	private QUSelector m_QUSelector;
 	private QUProperty m_QUProperty;
 	private TranReportor m_TranReportor;

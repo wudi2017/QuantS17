@@ -11,9 +11,13 @@ import pers.di.common.CUtilsMath;
 import pers.di.dataapi.common.KLine;
 import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
+import pers.di.dataengine.DATimePrices;
 import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
 import pers.di.quantplatform.QuantSession;
+import utils.QS1711.DayKLinePriceWaveChecker;
+import utils.QS1711.ETDropStable;
+import utils.QS1711.ETDropStable.ResultDropStable;
 import utils.QS1711.ZCZXChecker;
 import utils.QS1711.base.EKRefHistoryPos;
 import utils.QS1711.base.EKRefHistoryPos.EKRefHistoryPosParam;
@@ -42,36 +46,49 @@ public class QS1801T1 extends QS1801Base {
 	@Override
 	void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
 		String stockID = cDAStock.ID();
+		DATimePrices cDATimePrices = cDAStock.timePrices();
 		double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 		double fNowPrice = cDAStock.price();
 		
-		// buy signal
+		if(ctx.date().equals("2016-03-04") && ctx.time().equals("13:20:00"))
 		{
-			// 1-跌停不买进
-			boolean bDieTing = false;
+			CLog.output("TEST", "");
+		}
+		
+		// buy signal
+		do
+		{
+			// 跌停不买进
 			double fYC = CUtilsMath.saveNDecimal(fYesterdayClosePrice, 2);
 			double fDieTing = CUtilsMath.saveNDecimal(fYC*0.9f, 2);
-			if(0 == Double.compare(fDieTing, fNowPrice))
+			if(Double.compare(fDieTing, fNowPrice) >= 0)
 			{
-				bDieTing = true;
+				break;
 			}
 			
-			boolean bZhangFuDa = false;
-			if(!bDieTing)
+			// 涨幅相比选股时标准参考价高 不买进
+			Double dStdPaZCZX = super.getPrivateStockPropertyDouble(stockID, "dStdPaZCZX");
+			if(null == dStdPaZCZX || dStdPaZCZX <= 0)
 			{
-				double dStdPaZCZX = super.getPrivateStockPropertyDouble(stockID, "dStdPaZCZX");
-				double fZhang = (fNowPrice-dStdPaZCZX)/dStdPaZCZX;
-				if(fZhang > 0.08)
-				{
-					bZhangFuDa = true;
-				}
+				break;
+			}
+			double fZhang = (fNowPrice-dStdPaZCZX)/dStdPaZCZX;
+			if(fZhang > 0)
+			{
+				break;
 			}
 			
-			if(!bDieTing && !bZhangFuDa)
+			// 出现分时急跌
+			double dWave = DayKLinePriceWaveChecker.check(cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
+			ResultDropStable cResultDropStable = ETDropStable.checkDropStable(cDATimePrices, cDATimePrices.size()-1, dWave);
+			if(!cResultDropStable.bCheck)
 			{
-				super.buySignalEmit(ctx, stockID);
+				break;
 			}
-		}
+			
+			super.buySignalEmit(ctx, stockID);
+			break;
+		} while(true);
 		
 		// default process
 		super.onAutoForceClearProcess(ctx, cDAStock);
@@ -143,10 +160,10 @@ public class QS1801T1 extends QS1801Base {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-01-01 2016-08-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2010-01-01 2018-01-20", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
 				new QS1801T1());
-		qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
+		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		
 		CLog.output("TEST", "FastTest main end");

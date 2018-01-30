@@ -137,6 +137,9 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 		this.onStrateInit(ctx);
 	}
 	@Override
+	public void onUnInit(QuantContext ctx) {
+	}
+	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
 		

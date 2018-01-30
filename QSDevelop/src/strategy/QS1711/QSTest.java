@@ -37,6 +37,9 @@ public class QSTest {
 		public void onInit(QuantContext ctx) {
 		}
 		@Override
+		public void onUnInit(QuantContext ctx) {
+		}
+		@Override
 		public void onDayStart(QuantContext ctx) {
 //			if(ctx.date().equals("2016-06-13"))
 //				super.addCurrentDayInterestMinuteDataID("000544");
