@@ -1,5 +1,11 @@
 package strategy.QS1801;
 
+import java.awt.*;  
+import java.awt.event.*;
+import java.net.URL;
+
+import javax.swing.*;
+
 import java.util.List;
 
 import pers.di.account.Account;
@@ -103,26 +109,93 @@ public class QSTest extends QS1801Base {
 	/*
 	 * *************************************************************************************
 	 */
+	
+	public static class JTb1 extends JFrame  
+	{  
+	    JTable table;  
+	    public JTb1()  
+	    {  
+	        super("test title"); 
+	        super.setSize(800,600); 
+	        
+	        try{ 
+	        	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());  
+	        }catch(Exception e)
+	        {
+	        	
+	        }  
+	        Container c=getContentPane();  
+	        //创建表值  
+	        Object[][]data={  
+	            {"082520","name1","03A01",80,90,95,(80+90+95)},  
+	            {"082521","name2","03A02",88,90,90,(88+90+90)}  
+	        };  
+	        String[] rowName={"学号","姓名","班级","数学","体育","英语","总分"};  
+	        table=new JTable(data,rowName);//创建表格对象  
+	        c.add(new JScrollPane(table));  
+	        setVisible(true);  
+	        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  
+	    }  
+	}
+	
+	public static class JTabbedPaneDemo  extends JPanel {  
+		  
+	    public JTabbedPaneDemo() {  
+	    	JTabbedPane jTabbedpane = new JTabbedPane();
+	    	
+	        // 第一个标签下的JPanel  
+	        JPanel jpanelFirst = new JPanel();  
+	        // jTabbedpane.addTab(tabNames[i++],icon,creatComponent(),"first");//加入第一个页面  
+	        jTabbedpane.addTab("tabName1", null, jpanelFirst, "first");// 加入第一个页面
+	        jpanelFirst.setLayout(new GridLayout(1, 1));
+
+//	        // 第二个标签下的JPanel  
+	        JPanel jpanelSecond = new JPanel();  
+	        jTabbedpane.addTab("tabName2", null, jpanelSecond, "second");// 加入第一个页面 
+     
+	        setLayout(new GridLayout(1, 1));  
+	        add(jTabbedpane);  
+	        
+	        
+	        String[] rowName={"学号","姓名","班级","数学","体育","英语","总分"}; 
+	        Object[][]data={  
+		            {"082520","name1","03A01",80,90,95,(80+90+95)},  
+		            {"082521","name2","03A02",88,90,90,(88+90+90)}  
+		        };  
+	        JTable table = new JTable(data,rowName);//创建表格对象
+	        
+	        JScrollPane jspan = new JScrollPane(table);
+	        jpanelFirst.add(jspan);
+	    }  
+	}
 	public static void main(String[] args) throws Exception {
-		CSystem.start();
 		
-		CLog.output("TEST", "FastTest main begin");
+		JFrame frame = new JFrame();  
+        frame.setLayout(null);  
+        frame.setContentPane(new JTabbedPaneDemo());  
+        frame.setSize(800, 600);  
+        frame.setVisible(true);  
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
 		
-		// create testaccount
-		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("account_QS1801T1" ,  new MockAccountOpe(), true);
-		cAccoutDriver.reset(100000);
-		Account acc = cAccoutDriver.account();
-		
-		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-03-01 2016-04-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
-				cAccoutDriver, 
-				new QSTest());
-		qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
-		qSession.run();
-		
-		CLog.output("TEST", "FastTest main end");
-		CSystem.stop();
+//		CSystem.start();
+//		
+//		CLog.output("TEST", "FastTest main begin");
+//		
+//		// create testaccount
+//		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
+//		cAccoutDriver.load("account_QS1801T1" ,  new MockAccountOpe(), true);
+//		cAccoutDriver.reset(100000);
+//		Account acc = cAccoutDriver.account();
+//		
+//		QuantSession qSession = new QuantSession(
+//				"HistoryTest 2016-03-01 2016-04-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
+//				cAccoutDriver, 
+//				new QSTest());
+//		qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
+//		qSession.run();
+//		
+//		CLog.output("TEST", "FastTest main end");
+//		CSystem.stop();
 	}
 
 }

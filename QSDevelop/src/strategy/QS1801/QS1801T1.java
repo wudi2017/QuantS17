@@ -102,7 +102,7 @@ public class QS1801T1 extends QS1801Base {
 		{
 			DAStock cDAStock = ctx.pool().get(iStock);
 			if(
-				cDAStock.ID().compareTo("000921") >= 0 && cDAStock.ID().compareTo("000921") <= 0  &&
+				//cDAStock.ID().compareTo("000921") >= 0 && cDAStock.ID().compareTo("000921") <= 0  &&
 				cDAStock.dayKLines().size() >= 60
 				&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 				&& cDAStock.circulatedMarketValue() <= 1000.0) {
