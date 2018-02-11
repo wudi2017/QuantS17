@@ -67,7 +67,8 @@ public abstract class QS1802Base extends QuantStrategy {
 	
 	public QS1802Base()
 	{
-		
+		// initialize m_defaultCfg
+		m_defaultCfg = new DefaultConfig();
 	}
 	public void setDefaultConfig(DefaultConfig defaultCfg)
 	{
@@ -423,9 +424,6 @@ public abstract class QS1802Base extends QuantStrategy {
 		String accountIDName = ctx.ap().ID();
 		String strStockStrategyHelperPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
 		CFileSystem.createDir(strStockStrategyHelperPath);
-		
-		// initialize m_defaultCfg
-		m_defaultCfg = new DefaultConfig();
 		
 		// initialize m_QUSelector
 		String selectFileName = strStockStrategyHelperPath + "\\" + derivedStrategyClsName + "_QUSelectTable.xml";
