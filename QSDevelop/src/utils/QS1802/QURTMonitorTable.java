@@ -2,35 +2,139 @@ package utils.QS1802;
 
 import java.util.*;
 
+import pers.di.common.CXmlTable;
+import pers.di.common.CXmlTable.RowCursor;
+import utils.QS1802.QUSelectTable.SelectItem;
+
 public class QURTMonitorTable {
 	
 	public QURTMonitorTable(String fileName)
 	{
-		
+		m_monitorMap = new HashMap<String, MonitorItem>();
+		m_CXmlTable = new CXmlTable(fileName);
 	}
 	
 	public boolean open()
 	{
-		return false;
+		m_CXmlTable.open();
+		RowCursor cursor = m_CXmlTable.moveFirst();
+		while(null!=cursor)
+		{
+			String sStockID = cursor.getColume("stockID");
+			String sStrategy = cursor.getColume("strategy");
+			String sBuyTriggerPrice = cursor.getColume("buyTriggerPrice");
+			String sSellTriggerPrice = cursor.getColume("sellTriggerPrice");
+			String sMinCommitInterval = cursor.getColume("minCommitInterval");
+			String sOneCommitAmount = cursor.getColume("oneCommitAmount");
+			String sMaxHoldAmount = cursor.getColume("maxHoldAmount");
+			String sTargetProfitPrice = cursor.getColume("targetProfitPrice");
+			String sTargetProfitMoney = cursor.getColume("targetProfitMoney");
+			String sStopLossPrice = cursor.getColume("stopLossPrice");
+			String sStopLossMoney = cursor.getColume("stopLossMoney");
+			String sMaxHoldDays = cursor.getColume("maxHoldDays");
+			
+			MonitorItem cMonitorItem = new MonitorItem();
+			if(null != sStockID)
+				cMonitorItem.m_sStrategy = sStrategy;
+			if(null != sBuyTriggerPrice)
+				cMonitorItem.m_dBuyTriggerPrice = Double.parseDouble(sBuyTriggerPrice);
+			if(null != sSellTriggerPrice)
+				cMonitorItem.m_dSellTriggerPrice = Double.parseDouble(sSellTriggerPrice);
+			if(null != sMinCommitInterval)
+				cMonitorItem.m_lMinCommitInterval = Long.parseLong(sMinCommitInterval);
+			if(null != sOneCommitAmount)
+				cMonitorItem.m_lOneCommitAmount = Long.parseLong(sOneCommitAmount);
+			if(null != sMaxHoldAmount)
+				cMonitorItem.m_lMaxHoldAmount = Long.parseLong(sMaxHoldAmount);
+			if(null != sTargetProfitPrice)
+				cMonitorItem.m_dTargetProfitPrice = Double.parseDouble(sTargetProfitPrice);
+			if(null != sTargetProfitMoney)
+				cMonitorItem.m_dTargetProfitMoney = Double.parseDouble(sTargetProfitMoney);
+			if(null != sStopLossPrice)
+				cMonitorItem.m_dStopLossPrice = Double.parseDouble(sStopLossPrice);
+			if(null != sStopLossMoney)
+				cMonitorItem.m_dStopLossMoney = Double.parseDouble(sStopLossMoney);
+			if(null != sMaxHoldDays)
+				cMonitorItem.m_dMaxHoldDays = Long.parseLong(sMaxHoldDays);
+
+			m_monitorMap.put(sStockID, cMonitorItem);
+			
+			cursor = m_CXmlTable.moveNext();
+		}
+		return true;
 	}
 	public boolean commit()
 	{
-		return false;
+		m_CXmlTable.deleteAll();
+		
+		for (Map.Entry<String, MonitorItem> entry : m_monitorMap.entrySet()) { 
+			String stockID = entry.getKey();
+			MonitorItem cMonitorItem = entry.getValue();
+			
+			RowCursor cRowCursor = m_CXmlTable.addRow();
+			cRowCursor.setColume("stockID", stockID);
+			if(null != cMonitorItem.m_sStrategy)
+				cRowCursor.setColume("strategy", cMonitorItem.m_sStrategy);
+			if(null != cMonitorItem.m_dBuyTriggerPrice)
+				cRowCursor.setColume("buyTriggerPrice", String.format("%.3f", cMonitorItem.m_dBuyTriggerPrice));
+			if(null != cMonitorItem.m_dSellTriggerPrice)
+				cRowCursor.setColume("sellTriggerPrice", String.format("%.3f", cMonitorItem.m_dSellTriggerPrice));
+			if(null != cMonitorItem.m_lMinCommitInterval)
+				cRowCursor.setColume("minCommitInterval", String.format("%d", cMonitorItem.m_lMinCommitInterval));
+			if(null != cMonitorItem.m_lOneCommitAmount)
+				cRowCursor.setColume("oneCommitAmount", String.format("%d", cMonitorItem.m_lOneCommitAmount));
+			if(null != cMonitorItem.m_lMaxHoldAmount)
+				cRowCursor.setColume("maxHoldAmount", String.format("%d", cMonitorItem.m_lMaxHoldAmount));
+			if(null != cMonitorItem.m_dTargetProfitPrice)
+				cRowCursor.setColume("targetProfitPrice", String.format("%.3f", cMonitorItem.m_dTargetProfitPrice));
+			if(null != cMonitorItem.m_dTargetProfitMoney)
+				cRowCursor.setColume("targetProfitMoney", String.format("%.3f", cMonitorItem.m_dTargetProfitMoney));
+			if(null != cMonitorItem.m_dStopLossPrice)
+				cRowCursor.setColume("stopLossPrice", String.format("%.3f", cMonitorItem.m_dStopLossPrice));
+			if(null != cMonitorItem.m_dStopLossMoney)
+				cRowCursor.setColume("stopLossMoney", String.format("%.3f", cMonitorItem.m_dStopLossMoney));
+			if(null != cMonitorItem.m_dMaxHoldDays)
+				cRowCursor.setColume("maxHoldDays", String.format("%d", cMonitorItem.m_dMaxHoldDays));
+		}
+		return m_CXmlTable.commit();
 	}
 	
 	public MonitorItem item(String stockID)
 	{
-		return null;
+		return m_monitorMap.get(stockID);
 	}
 	
-	public List<MonitorItem> items()
+	public Map<String, MonitorItem> items()
 	{
-		return null;
+		return m_monitorMap;
+	}
+	
+	public void addItem(String stockID)
+	{
+		if(!m_monitorMap.containsKey(stockID))
+		{
+			MonitorItem cMonitorItem = new MonitorItem();
+			m_monitorMap.put(stockID, cMonitorItem);
+		}
+	}
+	
+	public void removeItem(String stockID)
+	{
+		if(m_monitorMap.containsKey(stockID))
+		{
+			m_monitorMap.remove(stockID);
+		}
+		return;
 	}
 	
 	public List<String> monitorStockIDs()
 	{
-		return new ArrayList<String>();
+		List<String> retList = new ArrayList<String>();
+		for (Map.Entry<String, MonitorItem> entry : m_monitorMap.entrySet()) { 
+			String stockID = entry.getKey();
+			retList.add(stockID);
+		}
+		return retList;
 	}
 	
 	/**
@@ -38,15 +142,6 @@ public class QURTMonitorTable {
 	 */
 	public static class MonitorItem
 	{
-		public String stockID()
-		{
-			return m_sStockID;
-		}
-		public void setStockID(String stockID)
-		{
-			m_sStockID = stockID;
-		}
-		
 		public String strategy()
 		{
 			return m_sStrategy;
@@ -89,7 +184,7 @@ public class QURTMonitorTable {
 		}
 		public void setOneCommitAmount(Long oneCommitAmount)
 		{
-			m_lMinCommitInterval = oneCommitAmount;
+			m_lOneCommitAmount = oneCommitAmount;
 		}
 		
 		public Long maxHoldAmount()
@@ -98,7 +193,7 @@ public class QURTMonitorTable {
 		}
 		public void setMaxHoldAmount(Long maxHoldAmount)
 		{
-			m_lMinCommitInterval = maxHoldAmount;
+			m_lMaxHoldAmount = maxHoldAmount;
 		}
 		
 		public Double targetProfitMoney()
@@ -146,7 +241,6 @@ public class QURTMonitorTable {
 			m_dMaxHoldDays = maxHoldDays;
 		}
 		
-		private String m_sStockID;
 		private String m_sStrategy; // P/M
 		private Double m_dBuyTriggerPrice; 
 		private Double m_dSellTriggerPrice;
@@ -159,4 +253,7 @@ public class QURTMonitorTable {
 		private Double m_dStopLossMoney;
 		private Long m_dMaxHoldDays;
 	}
+	
+	private Map<String, MonitorItem> m_monitorMap;
+	private CXmlTable m_CXmlTable;
 }

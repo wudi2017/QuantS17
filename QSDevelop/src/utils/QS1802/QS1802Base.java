@@ -34,6 +34,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		public DefaultConfig()
 		{
 			// default
+			GlobalDefaultAutoMoveSelectToMonitor = true;
 			GlobalDefaultMinCommitInterval = 30L;
 			GlobalDefaulMaxHoldStockCount = 5L;
 			GlobalDefaulStockMaxHoldPosstion = 0.2;
@@ -44,6 +45,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 		public void copyFrom(DefaultConfig cfg)
 		{
+			GlobalDefaultAutoMoveSelectToMonitor = cfg.GlobalDefaultAutoMoveSelectToMonitor;
 			GlobalDefaultMinCommitInterval = cfg.GlobalDefaultMinCommitInterval;
 			GlobalDefaulMaxHoldStockCount = cfg.GlobalDefaulMaxHoldStockCount;
 			GlobalDefaulStockMaxHoldPosstion = cfg.GlobalDefaulStockMaxHoldPosstion;
@@ -52,6 +54,7 @@ public abstract class QS1802Base extends QuantStrategy {
 			GlobalDefaulStockTargetProfitRatio = cfg.GlobalDefaulStockTargetProfitRatio;
 			GlobalDefaulStockStopLossRatio = cfg.GlobalDefaulStockStopLossRatio;
 		}
+		public Boolean GlobalDefaultAutoMoveSelectToMonitor;
 		public Long GlobalDefaultMinCommitInterval;
 		public Long GlobalDefaulMaxHoldStockCount;
 		public Double GlobalDefaulStockMaxHoldPosstion;
@@ -284,18 +287,18 @@ public abstract class QS1802Base extends QuantStrategy {
 	{
 		String stockID = cDAStock.ID();
 		Double fNowPrice = cDAStock.price();
+	
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		if(null == cHoldStock || cHoldStock.availableAmount <= 0)
+		{
+			//CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
+			return false;
+		}
 		
 		// check monitor table item
 		MonitorItem cMonitorItem = m_QURTMonitorTable.item(stockID);
 		if(null == cMonitorItem)
 		{
-			return false;
-		}
-				
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
-		if(null == cHoldStock || cHoldStock.availableAmount <= 0)
-		{
-			//CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
 			return false;
 		}
 		
@@ -420,8 +423,10 @@ public abstract class QS1802Base extends QuantStrategy {
 		
 		// commit select table
 		m_QUSelectTable.commit();
-		
-		// commit monitor table
+	
+		// update monitor table
+		this.autoRemoveInvalidMonitor(ctx);
+		this.autoAddSelect2Monitor();
 		m_QURTMonitorTable.commit();
 
 		// report
@@ -431,7 +436,9 @@ public abstract class QS1802Base extends QuantStrategy {
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
-		CLog.output("TEST", "onDayFinish %s dump account&select\n %s\n", ctx.date(), ctx.ap().dump());
+		CLog.output("TEST", "onDayFinish %s", ctx.date());
+		CLog.output("TEST", "dump account:\n %s", ctx.ap().dump());
+		CLog.output("TEST", "dump selecttable:\n %s", m_QUSelectTable.dump());
 	}
 	
 	/*
@@ -461,6 +468,43 @@ public abstract class QS1802Base extends QuantStrategy {
 	/**
 	 * *********************************************************************************************
 	 */
+	
+	// remove monitor ID item, which it is not exist in holdstock & strategy!=Manul
+	private void autoRemoveInvalidMonitor(QuantContext ctx)
+	{
+		List<String> holdIDs = ctx.ap().getHoldStockIDList();
+		List<String> monitorIDs = m_QURTMonitorTable.monitorStockIDs();
+		for(int i=0; i<monitorIDs.size(); i++)
+		{
+			String monitorID = monitorIDs.get(i);
+			if(null == m_QURTMonitorTable.item(monitorID).strategy()
+				|| !m_QURTMonitorTable.item(monitorID).strategy().equals("M"))
+			{
+				if(!holdIDs.contains(monitorID))
+				{
+					m_QURTMonitorTable.removeItem(monitorID);
+				}
+			}
+		}
+	}
+	// add select ID to monitor
+	private void autoAddSelect2Monitor()
+	{
+		if(m_defaultCfg.GlobalDefaultAutoMoveSelectToMonitor)
+		{
+			List<String> selectStockIDs = m_QUSelectTable.selectStockIDs();
+			for(int i=0; i<selectStockIDs.size(); i++)
+			{
+				String selectID = selectStockIDs.get(i);
+				if(null == m_QURTMonitorTable.item(selectID))
+				{
+					m_QURTMonitorTable.addItem(selectID);
+					m_QURTMonitorTable.item(selectID).setStrategy("P");
+				}
+			}
+		}
+	}
+	
 	private DefaultConfig m_defaultCfg;
 	
 	private QUSelectTable m_QUSelectTable; // Ñ¡¹É±í

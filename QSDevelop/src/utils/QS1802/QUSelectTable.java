@@ -152,6 +152,18 @@ public class QUSelectTable {
         }
 	}
 	
+	public String dump()
+	{
+		String dump = "";
+		dump += String.format("Select(%d) ", m_SelectItemList.size());
+		for(int i=0; i<m_SelectItemList.size(); i++)
+		{
+			SelectItem cSelectItem = m_SelectItemList.get(i);
+			dump += String.format("%s ", cSelectItem.m_sStockID);
+		}
+		return dump;
+	}
+	
 	/**
 	 *********************************************************************************************
 	 */
