@@ -84,6 +84,7 @@ public abstract class QS1711Base extends QuantStrategy {
 	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
+		super.addCurrentDayInterestMinuteDataIDs(ctx.ap().getHoldStockIDList());
 		m_XStockSelectManager.loadFromFile();
 		super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
 		CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());

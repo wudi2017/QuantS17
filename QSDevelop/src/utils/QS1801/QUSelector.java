@@ -39,11 +39,10 @@ import org.xml.sax.InputSource;
  * Quant Utils Selector for Stocks
  */
 public class QUSelector {
-	public QUSelector(String ID)
+	
+	public QUSelector(String fileName)
 	{
-		String strStockStrategyHelperPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
-		CFileSystem.createDir(strStockStrategyHelperPath);
-		m_selectFileName = strStockStrategyHelperPath + "\\" + ID + "_QUSelector.xml";
+		m_selectFileName = fileName;
 		m_SelectItemList = new ArrayList<InnerSelectStockItem>();
 	}
 	

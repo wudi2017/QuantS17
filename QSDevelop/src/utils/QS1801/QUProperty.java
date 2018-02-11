@@ -14,12 +14,9 @@ import pers.di.quantplatform.AccountProxy;
  * Quant Utils Property for Stocks
  */
 public class QUProperty {
-	public QUProperty(String ID)
+	public QUProperty(String fileName)
 	{
-		String strStockStrategyHelperPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
-		CFileSystem.createDir(strStockStrategyHelperPath);
-		String propertyFileName = strStockStrategyHelperPath + "\\" + ID + "_QUProperty.xml";
-		m_CL2Property = new CL2Property(propertyFileName);
+		m_CL2Property = new CL2Property(fileName);
 	}
 	
 	// stock boolean
