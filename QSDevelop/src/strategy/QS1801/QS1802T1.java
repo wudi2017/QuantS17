@@ -103,7 +103,7 @@ public class QS1802T1 extends QS1802Base {
 		{
 			DAStock cDAStock = ctx.pool().get(iStock);
 			if(
-				//cDAStock.ID().compareTo("000921") >= 0 && cDAStock.ID().compareTo("000921") <= 0  &&
+				cDAStock.ID().compareTo("000001") >= 0 && cDAStock.ID().compareTo("000200") <= 0  &&
 				cDAStock.dayKLines().size() >= 60
 				&& cDAStock.dayKLines().lastDate().equals(ctx.date())
 				&& cDAStock.circulatedMarketValue() <= 1000.0) {
@@ -168,9 +168,9 @@ public class QS1802T1 extends QS1802Base {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2010-01-01 2018-01-20", // Realtime | HistoryTest 2016-01-01 2017-01-01
+				"HistoryTest 2016-01-01 2016-03-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1801T1());
+				new QS1802T1());
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		

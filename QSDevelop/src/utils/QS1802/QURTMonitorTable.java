@@ -30,7 +30,7 @@ public class QURTMonitorTable {
 	
 	public List<String> monitorStockIDs()
 	{
-		return null;
+		return new ArrayList<String>();
 	}
 	
 	/**

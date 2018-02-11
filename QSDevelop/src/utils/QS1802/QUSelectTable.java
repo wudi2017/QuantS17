@@ -20,17 +20,17 @@ public class QUSelectTable {
 		while(null!=cursor)
 		{
 			SelectItem cSelectItem = new SelectItem();
+			
 			cSelectItem.m_sStockID = cursor.getColume("stockID");
 			cSelectItem.m_dPriority = Double.parseDouble(cursor.getColume("priority"));
-			
-			List<String> columes = cursor.columes();
-			for(int i=0; i<columes.size(); i++)
-			{
-				String colume = columes.get(i);
-				String value = cursor.getColume(colume);
-				if(!colume.equals("stockID") && !colume.equals("priority"))
+			Map<String,String> columesmap = cursor.columesMap();
+			for (Map.Entry<String, String> entry : cSelectItem.m_propMap.entrySet()) { 
+				String key = entry.getKey();
+				String value = entry.getValue();
+				
+				if(!key.equals("stockID") && !key.equals("priority"))
 				{
-					cSelectItem.setProperty(colume, value);
+					cSelectItem.setProperty(key, value);
 				}
 			}
 

@@ -369,8 +369,9 @@ public abstract class QS1802Base extends QuantStrategy {
 		m_defaultCfg = new DefaultConfig();
 		
 		// initialize m_QUSelector
-		String selectFileName = strStockStrategyHelperPath + "\\" + derivedStrategyClsName + "_QUSelector.xml";
+		String selectFileName = strStockStrategyHelperPath + "\\" + derivedStrategyClsName + "_QUSelectTable.xml";
 		m_QUSelectTable = new QUSelectTable(selectFileName);
+		m_QUSelectTable.open();
 		
 		// initialize monitor table
 		String rtMonitorFileName = strStockStrategyHelperPath + "\\" + derivedStrategyClsName + "_QURTMonitorTable.xml";
