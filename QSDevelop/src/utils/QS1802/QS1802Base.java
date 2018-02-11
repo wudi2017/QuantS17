@@ -73,6 +73,10 @@ public abstract class QS1802Base extends QuantStrategy {
 	{
 		m_defaultCfg.copyFrom(defaultCfg);
 	}
+	public DefaultConfig getDefaultConfig()
+	{
+		return m_defaultCfg;
+	}
 	public QUSelectTable QUSelectTable()
 	{
 		return m_QUSelectTable;
@@ -359,6 +363,58 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 	}
 	
+	public boolean onManulHandlerProcess(QuantContext ctx, DAStock cDAStock)
+	{
+		String stockID = cDAStock.ID();
+		Double fNowPrice = cDAStock.price();
+		
+		MonitorItem cMonitorItem = m_QURTMonitorTable.item(stockID);
+		if(null != cMonitorItem.buyTriggerPrice() && 
+				fNowPrice <= cMonitorItem.buyTriggerPrice())
+		{
+			boolean bBeforeHigh = true;
+			for(int i=0; i<cDAStock.timePrices().size()-1-1; i++)
+			{
+				double dprice = cDAStock.timePrices().get(i).price;
+				if(dprice <= fNowPrice)
+				{
+					bBeforeHigh = false;
+					break;
+				}
+			}
+			
+			if(bBeforeHigh)
+			{
+				this.buySignalEmit(ctx, stockID);
+				return true;
+			}
+			
+		}
+		
+		if(null != cMonitorItem.sellTriggerPrice() &&
+				fNowPrice >= cMonitorItem.sellTriggerPrice())
+		{
+			boolean bBeforeLow = true;
+			for(int i=0; i<cDAStock.timePrices().size()-1-1; i++)
+			{
+				double dprice = cDAStock.timePrices().get(i).price;
+				if(dprice >= fNowPrice)
+				{
+					bBeforeLow = false;
+					break;
+				}
+			}
+			
+			if(bBeforeLow)
+			{
+				this.sellSignalEmit(ctx, stockID);
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	
 	@Override
 	public void onInit(QuantContext ctx) 
@@ -410,8 +466,20 @@ public abstract class QS1802Base extends QuantStrategy {
 			String stockID = monitorIDs.get(iStock);
 			DAStock cDAStock = ctx.pool().get(stockID);
 			
+			// first: auto clear check
 			this.onAutoForceClearProcess(ctx, cDAStock);
-			this.onStrateMinute(ctx, cDAStock);
+			
+			MonitorItem cMonitorItem = m_QURTMonitorTable.item(stockID);
+			if(null != cMonitorItem && cMonitorItem.strategy().equals("M"))
+			{
+				// call manual configure buy & sell check
+				this.onManulHandlerProcess(ctx, cDAStock);
+			}
+			else
+			{
+				// call auto program buy & sell check
+				this.onStrateMinute(ctx, cDAStock);
+			}
 		}
 	}
 	

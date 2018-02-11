@@ -27,8 +27,11 @@ import utils.QS1802.QUSelectTable.SelectItem;
 
 public class QS1802T1 extends QS1802Base {
 	
-	public QS1802T1() {
+	public QS1802T1(boolean bAutoSelect2Monitor) {
 		super();
+		DefaultConfig cfg = super.getDefaultConfig();
+		cfg.GlobalDefaultAutoMoveSelectToMonitor = bAutoSelect2Monitor;
+		super.setDefaultConfig(cfg);
 	}
 
 	@Override
@@ -45,11 +48,6 @@ public class QS1802T1 extends QS1802Base {
 		DATimePrices cDATimePrices = cDAStock.timePrices();
 		double fYesterdayClosePrice = cDAStock.dayKLines().lastPrice();
 		double fNowPrice = cDAStock.price();
-		
-		if(ctx.date().equals("2016-03-04") && ctx.time().equals("13:20:00"))
-		{
-			CLog.output("TEST", "");
-		}
 		
 		// buy signal
 		do
@@ -170,7 +168,7 @@ public class QS1802T1 extends QS1802Base {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2016-01-01 2016-03-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 				cAccoutDriver, 
-				new QS1802T1());
+				new QS1802T1(true));
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		
