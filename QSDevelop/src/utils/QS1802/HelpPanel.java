@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -18,32 +19,86 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 
 public class HelpPanel {
+	
+	public static class SelectPanel extends JPanel
+	{
+		public SelectPanel()
+		{
+			this.setLayout(null);
+			//this.setBackground(Color.red); 
+			//this.setPreferredSize(new Dimension(800,300));
+			this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
+			
+			JLabel label_RTMonitor = new JLabel("Select");
+			label_RTMonitor.setBounds(new Rectangle(10, 0, 100, 20));
+			this.add(label_RTMonitor);
+
+			JCheckBox checkbox_AutoAddMonitor = new JCheckBox(" AutoAddMonitor");
+			checkbox_AutoAddMonitor.setBounds(new Rectangle(100, 10, 250, 20));
+			this.add(checkbox_AutoAddMonitor);
+			
+			{
+				m_SelectTable = new JTable();
+				JScrollPane scrollPane = new JScrollPane();
+				scrollPane.setViewportView(m_SelectTable);
+				scrollPane.setBounds(new Rectangle(10, 40, 1155, 150));
+				this.add(scrollPane);
+
+				Vector vName = new Vector();
+				vName.add("StockID");
+				vName.add("Priority");
+				vName.add("Date");
+				Vector vData = new Vector();
+				DefaultTableModel model = new DefaultTableModel(vData, vName);
+				m_SelectTable.setModel(model);
+			}
+
+		}
+		
+		private JTable m_SelectTable;
+	}
 	
 	public static class RTMonitorPanel extends JPanel
 	{
 		public static class AddBtnListener implements ActionListener
 		{
+			public AddBtnListener(RTMonitorPanel rtmt)
+			{
+				m_RTMonitorPanel = rtmt;
+			}
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				System.out.println("AddBtnListener");
+				m_RTMonitorPanel.onClickAdd();
 			}
+			private RTMonitorPanel m_RTMonitorPanel;
 		}
 		public static class RemoveBtnListener implements ActionListener
 		{
+			public RemoveBtnListener(RTMonitorPanel rtmt)
+			{
+				m_RTMonitorPanel = rtmt;
+			}
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				System.out.println("RemoveBtnListener");
+				m_RTMonitorPanel.onClickRemove();
 			}
+			private RTMonitorPanel m_RTMonitorPanel;
 		}
 		public static class CommitBtnListener implements ActionListener
 		{
+			public CommitBtnListener(RTMonitorPanel rtmt)
+			{
+				m_RTMonitorPanel = rtmt;
+			}
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				System.out.println("CommitBtnListener");
+				m_RTMonitorPanel.onClickCommit();
 			}
+			private RTMonitorPanel m_RTMonitorPanel;
 		}
 		public RTMonitorPanel()
 		{
@@ -57,57 +112,68 @@ public class HelpPanel {
 			this.add(label_RTMonitor);
 			
 			{
-				String[] columnNames = {"StockID","Strategy","BuyTriggerPrice","SellTriggerPrice",};
-		        String[][] tableValues = {};
-				JTable table_holdstock = new JTable(tableValues,columnNames);
-				JScrollPane scrollPane_holdstock = new JScrollPane();
-				scrollPane_holdstock.setViewportView(table_holdstock);
-				scrollPane_holdstock.setSize(0, 0);
-				scrollPane_holdstock.setBounds(new Rectangle(10, 30, 780, 200));
-				this.add(scrollPane_holdstock);
-				
-				
-				
+		        m_RTMonitorTable = new JTable();
+				JScrollPane scrollPane = new JScrollPane();
+				scrollPane.setViewportView(m_RTMonitorTable);
+				scrollPane.setBounds(new Rectangle(10, 30, 1155, 200));
+				this.add(scrollPane);
+
 				Vector vName = new Vector();
-				vName.add("StockID");
-				vName.add("Strategy");
-				vName.add("BuyTriggerPrice");
-				vName.add("SellTriggerPrice");
-				
-				Vector vRow = new Vector();
-				vRow.add("cell 0 0");
-				vRow.add("cell 0 1");
-				vRow.add("cell 0 2");
-				vRow.add("cell 0 3");
-				
+				vName.add("stockID");
+				vName.add("strategy");
+				vName.add("buyTriggerPrice");
+				vName.add("sellTriggerPrice");
+				vName.add("minCommitInterval");
+				vName.add("oneCommitAmount");
+				vName.add("maxHoldAmount");
+				vName.add("targetProfitPrice");
+				vName.add("targetProfitMoney");
+				vName.add("stopLossPrice");
+				vName.add("stopLossMoney");
+				vName.add("maxHoldDays");
 				Vector vData = new Vector();
-				vData.add(vRow.clone());
-				vData.add(vRow.clone());
-				vData.add(vRow.clone());
-				vData.add(vRow.clone());
-	
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
-				//DefaultTableModel cDefaultTableModel = (DefaultTableModel)table_holdstock.getModel();
-				
-				table_holdstock.setModel(model);
+				m_RTMonitorTable.setModel(model);
 			}
-			
-			
+
 			JButton btn_add = new JButton("Add");
 			btn_add.setBounds(new Rectangle(10, 235, 80, 20));
-			btn_add.addActionListener(new AddBtnListener());
+			btn_add.addActionListener(new AddBtnListener(this));
 			this.add(btn_add);
 			
 			JButton btn_remove = new JButton("Remove");
 			btn_remove.setBounds(new Rectangle(100, 235, 80, 20));
-			btn_remove.addActionListener(new RemoveBtnListener());
+			btn_remove.addActionListener(new RemoveBtnListener(this));
 			this.add(btn_remove);
 			
 			JButton btn_commit = new JButton("Commit");
 			btn_commit.setBounds(new Rectangle(190, 235, 80, 20));
-			btn_commit.addActionListener(new CommitBtnListener());
+			btn_commit.addActionListener(new CommitBtnListener(this));
 			this.add(btn_commit);
 		}
+		
+		public void onClickAdd()
+		{
+			DefaultTableModel dftModel = (DefaultTableModel)m_RTMonitorTable.getModel();
+			dftModel.addRow(new Vector());
+		}
+		
+		public void onClickRemove()
+		{
+			DefaultTableModel dftModel = (DefaultTableModel)m_RTMonitorTable.getModel();
+			int numrow=m_RTMonitorTable.getSelectedRows().length;
+            for (int i=0;i<numrow;i++){
+                   //É¾³ýËùÑ¡ÐÐ;
+            	dftModel.removeRow(m_RTMonitorTable.getSelectedRow());
+            }
+		}
+		
+		public void onClickCommit()
+		{
+			DefaultTableModel dftModel = (DefaultTableModel)m_RTMonitorTable.getModel();
+		}
+		
+		private JTable m_RTMonitorTable;
 	}
 	
 	public static class AccountInfoPanel extends JPanel
@@ -154,15 +220,24 @@ public class HelpPanel {
 			this.add(tfMarketValue);
 	
 			{
-				String[] columnNames = {"StockID","Strategy","BuyTriggerPrice","SellTriggerPrice",
-						"MinCommitVal","MaxHoldAmount", "A1", "A2", "A3", "A4", "A5", "A6"};
-		        String[][] tableValues = {};
-				JTable table_holdstock = new JTable(tableValues,columnNames);
+				JTable table_holdstock = new JTable();
 				JScrollPane scrollPane_holdstock = new JScrollPane();
 				scrollPane_holdstock.setViewportView(table_holdstock);
 				scrollPane_holdstock.setSize(0, 0);
-				scrollPane_holdstock.setBounds(new Rectangle(10, 90, 780, 200));
+				scrollPane_holdstock.setBounds(new Rectangle(10, 90, 1155, 200));
 				this.add(scrollPane_holdstock);
+				
+				Vector vName = new Vector();
+				vName.add("stockID");
+				vName.add("createDate");
+				vName.add("totalAmount");
+				vName.add("availableAmount");
+				vName.add("totalBuyCost");
+				vName.add("curPrice");
+				vName.add("refPrimeCostPrice");
+				Vector vData = new Vector();
+				DefaultTableModel model = new DefaultTableModel(vData, vName);
+				table_holdstock.setModel(model);
 			}
 		}
 	}
@@ -176,12 +251,16 @@ public class HelpPanel {
 			//this.setBackground(Color.CYAN);
 			this.setSize(800, 600);
 			
+			SelectPanel selectPane = new SelectPanel();
+			selectPane.setBounds(new Rectangle(10, 20, 1175, 200));
+			this.add(selectPane);
+			
 			RTMonitorPanel panelRTMonitor = new RTMonitorPanel();
-			panelRTMonitor.setBounds(new Rectangle(10, 20, 800, 270));
+			panelRTMonitor.setBounds(new Rectangle(10, 240, 1175, 270));
 			this.add(panelRTMonitor);
 			
 			AccountInfoPanel panelAccountInfo = new AccountInfoPanel();
-			panelAccountInfo.setBounds(new Rectangle(10, 300, 800, 300));
+			panelAccountInfo.setBounds(new Rectangle(10, 530, 1175, 300));
 			this.add(panelAccountInfo);
 		}
 	}
@@ -195,9 +274,9 @@ public class HelpPanel {
 	{
 		JFrame jfrm = new JFrame();
 		jfrm.setTitle("HelpPanel");
-		jfrm.setSize(840, 650);
+		jfrm.setSize(1200, 900);
 		jfrm.setResizable(false);
-		jfrm.setLocation(100,100);
+		jfrm.setLocation(10,10);
 		jfrm.setContentPane(new MainFramePanel());
 		//jfrm.pack();
 		jfrm.addWindowListener(new WindowListener());
