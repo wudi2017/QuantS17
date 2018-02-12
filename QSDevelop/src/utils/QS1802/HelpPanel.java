@@ -5,6 +5,9 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Vector;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -14,11 +17,34 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
+import javax.swing.table.DefaultTableModel;
+
 
 public class HelpPanel {
 	
 	public static class RTMonitorPanel extends JPanel
 	{
+		public static class AddBtnListener implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				System.out.println("AddBtnListener");
+			}
+		}
+		public static class RemoveBtnListener implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				System.out.println("RemoveBtnListener");
+			}
+		}
+		public static class CommitBtnListener implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				System.out.println("CommitBtnListener");
+			}
+		}
 		public RTMonitorPanel()
 		{
 			this.setLayout(null);
@@ -31,8 +57,7 @@ public class HelpPanel {
 			this.add(label_RTMonitor);
 			
 			{
-				String[] columnNames = {"StockID","Strategy","BuyTriggerPrice","SellTriggerPrice",
-						"MinCommitVal","MaxHoldAmount", "A1", "A2", "A3", "A4", "A5", "A6"};
+				String[] columnNames = {"StockID","Strategy","BuyTriggerPrice","SellTriggerPrice",};
 		        String[][] tableValues = {};
 				JTable table_holdstock = new JTable(tableValues,columnNames);
 				JScrollPane scrollPane_holdstock = new JScrollPane();
@@ -40,19 +65,47 @@ public class HelpPanel {
 				scrollPane_holdstock.setSize(0, 0);
 				scrollPane_holdstock.setBounds(new Rectangle(10, 30, 780, 200));
 				this.add(scrollPane_holdstock);
+				
+				
+				
+				Vector vName = new Vector();
+				vName.add("StockID");
+				vName.add("Strategy");
+				vName.add("BuyTriggerPrice");
+				vName.add("SellTriggerPrice");
+				
+				Vector vRow = new Vector();
+				vRow.add("cell 0 0");
+				vRow.add("cell 0 1");
+				vRow.add("cell 0 2");
+				vRow.add("cell 0 3");
+				
+				Vector vData = new Vector();
+				vData.add(vRow.clone());
+				vData.add(vRow.clone());
+				vData.add(vRow.clone());
+				vData.add(vRow.clone());
+	
+				DefaultTableModel model = new DefaultTableModel(vData, vName);
+				//DefaultTableModel cDefaultTableModel = (DefaultTableModel)table_holdstock.getModel();
+				
+				table_holdstock.setModel(model);
 			}
 			
 			
 			JButton btn_add = new JButton("Add");
 			btn_add.setBounds(new Rectangle(10, 235, 80, 20));
+			btn_add.addActionListener(new AddBtnListener());
 			this.add(btn_add);
 			
 			JButton btn_remove = new JButton("Remove");
 			btn_remove.setBounds(new Rectangle(100, 235, 80, 20));
+			btn_remove.addActionListener(new RemoveBtnListener());
 			this.add(btn_remove);
 			
 			JButton btn_commit = new JButton("Commit");
 			btn_commit.setBounds(new Rectangle(190, 235, 80, 20));
+			btn_commit.addActionListener(new CommitBtnListener());
 			this.add(btn_commit);
 		}
 	}
