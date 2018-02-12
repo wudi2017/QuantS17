@@ -438,6 +438,10 @@ public abstract class QS1802Base extends QuantStrategy {
 		// initialize report module
 		m_TranReportor = new TranReportor(accountIDName);
 		
+		// add current day monitor data ID according monitor table
+		super.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
+		this.onStrateDayStart(ctx);
+				
 		// callback onStrateInit
 		this.onStrateInit(ctx);
 	}
