@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Enumeration;
+import java.util.Map;
 import java.util.Vector;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,15 +21,199 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+
+import pers.di.common.CLog;
+import pers.di.common.CSyncObj;
+import pers.di.quantplatform.AccountProxy;
+import utils.QS1802.QURTMonitorTable.MonitorItem;
 
 
 public class HelpPanel {
 	
+	public boolean bindQUObject(QUSelectTable selectTable, 
+			QURTMonitorTable cQURTMonitorTable, 
+			AccountProxy ap)
+	{
+		m_sync.Lock();
+		
+		m_QURTMonitorTable = cQURTMonitorTable;
+		m_QURTMonitorTable.registerCallback(new QURTMonitorTableCB(this));
+		FlushMonitorTable2JTable();
+		
+		m_sync.UnLock();
+		return true;
+	}
+
+	private void FlushMonitorTable2JTable()
+	{
+		m_sync.Lock();
+		
+		DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_RTMonitorPanel.m_RTMonitorTable.getModel();
+		
+		// clear
+		while(dftModel.getRowCount()>0){
+			dftModel.removeRow(dftModel.getRowCount()-1);
+		}
+
+		// add all
+		Map<String, MonitorItem> itemsMap = m_QURTMonitorTable.items();
+		for (Map.Entry<String, MonitorItem> entry : itemsMap.entrySet()) { 
+			String stockID = entry.getKey();
+			MonitorItem cMonitorItem = entry.getValue();
+
+			Vector newRot = new Vector();
+			newRot.add(stockID);
+			newRot.add(cMonitorItem.strategy());
+			newRot.add(cMonitorItem.buyTriggerPrice());
+			newRot.add(cMonitorItem.sellTriggerPrice());
+			newRot.add(cMonitorItem.minCommitInterval());
+			newRot.add(cMonitorItem.oneCommitAmount());
+			newRot.add(cMonitorItem.maxHoldAmount());
+			newRot.add(cMonitorItem.targetProfitPrice());
+			newRot.add(cMonitorItem.targetProfitMoney());
+			newRot.add(cMonitorItem.stopLossPrice());
+			newRot.add(cMonitorItem.stopLossMoney());
+			newRot.add(cMonitorItem.maxHoldDays());
+			dftModel.addRow(newRot);
+		}
+		
+		m_sync.UnLock();
+	}
+	
+	private void onRTMonitorPanelCommit()
+	{
+		FlushJTable2MonitorTable();
+	}
+	
+	private void FlushJTable2MonitorTable()
+	{
+		m_sync.Lock();
+	
+		DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_RTMonitorPanel.m_RTMonitorTable.getModel();
+
+		//m_QURTMonitorTable.removeAllItem();
+		// 删掉后触发dftModel size为0 注意
+		
+		int iRowCnt = dftModel.getDataVector().size();
+		
+		for(int iRow=0; iRow<iRowCnt; iRow++)
+		{
+			String stockID = (String)dftModel.getValueAt(iRow, 0);
+			String strategy = (String)dftModel.getValueAt(iRow, 1);
+			String buyTriggerPrice = (String)dftModel.getValueAt(iRow, 2);
+			String sellTriggerPrice = (String)dftModel.getValueAt(iRow, 3);
+			String minCommitInterval = (String)dftModel.getValueAt(iRow, 4);
+			String oneCommitAmount = (String)dftModel.getValueAt(iRow, 5);
+			String maxHoldAmount = (String)dftModel.getValueAt(iRow, 6);
+			String targetProfitPrice = (String)dftModel.getValueAt(iRow, 7);
+			String targetProfitMoney = (String)dftModel.getValueAt(iRow, 8);
+			String stopLossPrice = (String)dftModel.getValueAt(iRow, 9);
+			String stopLossMoney = (String)dftModel.getValueAt(iRow, 10);
+			String maxHoldDays = (String)dftModel.getValueAt(iRow, 11);
+			
+			m_QURTMonitorTable.addItem(stockID);
+			MonitorItem cMonitorItem = m_QURTMonitorTable.item(stockID);
+			cMonitorItem.setStrategy(strategy);
+			if(null != buyTriggerPrice)
+				cMonitorItem.setBuyTriggerPrice(Double.parseDouble(buyTriggerPrice));
+			if(null != sellTriggerPrice)
+				cMonitorItem.setSellTriggerPrice(Double.parseDouble(sellTriggerPrice));
+			if(null != minCommitInterval)
+				cMonitorItem.setMinCommitInterval(Long.parseLong(minCommitInterval));
+			if(null != oneCommitAmount)
+				cMonitorItem.setOneCommitAmount(Long.parseLong(oneCommitAmount));
+			if(null != maxHoldAmount)
+				cMonitorItem.setMaxHoldAmount(Long.parseLong(maxHoldAmount));
+			if(null != targetProfitPrice)
+				cMonitorItem.setTargetProfitPrice(Double.parseDouble(targetProfitPrice));
+			if(null != targetProfitMoney)
+				cMonitorItem.setTargetProfitMoney(Double.parseDouble(targetProfitMoney));
+			if(null != stopLossPrice)
+				cMonitorItem.setStopLossPrice(Double.parseDouble(stopLossPrice));
+			if(null != stopLossMoney)
+				cMonitorItem.setStopLossMoney(Double.parseDouble(stopLossMoney));
+			if(null != maxHoldDays)
+				cMonitorItem.setMaxHoldDays(Long.parseLong(maxHoldDays));
+		}
+
+		m_sync.UnLock();
+	}
+	
+	public static class QURTMonitorTableCB implements QURTMonitorTable.ICallback
+	{
+		public QURTMonitorTableCB(HelpPanel cHelpPanel)
+		{
+			m_HelpPanel = cHelpPanel;
+		}
+		
+		@Override
+		public void onNotify(CALLBACKTYPE cb) {
+			m_HelpPanel.FlushMonitorTable2JTable();
+		}
+		private HelpPanel m_HelpPanel;
+	}
+	
+	private QURTMonitorTable m_QURTMonitorTable;
+	
+	/*
+	 * =====================================================================================================
+	 * 
+	 * 
+	 *  UI
+	 * 
+	 * 
+	 * =====================================================================================================
+	 */
+
+	public HelpPanel ()
+	{
+		m_sync = new CSyncObj();
+		m_MainFramePanel = new MainFramePanel(this);
+	}
+	public void start()
+	{
+		JFrame jfrm = new JFrame();
+		jfrm.setTitle("HelpPanel");
+		jfrm.setSize(1200, 900);
+		jfrm.setResizable(false);
+		jfrm.setLocation(10,10);
+		jfrm.setContentPane(m_MainFramePanel);
+		//jfrm.pack();
+		jfrm.addWindowListener(new WindowListener());
+		jfrm.setVisible(true);
+	}
+	
+	static private void FitTableColumns(JTable myTable) {
+	    JTableHeader header = myTable.getTableHeader();
+	    int rowCount = myTable.getRowCount();
+
+	    Enumeration columns = myTable.getColumnModel().getColumns();
+	    while (columns.hasMoreElements()) {
+	        TableColumn column = (TableColumn) columns.nextElement();
+	        int col = header.getColumnModel().getColumnIndex(column.getIdentifier());
+	        int width = (int) myTable.getTableHeader().getDefaultRenderer()
+	                .getTableCellRendererComponent(myTable, column.getIdentifier(), false, false, -1, col)
+	                .getPreferredSize().getWidth();
+	        for (int row = 0; row < rowCount; row++) {
+	            int preferedWidth = (int) myTable.getCellRenderer(row, col)
+	                    .getTableCellRendererComponent(myTable, myTable.getValueAt(row, col), false, false, row, col)
+	                    .getPreferredSize().getWidth();
+	            width = Math.max(width, preferedWidth);
+	        }
+	        header.setResizingColumn(column);
+	        column.setWidth(width + myTable.getIntercellSpacing().width + 10);
+	    }
+	}
+	
 	public static class SelectPanel extends JPanel
 	{
-		public SelectPanel()
+		public SelectPanel(MainFramePanel ower)
 		{
+			m_owerMainFramePanel = ower;
+			
 			this.setLayout(null);
 			//this.setBackground(Color.red); 
 			//this.setPreferredSize(new Dimension(800,300));
@@ -45,7 +231,7 @@ public class HelpPanel {
 				m_SelectTable = new JTable();
 				JScrollPane scrollPane = new JScrollPane();
 				scrollPane.setViewportView(m_SelectTable);
-				scrollPane.setBounds(new Rectangle(10, 40, 1155, 150));
+				scrollPane.setBounds(new Rectangle(10, 40, 400, 150));
 				this.add(scrollPane);
 
 				Vector vName = new Vector();
@@ -59,6 +245,7 @@ public class HelpPanel {
 
 		}
 		
+		private MainFramePanel m_owerMainFramePanel;
 		private JTable m_SelectTable;
 	}
 	
@@ -100,8 +287,10 @@ public class HelpPanel {
 			}
 			private RTMonitorPanel m_RTMonitorPanel;
 		}
-		public RTMonitorPanel()
+		public RTMonitorPanel(MainFramePanel ower)
 		{
+			m_owerMainFramePanel = ower;
+			
 			this.setLayout(null);
 			//this.setBackground(Color.red); 
 			//this.setPreferredSize(new Dimension(800,300));
@@ -131,9 +320,11 @@ public class HelpPanel {
 				vName.add("stopLossPrice");
 				vName.add("stopLossMoney");
 				vName.add("maxHoldDays");
+
 				Vector vData = new Vector();
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
 				m_RTMonitorTable.setModel(model);
+				HelpPanel.FitTableColumns(m_RTMonitorTable);
 			}
 
 			JButton btn_add = new JButton("Add");
@@ -171,15 +362,19 @@ public class HelpPanel {
 		public void onClickCommit()
 		{
 			DefaultTableModel dftModel = (DefaultTableModel)m_RTMonitorTable.getModel();
+			m_owerMainFramePanel.onRTMonitorPanelCommit();
 		}
 		
+		private MainFramePanel m_owerMainFramePanel;
 		private JTable m_RTMonitorTable;
 	}
 	
 	public static class AccountInfoPanel extends JPanel
 	{
-		public AccountInfoPanel()
+		public AccountInfoPanel(MainFramePanel ower)
 		{
+			m_owerMainFramePanel = ower;
+			
 			this.setLayout(null);
 			//this.setBackground(Color.red); 
 			//this.setPreferredSize(new Dimension(800,300));
@@ -240,46 +435,52 @@ public class HelpPanel {
 				table_holdstock.setModel(model);
 			}
 		}
+		
+		private MainFramePanel m_owerMainFramePanel;
 	}
 	
 
 	public static class MainFramePanel extends JPanel
 	{
-		public MainFramePanel()
+		public MainFramePanel(HelpPanel ower)
 		{
+			m_owerHelpPanel = ower;
+			
 			this.setLayout(null);
 			//this.setBackground(Color.CYAN);
 			this.setSize(800, 600);
 			
-			SelectPanel selectPane = new SelectPanel();
-			selectPane.setBounds(new Rectangle(10, 20, 1175, 200));
-			this.add(selectPane);
+			m_selectPane = new SelectPanel(this);
+			m_selectPane.setBounds(new Rectangle(10, 20, 1175, 200));
+			this.add(m_selectPane);
 			
-			RTMonitorPanel panelRTMonitor = new RTMonitorPanel();
-			panelRTMonitor.setBounds(new Rectangle(10, 240, 1175, 270));
-			this.add(panelRTMonitor);
+			m_RTMonitorPanel = new RTMonitorPanel(this);
+			m_RTMonitorPanel.setBounds(new Rectangle(10, 240, 1175, 270));
+			this.add(m_RTMonitorPanel);
 			
-			AccountInfoPanel panelAccountInfo = new AccountInfoPanel();
-			panelAccountInfo.setBounds(new Rectangle(10, 530, 1175, 300));
-			this.add(panelAccountInfo);
+			m_AccountInfoPanel = new AccountInfoPanel(this);
+			m_AccountInfoPanel.setBounds(new Rectangle(10, 530, 1175, 300));
+			this.add(m_AccountInfoPanel);
 		}
+		
+		public void onRTMonitorPanelCommit()
+		{
+			m_owerHelpPanel.onRTMonitorPanelCommit();
+		}
+		
+		private HelpPanel m_owerHelpPanel;
+		
+		private SelectPanel m_selectPane;
+		private RTMonitorPanel m_RTMonitorPanel;
+		private AccountInfoPanel m_AccountInfoPanel;
 	}
+	
 	static class WindowListener extends WindowAdapter {  
 		public void windowClosing(WindowEvent e) {  
 			System.exit(0);  
 		}  
 	}  
 	
-	public void start()
-	{
-		JFrame jfrm = new JFrame();
-		jfrm.setTitle("HelpPanel");
-		jfrm.setSize(1200, 900);
-		jfrm.setResizable(false);
-		jfrm.setLocation(10,10);
-		jfrm.setContentPane(new MainFramePanel());
-		//jfrm.pack();
-		jfrm.addWindowListener(new WindowListener());
-		jfrm.setVisible(true);
-	}
+	public CSyncObj m_sync;
+	public MainFramePanel m_MainFramePanel;
 }

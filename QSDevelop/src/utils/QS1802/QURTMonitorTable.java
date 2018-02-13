@@ -8,10 +8,26 @@ import utils.QS1802.QUSelectTable.SelectItem;
 
 public class QURTMonitorTable {
 	
+	public static interface ICallback
+	{
+		public enum CALLBACKTYPE
+		{
+			INVALID,
+			CHANGED,
+			COMMITED,
+		}
+		abstract public void onNotify(CALLBACKTYPE cb);
+	}
+	
 	public QURTMonitorTable(String fileName)
 	{
 		m_monitorMap = new HashMap<String, MonitorItem>();
 		m_CXmlTable = new CXmlTable(fileName);
+	}
+	
+	public void registerCallback(ICallback cb)
+	{
+		m_ICallback = cb;
 	}
 	
 	public boolean open()
@@ -33,7 +49,7 @@ public class QURTMonitorTable {
 			String sStopLossMoney = cursor.getColume("stopLossMoney");
 			String sMaxHoldDays = cursor.getColume("maxHoldDays");
 			
-			MonitorItem cMonitorItem = new MonitorItem();
+			MonitorItem cMonitorItem = new MonitorItem(this);
 			if(null != sStockID)
 				cMonitorItem.m_sStrategy = sStrategy;
 			if(null != sBuyTriggerPrice)
@@ -96,7 +112,10 @@ public class QURTMonitorTable {
 			if(null != cMonitorItem.m_dMaxHoldDays)
 				cRowCursor.setColume("maxHoldDays", String.format("%d", cMonitorItem.m_dMaxHoldDays));
 		}
-		return m_CXmlTable.commit();
+		
+		boolean bRet = m_CXmlTable.commit();
+		m_ICallback.onNotify(ICallback.CALLBACKTYPE.COMMITED);
+		return bRet;
 	}
 	
 	public MonitorItem item(String stockID)
@@ -113,8 +132,9 @@ public class QURTMonitorTable {
 	{
 		if(!m_monitorMap.containsKey(stockID))
 		{
-			MonitorItem cMonitorItem = new MonitorItem();
+			MonitorItem cMonitorItem = new MonitorItem(this);
 			m_monitorMap.put(stockID, cMonitorItem);
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
 		}
 	}
 	
@@ -123,6 +143,17 @@ public class QURTMonitorTable {
 		if(m_monitorMap.containsKey(stockID))
 		{
 			m_monitorMap.remove(stockID);
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+		}
+		return;
+	}
+	
+	public void removeAllItem()
+	{
+		if(m_monitorMap.size() > 0)
+		{
+			m_monitorMap.clear();
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
 		}
 		return;
 	}
@@ -142,6 +173,11 @@ public class QURTMonitorTable {
 	 */
 	public static class MonitorItem
 	{
+		public MonitorItem(QURTMonitorTable ower)
+		{
+			m_ower = ower;
+		}
+
 		public String strategy()
 		{
 			return m_sStrategy;
@@ -149,6 +185,7 @@ public class QURTMonitorTable {
 		public void setStrategy(String strategy)
 		{
 			m_sStrategy = strategy;
+			onItemChanged();
 		}
 		
 		public Double buyTriggerPrice()
@@ -158,6 +195,7 @@ public class QURTMonitorTable {
 		public void setBuyTriggerPrice(Double buyTriggerPrice)
 		{
 			m_dBuyTriggerPrice = buyTriggerPrice;
+			onItemChanged();
 		}
 
 		public Double sellTriggerPrice()
@@ -167,6 +205,7 @@ public class QURTMonitorTable {
 		public void setSellTriggerPrice(Double sellTriggerPrice)
 		{
 			m_dSellTriggerPrice = sellTriggerPrice;
+			onItemChanged();
 		}
 		
 		public Long minCommitInterval()
@@ -176,6 +215,7 @@ public class QURTMonitorTable {
 		public void setMinCommitInterval(Long minCommitInterval)
 		{
 			m_lMinCommitInterval = minCommitInterval;
+			onItemChanged();
 		}
 		
 		public Long oneCommitAmount()
@@ -185,6 +225,7 @@ public class QURTMonitorTable {
 		public void setOneCommitAmount(Long oneCommitAmount)
 		{
 			m_lOneCommitAmount = oneCommitAmount;
+			onItemChanged();
 		}
 		
 		public Long maxHoldAmount()
@@ -194,6 +235,7 @@ public class QURTMonitorTable {
 		public void setMaxHoldAmount(Long maxHoldAmount)
 		{
 			m_lMaxHoldAmount = maxHoldAmount;
+			onItemChanged();
 		}
 		
 		public Double targetProfitMoney()
@@ -203,6 +245,7 @@ public class QURTMonitorTable {
 		public void setTargetProfitMoney(Double targetProfitMoney)
 		{
 			m_dTargetProfitMoney = targetProfitMoney;
+			onItemChanged();
 		}
 		
 		public Double targetProfitPrice()
@@ -212,6 +255,7 @@ public class QURTMonitorTable {
 		public void setTargetProfitPrice(Double targetProfitPrice)
 		{
 			m_dTargetProfitPrice = targetProfitPrice;
+			onItemChanged();
 		}
 		
 		public Double stopLossPrice()
@@ -221,6 +265,7 @@ public class QURTMonitorTable {
 		public void setStopLossPrice(Double stopLossPrice)
 		{
 			m_dStopLossPrice = stopLossPrice;
+			onItemChanged();
 		}
 		
 		public Double stopLossMoney()
@@ -230,6 +275,7 @@ public class QURTMonitorTable {
 		public void setStopLossMoney(Double stopLossMoney)
 		{
 			m_dStopLossMoney = stopLossMoney;
+			onItemChanged();
 		}
 		
 		public Long maxHoldDays()
@@ -239,7 +285,16 @@ public class QURTMonitorTable {
 		public void setMaxHoldDays(Long maxHoldDays)
 		{
 			m_dMaxHoldDays = maxHoldDays;
+			onItemChanged();
 		}
+		
+		
+		private void onItemChanged()
+		{
+			m_ower.m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+		}
+		
+		private QURTMonitorTable m_ower;
 		
 		private String m_sStrategy; // P/M
 		private Double m_dBuyTriggerPrice; 
@@ -254,6 +309,7 @@ public class QURTMonitorTable {
 		private Long m_dMaxHoldDays;
 	}
 	
+	private ICallback m_ICallback;
 	private Map<String, MonitorItem> m_monitorMap;
 	private CXmlTable m_CXmlTable;
 }

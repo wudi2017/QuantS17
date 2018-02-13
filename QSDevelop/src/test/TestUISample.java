@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -16,6 +17,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
+import javax.swing.table.DefaultTableModel;
+
+import pers.di.common.CLog;
 
 public class TestUISample {
 	public static class FramePane extends JPanel
@@ -95,15 +99,36 @@ public class TestUISample {
 			this.add(label_RTMonitor);
 			
 			{
-				String[] columnNames = {"StockID","Strategy","BuyTriggerPrice","SellTriggerPrice",
-						"MinCommitVal","MaxHoldAmount", "A1", "A2", "A3", "A4", "A5", "A6"};
-		        String[][] tableValues = {};
-				JTable table_holdstock = new JTable(tableValues,columnNames);
+				JTable table_holdstock = new JTable(null);
 				JScrollPane scrollPane_holdstock = new JScrollPane();
 				scrollPane_holdstock.setViewportView(table_holdstock);
 				scrollPane_holdstock.setSize(0, 0);
 				scrollPane_holdstock.setBounds(new Rectangle(0, 330, 800, 200));
 				this.add(scrollPane_holdstock);
+				
+				Vector vName = new Vector();
+				vName.add("stockID");
+				vName.add("strategy");
+				vName.add("buyTriggerPrice");
+				vName.add("sellTriggerPrice");
+				vName.add("minCommitInterval");
+				vName.add("oneCommitAmount");
+				vName.add("maxHoldAmount");
+				vName.add("targetProfitPrice");
+				vName.add("targetProfitMoney");
+				vName.add("stopLossPrice");
+				vName.add("stopLossMoney");
+				vName.add("maxHoldDays");
+
+				Vector vData = new Vector();
+				DefaultTableModel model = new DefaultTableModel(vData, vName);
+				table_holdstock.setModel(model);
+				
+				DefaultTableModel dftModel = (DefaultTableModel)table_holdstock.getModel();
+				dftModel.addRow(new Vector());
+				
+				int iRowCnt = dftModel.getRowCount();
+				CLog.output("Test", "%d", iRowCnt);
 			}
 			
 			

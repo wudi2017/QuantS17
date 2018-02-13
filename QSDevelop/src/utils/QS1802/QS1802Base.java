@@ -34,6 +34,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		public DefaultConfig()
 		{
 			// default
+			GlobalDefaultShowHelpPanel = true;
 			GlobalDefaultAutoMoveSelectToMonitor = true;
 			GlobalDefaultMinCommitInterval = 30L;
 			GlobalDefaulMaxHoldStockCount = 5L;
@@ -45,6 +46,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 		public void copyFrom(DefaultConfig cfg)
 		{
+			GlobalDefaultShowHelpPanel = cfg.GlobalDefaultShowHelpPanel;
 			GlobalDefaultAutoMoveSelectToMonitor = cfg.GlobalDefaultAutoMoveSelectToMonitor;
 			GlobalDefaultMinCommitInterval = cfg.GlobalDefaultMinCommitInterval;
 			GlobalDefaulMaxHoldStockCount = cfg.GlobalDefaulMaxHoldStockCount;
@@ -54,6 +56,7 @@ public abstract class QS1802Base extends QuantStrategy {
 			GlobalDefaulStockTargetProfitRatio = cfg.GlobalDefaulStockTargetProfitRatio;
 			GlobalDefaulStockStopLossRatio = cfg.GlobalDefaulStockStopLossRatio;
 		}
+		public Boolean GlobalDefaultShowHelpPanel;
 		public Boolean GlobalDefaultAutoMoveSelectToMonitor;
 		public Long GlobalDefaultMinCommitInterval;
 		public Long GlobalDefaulMaxHoldStockCount;
@@ -69,6 +72,8 @@ public abstract class QS1802Base extends QuantStrategy {
 	{
 		// initialize m_defaultCfg
 		m_defaultCfg = new DefaultConfig();
+		
+		m_helpPanel = new HelpPanel();
 	}
 	public void setDefaultConfig(DefaultConfig defaultCfg)
 	{
@@ -444,6 +449,11 @@ public abstract class QS1802Base extends QuantStrategy {
 				
 		// callback onStrateInit
 		this.onStrateInit(ctx);
+		
+		// start helpPanel
+		m_helpPanel.bindQUObject(m_QUSelectTable,m_QURTMonitorTable, ctx.ap());
+		m_helpPanel.start();
+		
 	}
 	
 	@Override
@@ -580,4 +590,6 @@ public abstract class QS1802Base extends QuantStrategy {
 	private QUSelectTable m_QUSelectTable; // 选股表
 	private QURTMonitorTable m_QURTMonitorTable; // 实时监控表
 	private TranReportor m_TranReportor; // 报告模块
+	
+	private HelpPanel m_helpPanel;
 }
