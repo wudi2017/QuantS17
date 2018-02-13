@@ -166,7 +166,7 @@ public class QS1802T1 extends QS1802Base {
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-01-01 2016-03-01", // Realtime | HistoryTest 2016-01-01 2016-03-01
+				"Realtime", // Realtime | HistoryTest 2016-01-01 2016-03-01
 				cAccoutDriver, 
 				new QS1802T1(true)); // bAutoSelect2Monitor
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");

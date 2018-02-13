@@ -126,6 +126,16 @@ public class TestUISample {
 				
 				DefaultTableModel dftModel = (DefaultTableModel)table_holdstock.getModel();
 				dftModel.addRow(new Vector());
+				dftModel.addRow(new Vector());
+				dftModel.addRow(new Vector());
+				
+				dftModel.addRow(new Vector());
+				
+//				// clear
+//				while(dftModel.getRowCount()>0){
+//					dftModel.removeRow(0);
+//				}
+				
 				
 				int iRowCnt = dftModel.getRowCount();
 				CLog.output("Test", "%d", iRowCnt);

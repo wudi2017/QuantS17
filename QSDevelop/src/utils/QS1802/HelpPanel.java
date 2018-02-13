@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -27,6 +28,7 @@ import javax.swing.table.TableModel;
 
 import pers.di.common.CLog;
 import pers.di.common.CSyncObj;
+import pers.di.common.CThread;
 import pers.di.quantplatform.AccountProxy;
 import utils.QS1802.QURTMonitorTable.MonitorItem;
 
@@ -51,34 +53,39 @@ public class HelpPanel {
 	{
 		m_sync.Lock();
 		
-		DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_RTMonitorPanel.m_RTMonitorTable.getModel();
-		
-		// clear
-		while(dftModel.getRowCount()>0){
-			dftModel.removeRow(dftModel.getRowCount()-1);
-		}
+		Runnable runnable = new Runnable() {
+			public void run() {
+				DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_RTMonitorPanel.m_RTMonitorTable.getModel();
+				// clear
+				// dftModel.getDataVector().clear();
+				// dftModel.setRowCount(0);
+				while(dftModel.getRowCount()>0){
+					dftModel.removeRow(dftModel.getRowCount()-1);
+				}
+				// add
+				Map<String, MonitorItem> itemsMap = m_QURTMonitorTable.CopyOriginROMirrorMap();
+				for (Map.Entry<String, MonitorItem> entry : itemsMap.entrySet()) { 
+					String stockID = entry.getKey();
+					MonitorItem cMonitorItem = entry.getValue();
 
-		// add all
-		Map<String, MonitorItem> itemsMap = m_QURTMonitorTable.items();
-		for (Map.Entry<String, MonitorItem> entry : itemsMap.entrySet()) { 
-			String stockID = entry.getKey();
-			MonitorItem cMonitorItem = entry.getValue();
-
-			Vector newRot = new Vector();
-			newRot.add(stockID);
-			newRot.add(cMonitorItem.strategy());
-			newRot.add(cMonitorItem.buyTriggerPrice());
-			newRot.add(cMonitorItem.sellTriggerPrice());
-			newRot.add(cMonitorItem.minCommitInterval());
-			newRot.add(cMonitorItem.oneCommitAmount());
-			newRot.add(cMonitorItem.maxHoldAmount());
-			newRot.add(cMonitorItem.targetProfitPrice());
-			newRot.add(cMonitorItem.targetProfitMoney());
-			newRot.add(cMonitorItem.stopLossPrice());
-			newRot.add(cMonitorItem.stopLossMoney());
-			newRot.add(cMonitorItem.maxHoldDays());
-			dftModel.addRow(newRot);
-		}
+					Vector newRot = new Vector();
+					newRot.add(stockID);
+					newRot.add(cMonitorItem.strategy());
+					newRot.add(cMonitorItem.buyTriggerPrice());
+					newRot.add(cMonitorItem.sellTriggerPrice());
+					newRot.add(cMonitorItem.minCommitInterval());
+					newRot.add(cMonitorItem.oneCommitAmount());
+					newRot.add(cMonitorItem.maxHoldAmount());
+					newRot.add(cMonitorItem.targetProfitPrice());
+					newRot.add(cMonitorItem.targetProfitMoney());
+					newRot.add(cMonitorItem.stopLossPrice());
+					newRot.add(cMonitorItem.stopLossMoney());
+					newRot.add(cMonitorItem.maxHoldDays());
+					dftModel.addRow(newRot);
+				}
+			}
+		};
+		SwingUtilities.invokeLater(runnable);	
 		
 		m_sync.UnLock();
 	}
@@ -91,14 +98,15 @@ public class HelpPanel {
 	private void FlushJTable2MonitorTable()
 	{
 		m_sync.Lock();
-	
+
 		DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_RTMonitorPanel.m_RTMonitorTable.getModel();
 
-		//m_QURTMonitorTable.removeAllItem();
-		// 删掉后触发dftModel size为0 注意
+		// 清除QURTMonitorTable数据，但要停止callback，否则导致UItable为NULL
+		m_QURTMonitorTable.registerCallback(null);
+		m_QURTMonitorTable.removeAllItem();
+		m_QURTMonitorTable.registerCallback(new QURTMonitorTableCB(this));
 		
 		int iRowCnt = dftModel.getDataVector().size();
-		
 		for(int iRow=0; iRow<iRowCnt; iRow++)
 		{
 			String stockID = (String)dftModel.getValueAt(iRow, 0);
@@ -307,22 +315,12 @@ public class HelpPanel {
 				scrollPane.setBounds(new Rectangle(10, 30, 1155, 200));
 				this.add(scrollPane);
 
-				Vector vName = new Vector();
-				vName.add("stockID");
-				vName.add("strategy");
-				vName.add("buyTriggerPrice");
-				vName.add("sellTriggerPrice");
-				vName.add("minCommitInterval");
-				vName.add("oneCommitAmount");
-				vName.add("maxHoldAmount");
-				vName.add("targetProfitPrice");
-				vName.add("targetProfitMoney");
-				vName.add("stopLossPrice");
-				vName.add("stopLossMoney");
-				vName.add("maxHoldDays");
-
-				Vector vData = new Vector();
-				DefaultTableModel model = new DefaultTableModel(vData, vName);
+				String[] header = new String[] { 
+						"stockID", "strategy", "buyTriggerPrice", "sellTriggerPrice",
+						"minCommitInterval", "oneCommitAmount", "maxHoldAmount", 
+						"targetProfitPrice", "targetProfitMoney", "stopLossPrice", "stopLossMoney", "maxHoldDays",
+						};
+				DefaultTableModel model = new DefaultTableModel(header, 0);
 				m_RTMonitorTable.setModel(model);
 				HelpPanel.FitTableColumns(m_RTMonitorTable);
 			}

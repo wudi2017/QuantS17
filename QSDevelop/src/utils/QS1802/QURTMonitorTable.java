@@ -2,6 +2,7 @@ package utils.QS1802;
 
 import java.util.*;
 
+import pers.di.common.CSyncObj;
 import pers.di.common.CXmlTable;
 import pers.di.common.CXmlTable.RowCursor;
 import utils.QS1802.QUSelectTable.SelectItem;
@@ -21,17 +22,21 @@ public class QURTMonitorTable {
 	
 	public QURTMonitorTable(String fileName)
 	{
+		m_sync = new CSyncObj();
 		m_monitorMap = new HashMap<String, MonitorItem>();
 		m_CXmlTable = new CXmlTable(fileName);
 	}
 	
 	public void registerCallback(ICallback cb)
 	{
+		m_sync.Lock();
 		m_ICallback = cb;
+		m_sync.UnLock();
 	}
 	
 	public boolean open()
 	{
+		m_sync.Lock();
 		m_CXmlTable.open();
 		RowCursor cursor = m_CXmlTable.moveFirst();
 		while(null!=cursor)
@@ -77,10 +82,13 @@ public class QURTMonitorTable {
 			
 			cursor = m_CXmlTable.moveNext();
 		}
+		m_sync.UnLock();
 		return true;
 	}
 	public boolean commit()
 	{
+		m_sync.Lock();
+		
 		m_CXmlTable.deleteAll();
 		
 		for (Map.Entry<String, MonitorItem> entry : m_monitorMap.entrySet()) { 
@@ -114,57 +122,88 @@ public class QURTMonitorTable {
 		}
 		
 		boolean bRet = m_CXmlTable.commit();
-		m_ICallback.onNotify(ICallback.CALLBACKTYPE.COMMITED);
+		
+		if(null != m_ICallback)
+		{
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.COMMITED);
+		}
+		
+		m_sync.UnLock();
 		return bRet;
 	}
 	
 	public MonitorItem item(String stockID)
 	{
-		return m_monitorMap.get(stockID);
+		m_sync.Lock();
+		MonitorItem reItem = m_monitorMap.get(stockID);
+		m_sync.UnLock();
+		return reItem;
 	}
 	
-	public Map<String, MonitorItem> items()
+	// ¿½±´Ô­Ê¼Ö»¶Á¾µÏñ
+	public Map<String, MonitorItem> CopyOriginROMirrorMap()
 	{
-		return m_monitorMap;
+		m_sync.Lock();
+		Map<String, MonitorItem> retMap = new HashMap<String, MonitorItem>();
+		retMap.putAll(m_monitorMap);
+		m_sync.UnLock();
+		return retMap;
 	}
 	
 	public void addItem(String stockID)
 	{
+		m_sync.Lock();
 		if(!m_monitorMap.containsKey(stockID))
 		{
 			MonitorItem cMonitorItem = new MonitorItem(this);
 			m_monitorMap.put(stockID, cMonitorItem);
-			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			if(null != m_ICallback)
+			{
+				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			}
 		}
+		m_sync.UnLock();
 	}
 	
 	public void removeItem(String stockID)
 	{
+		m_sync.Lock();
 		if(m_monitorMap.containsKey(stockID))
 		{
 			m_monitorMap.remove(stockID);
-			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			if(null != m_ICallback)
+			{
+				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			}
 		}
+		m_sync.UnLock();
 		return;
 	}
 	
 	public void removeAllItem()
 	{
+		m_sync.Lock();
 		if(m_monitorMap.size() > 0)
 		{
 			m_monitorMap.clear();
-			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			if(null != m_ICallback)
+			{
+				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			}
 		}
+		m_sync.UnLock();
 		return;
 	}
 	
 	public List<String> monitorStockIDs()
 	{
+		m_sync.Lock();
 		List<String> retList = new ArrayList<String>();
 		for (Map.Entry<String, MonitorItem> entry : m_monitorMap.entrySet()) { 
 			String stockID = entry.getKey();
 			retList.add(stockID);
 		}
+		m_sync.UnLock();
 		return retList;
 	}
 	
@@ -291,7 +330,10 @@ public class QURTMonitorTable {
 		
 		private void onItemChanged()
 		{
-			m_ower.m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			if(null != m_ower && null != m_ower.m_ICallback)
+			{
+				m_ower.m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			}
 		}
 		
 		private QURTMonitorTable m_ower;
@@ -309,6 +351,7 @@ public class QURTMonitorTable {
 		private Long m_dMaxHoldDays;
 	}
 	
+	public CSyncObj m_sync;
 	private ICallback m_ICallback;
 	private Map<String, MonitorItem> m_monitorMap;
 	private CXmlTable m_CXmlTable;
