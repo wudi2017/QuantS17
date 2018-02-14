@@ -27,10 +27,11 @@ import utils.QS1802.QUSelectTable.SelectItem;
 
 public class QS1802T1 extends QS1802Base {
 	
-	public QS1802T1(boolean bAutoSelect2Monitor) {
+	public QS1802T1(boolean bAutoSelect2Monitor, boolean bHelpPane) {
 		super();
 		DefaultConfig cfg = super.getDefaultConfig();
 		cfg.GlobalDefaultAutoMoveSelectToMonitor = bAutoSelect2Monitor;
+		cfg.GlobalDefaultShowHelpPanel = bHelpPane;
 		super.setDefaultConfig(cfg);
 	}
 
@@ -168,7 +169,7 @@ public class QS1802T1 extends QS1802Base {
 		QuantSession qSession = new QuantSession(
 				"HistoryTest 2016-01-01 2016-03-01", // Realtime | HistoryTest 2016-01-01 2016-03-01
 				cAccoutDriver, 
-				new QS1802T1(true)); // bAutoSelect2Monitor
+				new QS1802T1(true, true)); // bAutoSelect2Monitor, bHelpPane
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		

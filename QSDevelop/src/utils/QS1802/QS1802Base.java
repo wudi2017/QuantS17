@@ -451,9 +451,11 @@ public abstract class QS1802Base extends QuantStrategy {
 		this.onStrateInit(ctx);
 		
 		// start helpPanel
-		m_helpPanel.bindQUObject(m_QUSelectTable,m_QURTMonitorTable, ctx.ap());
-		m_helpPanel.start();
-		
+		if(m_defaultCfg.GlobalDefaultShowHelpPanel)
+		{
+			m_helpPanel.bindQUObject(m_QUSelectTable,m_QURTMonitorTable, ctx.ap());
+			m_helpPanel.start();
+		}
 	}
 	
 	@Override
