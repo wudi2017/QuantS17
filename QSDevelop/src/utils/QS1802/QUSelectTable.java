@@ -4,17 +4,38 @@ import java.util.*;
 
 import pers.di.common.*;
 import pers.di.common.CXmlTable.RowCursor;
+import utils.QS1802.QURTMonitorTable.MonitorItem;
 
 public class QUSelectTable {
 	
+	public static interface ICallback
+	{
+		public enum CALLBACKTYPE
+		{
+			INVALID,
+			CHANGED,
+		}
+		abstract public void onNotify(CALLBACKTYPE cb);
+	}
+	
 	public QUSelectTable(String fileName)
 	{
+		m_sync = new CSyncObj();
+		m_ICallback = null;
 		m_SelectItemList = new ArrayList<SelectItem>();
 		m_CXmlTable = new CXmlTable(fileName);
 	}
 	
+	public void registerCallback(ICallback cb)
+	{
+		m_sync.Lock();
+		m_ICallback = cb;
+		m_sync.UnLock();
+	}
+	
 	public boolean open()
 	{
+		m_sync.Lock();
 		m_CXmlTable.open();
 		RowCursor cursor = m_CXmlTable.moveFirst();
 		while(null!=cursor)
@@ -36,11 +57,18 @@ public class QUSelectTable {
 
 			cursor = m_CXmlTable.moveNext();
 		}
+		
+		if(null != m_ICallback)
+		{
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+		}
+		m_sync.UnLock();
 		return true;
 	}
 	
 	public boolean commit()
 	{
+		m_sync.Lock();
 		m_CXmlTable.deleteAll();
 		for(int i=0; i<m_SelectItemList.size(); i++)
 		{
@@ -59,11 +87,22 @@ public class QUSelectTable {
 				}
 			}
 		}
-		return m_CXmlTable.commit();
+		
+		boolean bCommit = m_CXmlTable.commit();
+		
+		if(null != m_ICallback)
+		{
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+		}
+		
+		m_sync.UnLock();
+		
+		return bCommit;
 	}
 	
 	public SelectItem item(String stockID)
 	{
+		m_sync.Lock();
 		for(int i=0; i<m_SelectItemList.size(); i++)
 		{
 			SelectItem cSelectItem = m_SelectItemList.get(i);
@@ -72,11 +111,13 @@ public class QUSelectTable {
 				return cSelectItem;
 			}
 		}
+		m_sync.UnLock();
 		return null;
 	}
 	
 	public void addItem(String stockID)
 	{
+		m_sync.Lock();
 		for(int i=0; i<m_SelectItemList.size(); i++)
 		{
 			SelectItem cSelectItem = m_SelectItemList.get(i);
@@ -89,10 +130,18 @@ public class QUSelectTable {
 		SelectItem cNewSelectItem = new SelectItem();
 		cNewSelectItem.m_sStockID = stockID;
 		m_SelectItemList.add(cNewSelectItem);
+		
+		if(null != m_ICallback)
+		{
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+		}
+		
+		m_sync.UnLock();
 	}
 	
 	public void removeItem(String stockID)
 	{
+		m_sync.Lock();
 		int index = -1;
 		for(int i=0; i<m_SelectItemList.size(); i++)
 		{
@@ -106,23 +155,45 @@ public class QUSelectTable {
 		if(index >= 0)
 		{
 			m_SelectItemList.remove(index);
+			
+			if(null != m_ICallback)
+			{
+				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			}
 		}
+		
+		m_sync.UnLock();
 		return;
 	}
 	
 	public void clearAllItem()
 	{
-		m_SelectItemList.clear();
+		m_sync.Lock();
+		if(m_SelectItemList.size() > 0)
+		{
+			m_SelectItemList.clear();
+			
+			if(null != m_ICallback)
+			{
+				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+			}
+		}
+		m_sync.UnLock();
 		return;
 	}
 	
-	public List<SelectItem> items()
+	public List<SelectItem> copyOriginROItemList()
 	{
+//		m_sync.Lock();
+//		List<SelectItem> retList = new ArrayList<SelectItem>();
+//		retList.addAll(m_SelectItemList);
+//		m_sync.UnLock();
 		return m_SelectItemList;
 	}
 	
 	public List<String> selectStockIDs()
 	{
+		m_sync.Lock();
 		Collections.sort(m_SelectItemList, new SelectItem.SelectItemCompare());
 		
 		List<String> retList = new ArrayList<String>();
@@ -131,11 +202,13 @@ public class QUSelectTable {
 			SelectItem cSelectItem = m_SelectItemList.get(i);
 			retList.add(cSelectItem.m_sStockID);
 		}
+		m_sync.UnLock();
 		return retList;
 	}
 	
 	public void selectKeepMaxCount(int maxCount)
 	{
+		m_sync.Lock();
 		Collections.sort(m_SelectItemList, new SelectItem.SelectItemCompare());
 		int count = 0;
 		Iterator<SelectItem> iter = m_SelectItemList.iterator();
@@ -150,10 +223,18 @@ public class QUSelectTable {
         	}
         	iter.next();
         }
+        
+        if(null != m_ICallback)
+		{
+			m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+		}
+        
+        m_sync.UnLock();
 	}
 	
 	public String dump()
 	{
+		m_sync.UnLock();
 		String dump = "";
 		dump += String.format("Select(%d) ", m_SelectItemList.size());
 		for(int i=0; i<m_SelectItemList.size(); i++)
@@ -161,6 +242,7 @@ public class QUSelectTable {
 			SelectItem cSelectItem = m_SelectItemList.get(i);
 			dump += String.format("%s ", cSelectItem.m_sStockID);
 		}
+		m_sync.UnLock();
 		return dump;
 	}
 	
@@ -175,9 +257,17 @@ public class QUSelectTable {
 			m_dPriority = Double.MIN_VALUE;
 			m_propMap = new HashMap<String,String>();
 		}
+		public String stockID()
+		{
+			return m_sStockID;
+		}
+		public Double priority()
+		{
+			return m_dPriority;
+		}
 		public void setPriority(Double dPriority)
 		{
-			
+			m_dPriority = dPriority;
 		}
 		public String getProperty(String property)
 		{
@@ -206,6 +296,8 @@ public class QUSelectTable {
 		private Map<String,String> m_propMap;
 	}
 	
+	public CSyncObj m_sync;
+	private ICallback m_ICallback;
 	private List<SelectItem> m_SelectItemList;
 	private CXmlTable m_CXmlTable;
 }

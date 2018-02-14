@@ -141,7 +141,7 @@ public class QURTMonitorTable {
 	}
 	
 	// ¿½±´Ô­Ê¼Ö»¶Á¾µÏñ
-	public Map<String, MonitorItem> CopyOriginROMirrorMap()
+	public Map<String, MonitorItem> copyOriginROMirrorMap()
 	{
 		m_sync.Lock();
 		Map<String, MonitorItem> retMap = new HashMap<String, MonitorItem>();

@@ -5,9 +5,7 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -27,10 +25,15 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import pers.di.common.CLog;
+import pers.di.common.CObjectContainer;
 import pers.di.common.CSyncObj;
 import pers.di.common.CThread;
+import pers.di.account.common.*;
 import pers.di.quantplatform.AccountProxy;
+import pers.di.account.Account;
+
 import utils.QS1802.QURTMonitorTable.MonitorItem;
+import utils.QS1802.QUSelectTable.SelectItem;
 
 
 public class HelpPanel {
@@ -41,12 +44,50 @@ public class HelpPanel {
 	{
 		m_sync.Lock();
 		
+		m_selectTable = selectTable;
+		m_selectTable.registerCallback(new SelectTableCB(this));
+		FlushSelect2JTable();
+		
 		m_QURTMonitorTable = cQURTMonitorTable;
 		m_QURTMonitorTable.registerCallback(new QURTMonitorTableCB(this));
 		FlushMonitorTable2JTable();
 		
+		m_ap = ap;
+		m_ap.registerCallback(new AccountCB(this));
+		FlushAccount2JTable();
+		
 		m_sync.UnLock();
 		return true;
+	}
+	
+	private void FlushSelect2JTable()
+	{
+		m_sync.Lock();
+		
+		Runnable runnable = new Runnable() {
+			public void run() {
+				DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_selectPane.m_SelectTable.getModel();
+				// clear
+				while(dftModel.getRowCount()>0){
+					dftModel.removeRow(dftModel.getRowCount()-1);
+				}
+				// add
+				 List<SelectItem> selectList = m_selectTable.copyOriginROItemList();
+				 for(int i=0; i<selectList.size(); i++ )
+				 {
+					SelectItem cSelectItem = selectList.get(i);
+					
+					Vector newRot = new Vector();
+					newRot.add(cSelectItem.stockID());
+					newRot.add(String.format("%.3f", cSelectItem.priority()));
+					newRot.add("-");
+					dftModel.addRow(newRot);
+				 }
+			}
+		};
+		SwingUtilities.invokeLater(runnable);	
+		
+		m_sync.UnLock();
 	}
 
 	private void FlushMonitorTable2JTable()
@@ -63,7 +104,7 @@ public class HelpPanel {
 					dftModel.removeRow(dftModel.getRowCount()-1);
 				}
 				// add
-				Map<String, MonitorItem> itemsMap = m_QURTMonitorTable.CopyOriginROMirrorMap();
+				Map<String, MonitorItem> itemsMap = m_QURTMonitorTable.copyOriginROMirrorMap();
 				for (Map.Entry<String, MonitorItem> entry : itemsMap.entrySet()) { 
 					String stockID = entry.getKey();
 					MonitorItem cMonitorItem = entry.getValue();
@@ -71,16 +112,57 @@ public class HelpPanel {
 					Vector newRot = new Vector();
 					newRot.add(stockID);
 					newRot.add(cMonitorItem.strategy());
-					newRot.add(cMonitorItem.buyTriggerPrice());
-					newRot.add(cMonitorItem.sellTriggerPrice());
-					newRot.add(cMonitorItem.minCommitInterval());
-					newRot.add(cMonitorItem.oneCommitAmount());
-					newRot.add(cMonitorItem.maxHoldAmount());
-					newRot.add(cMonitorItem.targetProfitPrice());
-					newRot.add(cMonitorItem.targetProfitMoney());
-					newRot.add(cMonitorItem.stopLossPrice());
-					newRot.add(cMonitorItem.stopLossMoney());
-					newRot.add(cMonitorItem.maxHoldDays());
+					
+					if(null != cMonitorItem.buyTriggerPrice())
+						newRot.add(String.format("%.3f", cMonitorItem.buyTriggerPrice()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.sellTriggerPrice())
+						newRot.add(String.format("%.3f", cMonitorItem.sellTriggerPrice()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.minCommitInterval())
+						newRot.add(String.format("%d", cMonitorItem.minCommitInterval()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.oneCommitAmount())
+						newRot.add(String.format("%d", cMonitorItem.oneCommitAmount()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.maxHoldAmount())
+						newRot.add(String.format("%d", cMonitorItem.maxHoldAmount()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.targetProfitPrice())
+						newRot.add(String.format("%.3f",cMonitorItem.targetProfitPrice()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.targetProfitMoney())
+						newRot.add(String.format("%.3f",cMonitorItem.targetProfitMoney()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.stopLossPrice())
+						newRot.add(String.format("%.3f",cMonitorItem.stopLossPrice()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.stopLossMoney())
+						newRot.add(String.format("%.3f",cMonitorItem.stopLossMoney()));
+					else
+						newRot.add(null);
+					
+					if(null != cMonitorItem.maxHoldDays())
+						newRot.add(String.format("%d", cMonitorItem.maxHoldDays()));
+					else
+						newRot.add(null);
+					
 					dftModel.addRow(newRot);
 				}
 			}
@@ -88,11 +170,6 @@ public class HelpPanel {
 		SwingUtilities.invokeLater(runnable);	
 		
 		m_sync.UnLock();
-	}
-	
-	private void onRTMonitorPanelCommit()
-	{
-		FlushJTable2MonitorTable();
 	}
 	
 	private void FlushJTable2MonitorTable()
@@ -147,7 +224,78 @@ public class HelpPanel {
 				cMonitorItem.setMaxHoldDays(Long.parseLong(maxHoldDays));
 		}
 
+		m_QURTMonitorTable.commit();
+		
 		m_sync.UnLock();
+	}
+	
+	private void FlushAccount2JTable()
+	{
+		m_sync.Lock();
+		
+		Runnable runnable = new Runnable() {
+			public void run() {
+				
+				// flush table
+				
+				DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_AccountInfoPanel.m_HoldStockTable.getModel();
+				// clear
+				// dftModel.getDataVector().clear();
+				// dftModel.setRowCount(0);
+				while(dftModel.getRowCount()>0){
+					dftModel.removeRow(dftModel.getRowCount()-1);
+				}
+				// add
+				List<HoldStock> holdList = new ArrayList<HoldStock>();
+				m_ap.getHoldStockList(holdList);
+				for(int i=0; i<holdList.size(); i++)
+				{
+					HoldStock cHoldStock = holdList.get(i);
+					
+					Vector newRot = new Vector();
+					newRot.add(cHoldStock.stockID);
+					newRot.add(cHoldStock.createDate);
+					newRot.add(cHoldStock.totalAmount);
+					newRot.add(cHoldStock.availableAmount);
+					newRot.add(cHoldStock.totalBuyCost);
+					newRot.add(cHoldStock.curPrice);
+					newRot.add(cHoldStock.refPrimeCostPrice);
+					
+					dftModel.addRow(newRot);
+				}
+				
+				// flush tab
+				
+				CObjectContainer<Double> ctnctnTotalAssets = new CObjectContainer<Double>();
+				m_ap.getTotalAssets(ctnctnTotalAssets);
+				m_MainFramePanel.m_AccountInfoPanel.m_tfTotalAssets.setText(String.format("%.3f", ctnctnTotalAssets.get()));
+				
+				CObjectContainer<Double> ctnAvailableMoney = new CObjectContainer<Double>();
+				m_ap.getMoney(ctnAvailableMoney);
+				m_MainFramePanel.m_AccountInfoPanel.m_tfMoney.setText(String.format("%.3f", ctnAvailableMoney.get()));
+				
+				CObjectContainer<Double> ctnTotalStockMarketValue = new CObjectContainer<Double>();
+				m_ap.getTotalStockMarketValue(ctnTotalStockMarketValue);
+				m_MainFramePanel.m_AccountInfoPanel.m_tfMarketValue.setText(String.format("%.3f", ctnTotalStockMarketValue.get()));
+			}
+		};
+		SwingUtilities.invokeLater(runnable);	
+		
+		m_sync.UnLock();
+	}
+	
+	public static class SelectTableCB implements QUSelectTable.ICallback
+	{
+		public SelectTableCB(HelpPanel cHelpPanel)
+		{
+			m_HelpPanel = cHelpPanel;
+		}
+		
+		@Override
+		public void onNotify(CALLBACKTYPE cb) {
+			m_HelpPanel.FlushSelect2JTable();
+		}
+		private HelpPanel m_HelpPanel;
 	}
 	
 	public static class QURTMonitorTableCB implements QURTMonitorTable.ICallback
@@ -164,7 +312,24 @@ public class HelpPanel {
 		private HelpPanel m_HelpPanel;
 	}
 	
+	public static class AccountCB implements Account.ICallback
+	{
+		public AccountCB(HelpPanel cHelpPanel)
+		{
+			m_HelpPanel = cHelpPanel;
+		}
+		
+		@Override
+		public void onNotify(CALLBACKTYPE cb) {
+			m_HelpPanel.FlushAccount2JTable();
+		}
+		private HelpPanel m_HelpPanel;
+	}
+	
+	
+	private QUSelectTable m_selectTable;
 	private QURTMonitorTable m_QURTMonitorTable;
+	private AccountProxy m_ap;
 	
 	/*
 	 * =====================================================================================================
@@ -386,36 +551,36 @@ public class HelpPanel {
 			label_totalassets.setBounds(new Rectangle(10, 20, 100, 20));
 			this.add(label_totalassets);
 			
-			JTextField tfTotalAssets = new JTextField();
-			tfTotalAssets.setText("");
-			tfTotalAssets.setEditable(false);
-			tfTotalAssets.setBounds(new Rectangle(100, 20, 100, 18));
-			this.add(tfTotalAssets);
+			m_tfTotalAssets = new JTextField();
+			m_tfTotalAssets.setText("");
+			m_tfTotalAssets.setEditable(false);
+			m_tfTotalAssets.setBounds(new Rectangle(100, 20, 100, 18));
+			this.add(m_tfTotalAssets);
 			
 			JLabel label_money = new JLabel("Money:");
 			label_money.setBounds(new Rectangle(10, 40, 100, 20));
 			this.add(label_money);
 			
-			JTextField tfMoney = new JTextField();
-			tfMoney.setText("");
-			tfMoney.setEditable(false);
-			tfMoney.setBounds(new Rectangle(100, 40, 100, 18));
-			this.add(tfMoney);
+			m_tfMoney = new JTextField();
+			m_tfMoney.setText("");
+			m_tfMoney.setEditable(false);
+			m_tfMoney.setBounds(new Rectangle(100, 40, 100, 18));
+			this.add(m_tfMoney);
 			
 			JLabel label_marketValue = new JLabel("MarketValue:");
 			label_marketValue.setBounds(new Rectangle(10, 60, 100, 20));
 			this.add(label_marketValue);
 			
-			JTextField tfMarketValue = new JTextField();
-			tfMarketValue.setText("");
-			tfMarketValue.setEditable(false);
-			tfMarketValue.setBounds(new Rectangle(100, 60, 100, 18));
-			this.add(tfMarketValue);
+			m_tfMarketValue = new JTextField();
+			m_tfMarketValue.setText("");
+			m_tfMarketValue.setEditable(false);
+			m_tfMarketValue.setBounds(new Rectangle(100, 60, 100, 18));
+			this.add(m_tfMarketValue);
 	
 			{
-				JTable table_holdstock = new JTable();
+				m_HoldStockTable = new JTable();
 				JScrollPane scrollPane_holdstock = new JScrollPane();
-				scrollPane_holdstock.setViewportView(table_holdstock);
+				scrollPane_holdstock.setViewportView(m_HoldStockTable);
 				scrollPane_holdstock.setSize(0, 0);
 				scrollPane_holdstock.setBounds(new Rectangle(10, 90, 1155, 200));
 				this.add(scrollPane_holdstock);
@@ -430,11 +595,16 @@ public class HelpPanel {
 				vName.add("refPrimeCostPrice");
 				Vector vData = new Vector();
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
-				table_holdstock.setModel(model);
+				m_HoldStockTable.setModel(model);
 			}
 		}
 		
 		private MainFramePanel m_owerMainFramePanel;
+		private JTextField m_tfTotalAssets;
+		private JTextField m_tfMoney;
+		private JTextField m_tfMarketValue;
+		private JTable m_HoldStockTable;
+		
 	}
 	
 
@@ -463,7 +633,7 @@ public class HelpPanel {
 		
 		public void onRTMonitorPanelCommit()
 		{
-			m_owerHelpPanel.onRTMonitorPanelCommit();
+			m_owerHelpPanel.FlushJTable2MonitorTable();
 		}
 		
 		private HelpPanel m_owerHelpPanel;
