@@ -202,25 +202,25 @@ public class HelpPanel {
 			m_QURTMonitorTable.addItem(stockID);
 			MonitorItem cMonitorItem = m_QURTMonitorTable.item(stockID);
 			cMonitorItem.setStrategy(strategy);
-			if(null != buyTriggerPrice)
+			if(null != buyTriggerPrice && !buyTriggerPrice.equals(""))
 				cMonitorItem.setBuyTriggerPrice(Double.parseDouble(buyTriggerPrice));
-			if(null != sellTriggerPrice)
+			if(null != sellTriggerPrice && !sellTriggerPrice.equals(""))
 				cMonitorItem.setSellTriggerPrice(Double.parseDouble(sellTriggerPrice));
-			if(null != minCommitInterval)
+			if(null != minCommitInterval && !minCommitInterval.equals(""))
 				cMonitorItem.setMinCommitInterval(Long.parseLong(minCommitInterval));
-			if(null != oneCommitAmount)
+			if(null != oneCommitAmount && !oneCommitAmount.equals(""))
 				cMonitorItem.setOneCommitAmount(Long.parseLong(oneCommitAmount));
-			if(null != maxHoldAmount)
+			if(null != maxHoldAmount && !maxHoldAmount.equals(""))
 				cMonitorItem.setMaxHoldAmount(Long.parseLong(maxHoldAmount));
-			if(null != targetProfitPrice)
+			if(null != targetProfitPrice && !targetProfitPrice.equals(""))
 				cMonitorItem.setTargetProfitPrice(Double.parseDouble(targetProfitPrice));
-			if(null != targetProfitMoney)
+			if(null != targetProfitMoney && !targetProfitMoney.equals(""))
 				cMonitorItem.setTargetProfitMoney(Double.parseDouble(targetProfitMoney));
-			if(null != stopLossPrice)
+			if(null != stopLossPrice && !stopLossPrice.equals(""))
 				cMonitorItem.setStopLossPrice(Double.parseDouble(stopLossPrice));
-			if(null != stopLossMoney)
+			if(null != stopLossMoney && !stopLossMoney.equals(""))
 				cMonitorItem.setStopLossMoney(Double.parseDouble(stopLossMoney));
-			if(null != maxHoldDays)
+			if(null != maxHoldDays && !maxHoldDays.equals(""))
 				cMonitorItem.setMaxHoldDays(Long.parseLong(maxHoldDays));
 		}
 

@@ -103,14 +103,20 @@ public abstract class QS1802Base extends QuantStrategy {
 			return false;
 		}
 		
+		Long lStockOneCommitInterval = null;
+		Long lFullHoldAmount = null;
+		Long lOneCommitAmount = null;
+		Double dTargetProfitMoney = null;
+		Double dStockStopLossMoney = null;
+		Long lStockMaxHoldDays = null;
+		
 		// interval commit check
-		Long lStockOneCommitInterval = cMonitorItem.minCommitInterval();
+		lStockOneCommitInterval = cMonitorItem.minCommitInterval();
 		if(null == lStockOneCommitInterval)
 		{
 			Long lMinCommitInterval =  m_defaultCfg.GlobalDefaultMinCommitInterval;
 			if(null != lMinCommitInterval)
 			{
-				cMonitorItem.setMinCommitInterval(lMinCommitInterval);
 				lStockOneCommitInterval = lMinCommitInterval;
 			}
 		}
@@ -124,6 +130,9 @@ public abstract class QS1802Base extends QuantStrategy {
 				return false;
 			}
 		}
+		
+		lFullHoldAmount = cMonitorItem.maxHoldAmount();
+		lOneCommitAmount = cMonitorItem.oneCommitAmount();
 
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
 		ctx.ap().getTotalAssets(ctnTotalAssets);
@@ -145,22 +154,19 @@ public abstract class QS1802Base extends QuantStrategy {
 			}
 			
 			// define stock FullHoldAmount OneCommitAmount property
-			Long lFullHoldAmount = cMonitorItem.maxHoldAmount();
 			if(null == lFullHoldAmount)
 			{
 				Double dGlobalStockMaxPosstion = m_defaultCfg.GlobalDefaulStockMaxHoldPosstion;
 				double curFullPositionMoney = ctnTotalAssets.get()*dGlobalStockMaxPosstion;
 				long curFullPositionAmmount = (long)(curFullPositionMoney/fNowPrice);
-				cMonitorItem.setMaxHoldAmount(curFullPositionAmmount);
 				lFullHoldAmount = curFullPositionAmmount;
+				
 			}
-			Long lOneCommitAmount = cMonitorItem.oneCommitAmount();
 			if(null == lOneCommitAmount)
 			{
 				Double dGlobalStockOneCommitPossition = m_defaultCfg.GlobalDefaulStockOneCommitPossition;
-				Long curFullPositionAmmount = cMonitorItem.maxHoldAmount();
+				Long curFullPositionAmmount = lFullHoldAmount;
 				long curStockOneCommitPossitionAmmount = (long)(curFullPositionAmmount*dGlobalStockOneCommitPossition);
-				cMonitorItem.setOneCommitAmount(curStockOneCommitPossitionAmmount);
 				lOneCommitAmount = curStockOneCommitPossitionAmmount;
 			}	
 			// ±ê×¼»¯
@@ -173,24 +179,16 @@ public abstract class QS1802Base extends QuantStrategy {
 			{
 				if(newlOneCommitAmount != lOneCommitAmount)
 				{
-					cMonitorItem.setOneCommitAmount(newlOneCommitAmount);
+					lOneCommitAmount = newlOneCommitAmount;
 				}
 				if(0 != lFullHoldAmount%newlOneCommitAmount)
 				{
 					lFullHoldAmount = (lFullHoldAmount/newlOneCommitAmount)*newlOneCommitAmount;
-					cMonitorItem.setMaxHoldAmount(newlOneCommitAmount);
 				}
-			}
-			else
-			{
-				cMonitorItem.setOneCommitAmount(0L);
-				cMonitorItem.setMaxHoldAmount(0L);
 			}
 		}
 		
 		Long lAlreadyHoldAmount = null!=cHoldStock?cHoldStock.totalAmount:0L;
-		Long lFullHoldAmount = cMonitorItem.maxHoldAmount();
-		Long lOneCommitAmount = cMonitorItem.oneCommitAmount();
 		if(lAlreadyHoldAmount >= lFullHoldAmount) // FullHoldAmount AlreadyHoldAmount check
 		{
 			//CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d",  stockID, lAlreadyHoldAmount, lFullHoldAmount);
@@ -214,32 +212,38 @@ public abstract class QS1802Base extends QuantStrategy {
 		ctx.ap().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
 		
 		// create clear property
-		if(null == cMonitorItem.maxHoldDays())
-		{
-			Long lStockMaxHoldDays = m_defaultCfg.GlobalDefaulStockMaxHoldDays;
-			if(null != lStockMaxHoldDays)
-			{
-				cMonitorItem.setMaxHoldDays(lStockMaxHoldDays);
-			}
-		}
-		if(null == cMonitorItem.targetProfitMoney())
+		dTargetProfitMoney = cMonitorItem.targetProfitMoney();
+		if(null == dTargetProfitMoney)
 		{
 			Double dTargetProfitRatio = m_defaultCfg.GlobalDefaulStockTargetProfitRatio;
 			if(null != dTargetProfitRatio)
 			{
-				Double dTargetProfitMoney = lFullHoldAmount*fNowPrice*dTargetProfitRatio;
-				cMonitorItem.setTargetProfitMoney(dTargetProfitMoney);
+				dTargetProfitMoney = lFullHoldAmount*fNowPrice*dTargetProfitRatio;
 			}
 		}
-		if(null == cMonitorItem.stopLossMoney())
+		dStockStopLossMoney = cMonitorItem.stopLossMoney();
+		if(null == dStockStopLossMoney)
 		{
 			Double dStockStopLossRatio = m_defaultCfg.GlobalDefaulStockStopLossRatio;
 			if(null != dStockStopLossRatio)
 			{
-				Double dStockStopLossMoney = lFullHoldAmount*fNowPrice*dStockStopLossRatio;
-				cMonitorItem.setStopLossMoney(dStockStopLossMoney);
+				dStockStopLossMoney = lFullHoldAmount*fNowPrice*dStockStopLossRatio;
 			}
 		}
+		lStockMaxHoldDays = cMonitorItem.maxHoldDays();
+		if(null == lStockMaxHoldDays)
+		{
+			lStockMaxHoldDays = m_defaultCfg.GlobalDefaulStockMaxHoldDays;
+		}
+		
+		cMonitorItem.setMinCommitInterval(lStockOneCommitInterval);
+		cMonitorItem.setMaxHoldAmount(lFullHoldAmount);
+		cMonitorItem.setOneCommitAmount(lOneCommitAmount);
+		cMonitorItem.setTargetProfitMoney(dTargetProfitMoney);
+		cMonitorItem.setStopLossMoney(dStockStopLossMoney);
+		cMonitorItem.setMaxHoldDays(lStockMaxHoldDays);
+		m_QURTMonitorTable.commit();
+		
 		return true;
 	}
 	public boolean sellSignalEmit(QuantContext ctx, String stockID)
