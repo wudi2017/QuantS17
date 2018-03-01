@@ -22,6 +22,7 @@ import utils.QS1801.QUCommon;
 import utils.QS1801.QUProperty;
 import utils.QS1802.QURTMonitorTable;
 import utils.QS1802.QURTMonitorTable.MonitorItem;
+import utils.QS1802.QURTMonitorTable.ICallback.CALLBACKTYPE;
 import utils.QS1801.QUSelector;
 
 public abstract class QS1802Base extends QuantStrategy {
@@ -425,6 +426,31 @@ public abstract class QS1802Base extends QuantStrategy {
 		return false;
 	}
 	
+	public void onQURTMonitorTableCB(CALLBACKTYPE cb)
+	{
+		if(CALLBACKTYPE.COMMITED == cb)
+		{
+			// add new
+			super.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
+			// remove not exist in m_QURTMonitorTable
+			List<String> monitorIDs = m_QURTMonitorTable.monitorStockIDs();
+			List<String> curInterestMinuteDataIDs = super.getCurrentDayInterestMinuteDataIDs();
+			List<String> rmIDs = new ArrayList<String>();
+			for(int i=0; i<curInterestMinuteDataIDs.size(); i++)
+			{
+				String stockID = curInterestMinuteDataIDs.get(i);
+				if(!monitorIDs.contains(stockID))
+				{
+					rmIDs.add(stockID);
+				}
+			}
+			for(int i=0; i<rmIDs.size(); i++)
+			{
+				String stockID = rmIDs.get(i);
+				super.removeCurrentDayInterestMinuteDataID(stockID);
+			}
+		}
+	}
 	
 	@Override
 	public void onInit(QuantContext ctx) 
@@ -443,6 +469,9 @@ public abstract class QS1802Base extends QuantStrategy {
 		String rtMonitorFileName = strStockStrategyHelperPath + "\\" + derivedStrategyClsName + "_QURTMonitorTable.xml";
 		m_QURTMonitorTable = new QURTMonitorTable(rtMonitorFileName);
 		m_QURTMonitorTable.open();
+		
+		m_QURTMonitorTableCB = new QURTMonitorTableCB(this);
+		m_QURTMonitorTable.registerCallback("QS1802BaseRTMCb", m_QURTMonitorTableCB);
 		
 		// initialize report module
 		m_TranReportor = new TranReportor(accountIDName);
@@ -591,10 +620,28 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 	}
 	
+	public static class QURTMonitorTableCB implements QURTMonitorTable.ICallback
+	{
+		public QURTMonitorTableCB(QS1802Base cQS1802Base)
+		{
+			m_QS1802Base = cQS1802Base;
+		}
+		
+		@Override
+		public void onNotify(CALLBACKTYPE cb) {
+			if(null != m_QS1802Base)
+			{
+				m_QS1802Base.onQURTMonitorTableCB(cb);
+			}
+		}
+		private QS1802Base m_QS1802Base;
+	}
+	
 	private DefaultConfig m_defaultCfg;
 	
 	private QUSelectTable m_QUSelectTable; // 选股表
 	private QURTMonitorTable m_QURTMonitorTable; // 实时监控表
+	private QURTMonitorTableCB m_QURTMonitorTableCB;
 	private TranReportor m_TranReportor; // 报告模块
 	
 	private HelpPanel m_helpPanel;

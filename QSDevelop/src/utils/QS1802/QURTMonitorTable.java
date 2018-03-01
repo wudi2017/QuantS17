@@ -17,20 +17,28 @@ public class QURTMonitorTable {
 			CHANGED,
 			COMMITED,
 		}
-		abstract public void onNotify(CALLBACKTYPE cb);
+		abstract public void onNotify(CALLBACKTYPE cbType);
 	}
 	
 	public QURTMonitorTable(String fileName)
 	{
 		m_sync = new CSyncObj();
+		m_ICallbackMap = new HashMap<String, ICallback>();
 		m_monitorMap = new HashMap<String, MonitorItem>();
 		m_CXmlTable = new CXmlTable(fileName);
 	}
 	
-	public void registerCallback(ICallback cb)
+	public void registerCallback(String name, ICallback cb)
 	{
 		m_sync.Lock();
-		m_ICallback = cb;
+		m_ICallbackMap.put(name, cb);
+		m_sync.UnLock();
+	}
+	
+	public void unregisterCallback(String name)
+	{
+		m_sync.Lock();
+		m_ICallbackMap.remove(name);
 		m_sync.UnLock();
 	}
 	
@@ -123,10 +131,7 @@ public class QURTMonitorTable {
 		
 		boolean bRet = m_CXmlTable.commit();
 		
-		if(null != m_ICallback)
-		{
-			m_ICallback.onNotify(ICallback.CALLBACKTYPE.COMMITED);
-		}
+		this.callOnNotify(ICallback.CALLBACKTYPE.COMMITED);
 		
 		m_sync.UnLock();
 		return bRet;
@@ -157,10 +162,7 @@ public class QURTMonitorTable {
 		{
 			MonitorItem cMonitorItem = new MonitorItem(this);
 			m_monitorMap.put(stockID, cMonitorItem);
-			if(null != m_ICallback)
-			{
-				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
-			}
+			this.callOnNotify(ICallback.CALLBACKTYPE.CHANGED);
 		}
 		m_sync.UnLock();
 	}
@@ -171,10 +173,7 @@ public class QURTMonitorTable {
 		if(m_monitorMap.containsKey(stockID))
 		{
 			m_monitorMap.remove(stockID);
-			if(null != m_ICallback)
-			{
-				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
-			}
+			this.callOnNotify(ICallback.CALLBACKTYPE.CHANGED);
 		}
 		m_sync.UnLock();
 		return;
@@ -186,10 +185,7 @@ public class QURTMonitorTable {
 		if(m_monitorMap.size() > 0)
 		{
 			m_monitorMap.clear();
-			if(null != m_ICallback)
-			{
-				m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
-			}
+			this.callOnNotify(ICallback.CALLBACKTYPE.CHANGED);
 		}
 		m_sync.UnLock();
 		return;
@@ -330,9 +326,9 @@ public class QURTMonitorTable {
 		
 		private void onItemChanged()
 		{
-			if(null != m_ower && null != m_ower.m_ICallback)
+			if(null != m_ower)
 			{
-				m_ower.m_ICallback.onNotify(ICallback.CALLBACKTYPE.CHANGED);
+				m_ower.callOnNotify(ICallback.CALLBACKTYPE.CHANGED);
 			}
 		}
 		
@@ -351,8 +347,15 @@ public class QURTMonitorTable {
 		private Long m_dMaxHoldDays;
 	}
 	
-	public CSyncObj m_sync;
-	private ICallback m_ICallback;
+	private void callOnNotify(ICallback.CALLBACKTYPE cbType)
+	{
+		for (ICallback cb : m_ICallbackMap.values()) { 
+			cb.onNotify(cbType);
+		}
+	}
+	
+	private CSyncObj m_sync;
+	private Map<String, ICallback> m_ICallbackMap;
 	private Map<String, MonitorItem> m_monitorMap;
 	private CXmlTable m_CXmlTable;
 }

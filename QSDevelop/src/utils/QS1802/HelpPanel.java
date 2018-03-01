@@ -38,6 +38,8 @@ import utils.QS1802.QUSelectTable.SelectItem;
 
 public class HelpPanel {
 	
+	public static String s_strMonitorTableCBName = "strMonitorTableCBName";
+	
 	public boolean bindQUObject(QUSelectTable selectTable, 
 			QURTMonitorTable cQURTMonitorTable, 
 			AccountProxy ap)
@@ -49,7 +51,7 @@ public class HelpPanel {
 		FlushSelect2JTable();
 		
 		m_QURTMonitorTable = cQURTMonitorTable;
-		m_QURTMonitorTable.registerCallback(new QURTMonitorTableCB(this));
+		m_QURTMonitorTable.registerCallback(s_strMonitorTableCBName ,new QURTMonitorTableCB(this));
 		FlushMonitorTable2JTable();
 		
 		m_ap = ap;
@@ -179,9 +181,9 @@ public class HelpPanel {
 		DefaultTableModel dftModel = (DefaultTableModel)m_MainFramePanel.m_RTMonitorPanel.m_RTMonitorTable.getModel();
 
 		// 清除QURTMonitorTable数据，但要停止callback，否则导致UItable为NULL
-		m_QURTMonitorTable.registerCallback(null);
+		m_QURTMonitorTable.unregisterCallback(s_strMonitorTableCBName);
 		m_QURTMonitorTable.removeAllItem();
-		m_QURTMonitorTable.registerCallback(new QURTMonitorTableCB(this));
+		m_QURTMonitorTable.registerCallback(s_strMonitorTableCBName, new QURTMonitorTableCB(this));
 		
 		int iRowCnt = dftModel.getDataVector().size();
 		for(int iRow=0; iRow<iRowCnt; iRow++)
