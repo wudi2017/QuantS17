@@ -28,6 +28,7 @@ import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.common.CSyncObj;
 import pers.di.common.CThread;
+import pers.di.common.CUtilsMath;
 import pers.di.account.common.*;
 import pers.di.quantplatform.AccountProxy;
 import pers.di.account.Account;
@@ -262,7 +263,8 @@ public class HelpPanel {
 					newRot.add(cHoldStock.totalBuyCost);
 					newRot.add(cHoldStock.curPrice);
 					newRot.add(cHoldStock.refPrimeCostPrice);
-					
+					newRot.add(CUtilsMath.saveNDecimal(cHoldStock.refProfit(), 3));
+
 					dftModel.addRow(newRot);
 				}
 				
@@ -595,6 +597,7 @@ public class HelpPanel {
 				vName.add("totalBuyCost");
 				vName.add("curPrice");
 				vName.add("refPrimeCostPrice");
+				vName.add("refProfit");
 				Vector vData = new Vector();
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
 				m_HoldStockTable.setModel(model);
