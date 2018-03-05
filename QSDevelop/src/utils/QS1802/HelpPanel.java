@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import java.util.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Toolkit;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -17,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
@@ -347,20 +349,42 @@ public class HelpPanel {
 
 	public HelpPanel ()
 	{
+		int iJF_Width = 0;
+		int iJF_Height = 0;
+				
+		// config panel size
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();  
+        int screenWidth = (int) screenSize.getWidth();  
+        int screenHeight = (int) screenSize.getHeight();  
+        if(screenWidth>1300 && screenHeight>1000)
+        {
+        	iJF_Width = 1200;
+        	iJF_Height = 900;
+        }
+        else
+        {
+        	iJF_Width = 800;
+        	iJF_Height = 600;
+        }
+
+        iJF_Width = 800;
+    	iJF_Height = 600;
+    	
 		m_sync = new CSyncObj();
-		m_MainFramePanel = new MainFramePanel(this);
+		m_MainFramePanel = new MainFramePanel(this, iJF_Width, iJF_Height);
+		
+		m_jfrm = new JFrame();
+		m_jfrm.setTitle("HelpPanel");
+		m_jfrm.setSize(iJF_Width, iJF_Height);
+		m_jfrm.setResizable(false);
+		m_jfrm.setLocation(10,10);
+		m_jfrm.setContentPane(m_MainFramePanel);
+		//m_jfrm.pack();
+		m_jfrm.addWindowListener(new WindowListener());
 	}
 	public void start()
 	{
-		JFrame jfrm = new JFrame();
-		jfrm.setTitle("HelpPanel");
-		jfrm.setSize(1200, 900);
-		jfrm.setResizable(false);
-		jfrm.setLocation(10,10);
-		jfrm.setContentPane(m_MainFramePanel);
-		//jfrm.pack();
-		jfrm.addWindowListener(new WindowListener());
-		jfrm.setVisible(true);
+		m_jfrm.setVisible(true);
 	}
 	
 	static private void FitTableColumns(JTable myTable) {
@@ -387,9 +411,11 @@ public class HelpPanel {
 	
 	public static class SelectPanel extends JPanel
 	{
-		public SelectPanel(MainFramePanel ower)
+		public SelectPanel(MainFramePanel ower, int width, int height)
 		{
 			m_owerMainFramePanel = ower;
+			
+			int iPadding = 10;
 			
 			this.setLayout(null);
 			//this.setBackground(Color.red); 
@@ -397,7 +423,7 @@ public class HelpPanel {
 			this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 			
 			JLabel label_RTMonitor = new JLabel("Select");
-			label_RTMonitor.setBounds(new Rectangle(10, 0, 100, 20));
+			label_RTMonitor.setBounds(new Rectangle(iPadding, 0, 100, 20));
 			this.add(label_RTMonitor);
 
 //			JCheckBox checkbox_AutoAddMonitor = new JCheckBox(" AutoAddMonitor");
@@ -408,7 +434,7 @@ public class HelpPanel {
 				m_SelectTable = new JTable();
 				JScrollPane scrollPane = new JScrollPane();
 				scrollPane.setViewportView(m_SelectTable);
-				scrollPane.setBounds(new Rectangle(10, 40, 400, 150));
+				scrollPane.setBounds(new Rectangle(iPadding, 20, 400, height-30));
 				this.add(scrollPane);
 
 				Vector vName = new Vector();
@@ -464,9 +490,11 @@ public class HelpPanel {
 			}
 			private RTMonitorPanel m_RTMonitorPanel;
 		}
-		public RTMonitorPanel(MainFramePanel ower)
+		public RTMonitorPanel(MainFramePanel ower, int width, int height)
 		{
 			m_owerMainFramePanel = ower;
+			
+			int iPadding = 10;
 			
 			this.setLayout(null);
 			//this.setBackground(Color.red); 
@@ -474,14 +502,18 @@ public class HelpPanel {
 			this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 			
 			JLabel label_RTMonitor = new JLabel("RTMonitor");
-			label_RTMonitor.setBounds(new Rectangle(10, 0, 100, 20));
+			label_RTMonitor.setBounds(new Rectangle(iPadding, 0, 100, 20));
 			this.add(label_RTMonitor);
 			
+			int iTableHeight = height-60;
 			{
 		        m_RTMonitorTable = new JTable();
+		        //m_RTMonitorTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 				JScrollPane scrollPane = new JScrollPane();
+				//scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
+				scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 				scrollPane.setViewportView(m_RTMonitorTable);
-				scrollPane.setBounds(new Rectangle(10, 30, 1155, 200));
+				scrollPane.setBounds(new Rectangle(iPadding, 20, width-20, iTableHeight));
 				this.add(scrollPane);
 
 				String[] header = new String[] { 
@@ -491,21 +523,21 @@ public class HelpPanel {
 						};
 				DefaultTableModel model = new DefaultTableModel(header, 0);
 				m_RTMonitorTable.setModel(model);
-				HelpPanel.FitTableColumns(m_RTMonitorTable);
+				//HelpPanel.FitTableColumns(m_RTMonitorTable);
 			}
 
 			JButton btn_add = new JButton("Add");
-			btn_add.setBounds(new Rectangle(10, 235, 80, 20));
+			btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 80, 20));
 			btn_add.addActionListener(new AddBtnListener(this));
 			this.add(btn_add);
 			
 			JButton btn_remove = new JButton("Remove");
-			btn_remove.setBounds(new Rectangle(100, 235, 80, 20));
+			btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 80, 20));
 			btn_remove.addActionListener(new RemoveBtnListener(this));
 			this.add(btn_remove);
 			
 			JButton btn_commit = new JButton("Commit");
-			btn_commit.setBounds(new Rectangle(190, 235, 80, 20));
+			btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 80, 20));
 			btn_commit.addActionListener(new CommitBtnListener(this));
 			this.add(btn_commit);
 		}
@@ -538,7 +570,7 @@ public class HelpPanel {
 	
 	public static class AccountInfoPanel extends JPanel
 	{
-		public AccountInfoPanel(MainFramePanel ower)
+		public AccountInfoPanel(MainFramePanel ower, int width, int height)
 		{
 			m_owerMainFramePanel = ower;
 			
@@ -551,6 +583,7 @@ public class HelpPanel {
 			label_AccountInfo.setBounds(new Rectangle(10, 0, 100, 20));
 			this.add(label_AccountInfo);
 			
+			// 
 			JLabel label_totalassets = new JLabel("TotalAssets:");
 			label_totalassets.setBounds(new Rectangle(10, 20, 100, 20));
 			this.add(label_totalassets);
@@ -561,32 +594,37 @@ public class HelpPanel {
 			m_tfTotalAssets.setBounds(new Rectangle(100, 20, 100, 18));
 			this.add(m_tfTotalAssets);
 			
+			// 
 			JLabel label_money = new JLabel("Money:");
-			label_money.setBounds(new Rectangle(10, 40, 100, 20));
+			label_money.setBounds(new Rectangle(220, 20, 100, 20));
 			this.add(label_money);
 			
 			m_tfMoney = new JTextField();
 			m_tfMoney.setText("");
 			m_tfMoney.setEditable(false);
-			m_tfMoney.setBounds(new Rectangle(100, 40, 100, 18));
+			m_tfMoney.setBounds(new Rectangle(270, 20, 100, 18));
 			this.add(m_tfMoney);
 			
 			JLabel label_marketValue = new JLabel("MarketValue:");
-			label_marketValue.setBounds(new Rectangle(10, 60, 100, 20));
+			label_marketValue.setBounds(new Rectangle(390, 20, 100, 20));
 			this.add(label_marketValue);
 			
 			m_tfMarketValue = new JTextField();
 			m_tfMarketValue.setText("");
 			m_tfMarketValue.setEditable(false);
-			m_tfMarketValue.setBounds(new Rectangle(100, 60, 100, 18));
+			m_tfMarketValue.setBounds(new Rectangle(470, 20, 100, 18));
 			this.add(m_tfMarketValue);
 	
 			{
 				m_HoldStockTable = new JTable();
+				//m_HoldStockTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+				m_HoldStockTable.setColumnSelectionAllowed(true);
 				JScrollPane scrollPane_holdstock = new JScrollPane();
+				//scrollPane_holdstock.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
+				scrollPane_holdstock.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 				scrollPane_holdstock.setViewportView(m_HoldStockTable);
 				scrollPane_holdstock.setSize(0, 0);
-				scrollPane_holdstock.setBounds(new Rectangle(10, 90, 1155, 200));
+				scrollPane_holdstock.setBounds(new Rectangle(10, 45, width-20, height-50));
 				this.add(scrollPane_holdstock);
 				
 				Vector vName = new Vector();
@@ -615,24 +653,34 @@ public class HelpPanel {
 
 	public static class MainFramePanel extends JPanel
 	{
-		public MainFramePanel(HelpPanel ower)
+		public MainFramePanel(HelpPanel ower, int width, int height)
 		{
 			m_owerHelpPanel = ower;
+			m_width = width;
+			m_height = height;
 			
 			this.setLayout(null);
 			//this.setBackground(Color.CYAN);
-			this.setSize(800, 600);
+			//this.setSize(800, 600);
 			
-			m_selectPane = new SelectPanel(this);
-			m_selectPane.setBounds(new Rectangle(10, 20, 1175, 200));
+			int iPadding = 10;
+			
+			int iSelectPanelWidth = m_width-4*iPadding;
+			int iSelectPanelHeight = (m_height-50)/4;
+			m_selectPane = new SelectPanel(this, iSelectPanelWidth, iSelectPanelHeight);
+			m_selectPane.setBounds(new Rectangle(iPadding, iPadding, iSelectPanelWidth, iSelectPanelHeight));
 			this.add(m_selectPane);
 			
-			m_RTMonitorPanel = new RTMonitorPanel(this);
-			m_RTMonitorPanel.setBounds(new Rectangle(10, 240, 1175, 270));
+			int iRTMonitorPanelWidth = m_width-4*iPadding;
+			int iRTMonitorPanelHeight = (m_height-50)/3;
+			m_RTMonitorPanel = new RTMonitorPanel(this, iRTMonitorPanelWidth, iRTMonitorPanelHeight);
+			m_RTMonitorPanel.setBounds(new Rectangle(iPadding, 2*iPadding+iSelectPanelHeight, iRTMonitorPanelWidth, iRTMonitorPanelHeight));
 			this.add(m_RTMonitorPanel);
 			
-			m_AccountInfoPanel = new AccountInfoPanel(this);
-			m_AccountInfoPanel.setBounds(new Rectangle(10, 530, 1175, 300));
+			int iAccountInfoPanelWidth = m_width-4*iPadding;
+			int iAccountInfoPanelHeight = (m_height-50)/3;
+			m_AccountInfoPanel = new AccountInfoPanel(this, iAccountInfoPanelWidth, iAccountInfoPanelHeight);
+			m_AccountInfoPanel.setBounds(new Rectangle(iPadding, 3*iPadding+iSelectPanelHeight+iRTMonitorPanelHeight, iAccountInfoPanelWidth, iAccountInfoPanelHeight));
 			this.add(m_AccountInfoPanel);
 		}
 		
@@ -646,6 +694,9 @@ public class HelpPanel {
 		private SelectPanel m_selectPane;
 		private RTMonitorPanel m_RTMonitorPanel;
 		private AccountInfoPanel m_AccountInfoPanel;
+		
+		private int m_width;
+		private int m_height;
 	}
 	
 	static class WindowListener extends WindowAdapter {  
@@ -656,4 +707,5 @@ public class HelpPanel {
 	
 	public CSyncObj m_sync;
 	public MainFramePanel m_MainFramePanel;
+	public JFrame m_jfrm;
 }
