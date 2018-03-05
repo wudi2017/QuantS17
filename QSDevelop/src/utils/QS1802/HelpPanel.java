@@ -398,9 +398,9 @@ public class HelpPanel {
 			label_RTMonitor.setBounds(new Rectangle(10, 0, 100, 20));
 			this.add(label_RTMonitor);
 
-			JCheckBox checkbox_AutoAddMonitor = new JCheckBox(" AutoAddMonitor");
-			checkbox_AutoAddMonitor.setBounds(new Rectangle(100, 10, 250, 20));
-			this.add(checkbox_AutoAddMonitor);
+//			JCheckBox checkbox_AutoAddMonitor = new JCheckBox(" AutoAddMonitor");
+//			checkbox_AutoAddMonitor.setBounds(new Rectangle(100, 10, 250, 20));
+//			this.add(checkbox_AutoAddMonitor);
 			
 			{
 				m_SelectTable = new JTable();
