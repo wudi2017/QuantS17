@@ -73,8 +73,7 @@ public abstract class QS1802Base extends QuantStrategy {
 	{
 		// initialize m_defaultCfg
 		m_defaultCfg = new DefaultConfig();
-		
-		m_helpPanel = new HelpPanel();
+		m_helpPanel = null;
 	}
 	public void setDefaultConfig(DefaultConfig defaultCfg)
 	{
@@ -486,6 +485,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		// start helpPanel
 		if(m_defaultCfg.GlobalDefaultShowHelpPanel)
 		{
+			m_helpPanel = new HelpPanel();
 			m_helpPanel.bindQUObject(m_QUSelectTable,m_QURTMonitorTable, ctx.ap());
 			m_helpPanel.start();
 		}

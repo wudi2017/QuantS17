@@ -394,11 +394,11 @@ public class HelpPanel {
         // reset main content panel
         m_MainFramePanel = new MainFramePanel(this, width, height);
         m_jfrm.setContentPane(m_MainFramePanel);
-        m_jfrm.setVisible(true);
 		//m_jfrm.pack();	
 	}
 	public void start()
 	{
+		m_jfrm.setVisible(true);
 	}
 	
 	static private void FitTableColumns(JTable myTable) {
