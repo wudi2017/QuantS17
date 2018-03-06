@@ -362,6 +362,11 @@ public class HelpPanel {
         	iJF_Width = 1200;
         	iJF_Height = 900;
         }
+        else if(screenWidth<1000 || screenHeight<800)
+        {
+        	iJF_Width = screenWidth - 50;
+        	iJF_Height = screenHeight - 100;
+        }
         else
         {
         	iJF_Width = 900;
