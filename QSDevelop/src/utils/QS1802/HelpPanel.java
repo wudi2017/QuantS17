@@ -2,6 +2,7 @@ package utils.QS1802;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -356,35 +357,48 @@ public class HelpPanel {
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();  
         int screenWidth = (int) screenSize.getWidth();  
         int screenHeight = (int) screenSize.getHeight();  
-        if(screenWidth>1300 && screenHeight>1000)
+        if(screenWidth>1800 && screenHeight>1000)
         {
         	iJF_Width = 1200;
         	iJF_Height = 900;
         }
         else
         {
-        	iJF_Width = 800;
+        	iJF_Width = 900;
         	iJF_Height = 600;
         }
-
-        iJF_Width = 800;
-    	iJF_Height = 600;
     	
 		m_sync = new CSyncObj();
-		m_MainFramePanel = new MainFramePanel(this, iJF_Width, iJF_Height);
 		
 		m_jfrm = new JFrame();
 		m_jfrm.setTitle("HelpPanel");
 		m_jfrm.setSize(iJF_Width, iJF_Height);
 		m_jfrm.setResizable(false);
 		m_jfrm.setLocation(10,10);
-		m_jfrm.setContentPane(m_MainFramePanel);
-		//m_jfrm.pack();
 		m_jfrm.addWindowListener(new WindowListener());
+		
+		// get visible region size
+		JPanel contentPane=new JPanel();
+		m_jfrm.setContentPane(contentPane);
+		m_jfrm.setVisible(true);
+		int width=contentPane.getWidth();  
+        int height=contentPane.getHeight();  
+        Insets a=m_jfrm.getInsets();    
+        System.out.println("菜单栏的高度为："+a.top);  
+        System.out.println("JFrame左边框的宽度："+a.left);  
+        System.out.println("JFrame右边框的宽度："+a.right);  
+        System.out.println("JFrame下边框的宽度："+a.bottom);  
+        System.out.println("面板的宽度："+width);  
+        System.out.println("面板的高度："+height); 
+        
+        // reset main content panel
+        m_MainFramePanel = new MainFramePanel(this, width, height);
+        m_jfrm.setContentPane(m_MainFramePanel);
+        m_jfrm.setVisible(true);
+		//m_jfrm.pack();	
 	}
 	public void start()
 	{
-		m_jfrm.setVisible(true);
 	}
 	
 	static private void FitTableColumns(JTable myTable) {
@@ -434,13 +448,12 @@ public class HelpPanel {
 				m_SelectTable = new JTable();
 				JScrollPane scrollPane = new JScrollPane();
 				scrollPane.setViewportView(m_SelectTable);
-				scrollPane.setBounds(new Rectangle(iPadding, 20, 400, height-30));
+				scrollPane.setBounds(new Rectangle(iPadding, 20, 200, height-30));
 				this.add(scrollPane);
 
 				Vector vName = new Vector();
 				vName.add("StockID");
 				vName.add("Priority");
-				vName.add("Date");
 				Vector vData = new Vector();
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
 				m_SelectTable.setModel(model);
@@ -591,28 +604,28 @@ public class HelpPanel {
 			m_tfTotalAssets = new JTextField();
 			m_tfTotalAssets.setText("");
 			m_tfTotalAssets.setEditable(false);
-			m_tfTotalAssets.setBounds(new Rectangle(100, 20, 100, 18));
+			m_tfTotalAssets.setBounds(new Rectangle(85, 20, 100, 18));
 			this.add(m_tfTotalAssets);
 			
 			// 
 			JLabel label_money = new JLabel("Money:");
-			label_money.setBounds(new Rectangle(220, 20, 100, 20));
+			label_money.setBounds(new Rectangle(200, 20, 100, 20));
 			this.add(label_money);
 			
 			m_tfMoney = new JTextField();
 			m_tfMoney.setText("");
 			m_tfMoney.setEditable(false);
-			m_tfMoney.setBounds(new Rectangle(270, 20, 100, 18));
+			m_tfMoney.setBounds(new Rectangle(245, 20, 100, 18));
 			this.add(m_tfMoney);
 			
 			JLabel label_marketValue = new JLabel("MarketValue:");
-			label_marketValue.setBounds(new Rectangle(390, 20, 100, 20));
+			label_marketValue.setBounds(new Rectangle(360, 20, 100, 20));
 			this.add(label_marketValue);
 			
 			m_tfMarketValue = new JTextField();
 			m_tfMarketValue.setText("");
 			m_tfMarketValue.setEditable(false);
-			m_tfMarketValue.setBounds(new Rectangle(470, 20, 100, 18));
+			m_tfMarketValue.setBounds(new Rectangle(440, 20, 100, 18));
 			this.add(m_tfMarketValue);
 	
 			{
@@ -656,31 +669,36 @@ public class HelpPanel {
 		public MainFramePanel(HelpPanel ower, int width, int height)
 		{
 			m_owerHelpPanel = ower;
-			m_width = width;
-			m_height = height;
 			
 			this.setLayout(null);
+			//this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 			//this.setBackground(Color.CYAN);
-			//this.setSize(800, 600);
+			//this.setSize(width, height);
 			
-			int iPadding = 10;
+			int iPadding = 5;
 			
-			int iSelectPanelWidth = m_width-4*iPadding;
-			int iSelectPanelHeight = (m_height-50)/4;
+			int iSelectPanelX = 0+iPadding;
+			int iSelectPanelY = 0+iPadding;
+			int iSelectPanelWidth = width-2*iPadding;
+			int iSelectPanelHeight = (height-4*iPadding)/4;
 			m_selectPane = new SelectPanel(this, iSelectPanelWidth, iSelectPanelHeight);
-			m_selectPane.setBounds(new Rectangle(iPadding, iPadding, iSelectPanelWidth, iSelectPanelHeight));
+			m_selectPane.setBounds(new Rectangle(iSelectPanelX, iSelectPanelY, iSelectPanelWidth, iSelectPanelHeight));
 			this.add(m_selectPane);
 			
-			int iRTMonitorPanelWidth = m_width-4*iPadding;
-			int iRTMonitorPanelHeight = (m_height-50)/3;
+			int iRTMonitorPanelX = 0+iPadding;
+			int iRTMonitorPanelY = 0+iPadding+iSelectPanelHeight+iPadding;
+			int iRTMonitorPanelWidth = width-2*iPadding;
+			int iRTMonitorPanelHeight = ((height-4*iPadding)-iSelectPanelHeight)/2;
 			m_RTMonitorPanel = new RTMonitorPanel(this, iRTMonitorPanelWidth, iRTMonitorPanelHeight);
-			m_RTMonitorPanel.setBounds(new Rectangle(iPadding, 2*iPadding+iSelectPanelHeight, iRTMonitorPanelWidth, iRTMonitorPanelHeight));
+			m_RTMonitorPanel.setBounds(new Rectangle(iPadding, iRTMonitorPanelY, iRTMonitorPanelWidth, iRTMonitorPanelHeight));
 			this.add(m_RTMonitorPanel);
 			
-			int iAccountInfoPanelWidth = m_width-4*iPadding;
-			int iAccountInfoPanelHeight = (m_height-50)/3;
+			int iAccountInfoPanelX = 0+iPadding;
+			int iAccountInfoPanelY = 0+iPadding+iSelectPanelHeight+iPadding+iRTMonitorPanelHeight+iPadding;
+			int iAccountInfoPanelWidth = width-2*iPadding;
+			int iAccountInfoPanelHeight = ((height-4*iPadding)-iSelectPanelHeight-iRTMonitorPanelHeight);
 			m_AccountInfoPanel = new AccountInfoPanel(this, iAccountInfoPanelWidth, iAccountInfoPanelHeight);
-			m_AccountInfoPanel.setBounds(new Rectangle(iPadding, 3*iPadding+iSelectPanelHeight+iRTMonitorPanelHeight, iAccountInfoPanelWidth, iAccountInfoPanelHeight));
+			m_AccountInfoPanel.setBounds(new Rectangle(iAccountInfoPanelX, iAccountInfoPanelY, iAccountInfoPanelWidth, iAccountInfoPanelHeight));
 			this.add(m_AccountInfoPanel);
 		}
 		
@@ -694,9 +712,6 @@ public class HelpPanel {
 		private SelectPanel m_selectPane;
 		private RTMonitorPanel m_RTMonitorPanel;
 		private AccountInfoPanel m_AccountInfoPanel;
-		
-		private int m_width;
-		private int m_height;
 	}
 	
 	static class WindowListener extends WindowAdapter {  
