@@ -384,12 +384,12 @@ public class HelpPanel {
 		int width=contentPane.getWidth();  
         int height=contentPane.getHeight();  
         Insets a=m_jfrm.getInsets();    
-        System.out.println("菜单栏的高度为："+a.top);  
-        System.out.println("JFrame左边框的宽度："+a.left);  
-        System.out.println("JFrame右边框的宽度："+a.right);  
-        System.out.println("JFrame下边框的宽度："+a.bottom);  
-        System.out.println("面板的宽度："+width);  
-        System.out.println("面板的高度："+height); 
+//        System.out.println("菜单栏的高度为："+a.top);  
+//        System.out.println("JFrame左边框的宽度："+a.left);  
+//        System.out.println("JFrame右边框的宽度："+a.right);  
+//        System.out.println("JFrame下边框的宽度："+a.bottom);  
+//        System.out.println("面板的宽度："+width);  
+//        System.out.println("面板的高度："+height); 
         
         // reset main content panel
         m_MainFramePanel = new MainFramePanel(this, width, height);
