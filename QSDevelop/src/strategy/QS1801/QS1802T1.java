@@ -163,7 +163,8 @@ public class QS1802T1 extends QS1802Base {
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
 		cAccoutDriver.load("account_QS1801T1" ,  new MockAccountOpe(), true);
-		// cAccoutDriver.reset(100000);
+		//cAccoutDriver.reset(100000);
+		cAccoutDriver.start();
 		Account acc = cAccoutDriver.account();
 		
 		QuantSession qSession = new QuantSession(
@@ -172,6 +173,8 @@ public class QS1802T1 extends QS1802Base {
 				new QS1802T1(true, true)); // bAutoSelect2Monitor, bHelpPane
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
+		
+		cAccoutDriver.stop();
 		
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();
