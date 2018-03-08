@@ -9,6 +9,8 @@ import java.awt.event.WindowEvent;
 import java.util.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.Toolkit;
 
 import javax.swing.JButton;
@@ -376,9 +378,9 @@ public class HelpPanel {
 		m_sync = new CSyncObj();
 		
 		m_jfrm = new JFrame();
-		m_jfrm.setTitle("HelpPanel");
+		m_jfrm.setTitle("HelpPanel 1.01");
 		m_jfrm.setSize(iJF_Width, iJF_Height);
-		m_jfrm.setResizable(false);
+		m_jfrm.setResizable(true);
 		m_jfrm.setLocation(10,10);
 		m_jfrm.addWindowListener(new WindowListener());
 		
@@ -398,8 +400,27 @@ public class HelpPanel {
         
         // reset main content panel
         m_MainFramePanel = new MainFramePanel(this, width, height);
+        
         m_jfrm.setContentPane(m_MainFramePanel);
 		//m_jfrm.pack();	
+        
+        // size changed
+        m_jfrm.addComponentListener(new ComponentAdapter() {//让窗口响应大小改变事件
+            @Override
+            public void componentResized(ComponentEvent e) {
+            	// get visible region size
+            	JPanel contentPane=new JPanel();
+        		m_jfrm.setContentPane(contentPane);
+        		m_jfrm.setVisible(true);
+        		int width=contentPane.getWidth();  
+                int height=contentPane.getHeight();
+                
+                m_MainFramePanel.changeSize(width, height);
+                m_jfrm.setContentPane(m_MainFramePanel);
+
+                m_MainFramePanel.changeSize(width, height);
+            }
+        });
 	}
 	public void start()
 	{
@@ -441,33 +462,48 @@ public class HelpPanel {
 			//this.setPreferredSize(new Dimension(800,300));
 			this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 			
-			JLabel label_RTMonitor = new JLabel("Select");
-			label_RTMonitor.setBounds(new Rectangle(iPadding, 0, 100, 20));
-			this.add(label_RTMonitor);
+			JLabel label_Select = new JLabel("Select");
+			label_Select.setBounds(new Rectangle(iPadding, 0, 100, 20));
+			this.add(label_Select);
 
 //			JCheckBox checkbox_AutoAddMonitor = new JCheckBox(" AutoAddMonitor");
 //			checkbox_AutoAddMonitor.setBounds(new Rectangle(100, 10, 250, 20));
 //			this.add(checkbox_AutoAddMonitor);
 			
 			{
-				m_SelectTable = new JTable();
-				JScrollPane scrollPane = new JScrollPane();
-				scrollPane.setViewportView(m_SelectTable);
-				scrollPane.setBounds(new Rectangle(iPadding, 20, 200, height-30));
-				this.add(scrollPane);
-
 				Vector vName = new Vector();
 				vName.add("StockID");
 				vName.add("Priority");
 				Vector vData = new Vector();
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
-				m_SelectTable.setModel(model);
+				
+				m_SelectTable = new JTable(model) {
+					public boolean isCellEditable(int row, int column) { 
+						return false;
+					}
+				};
+				//m_SelectTable = new JTable();
+				//m_SelectTable.setModel(model);
+				m_SelectTable.setColumnSelectionAllowed(true);
+				
+				m_scrollPane = new JScrollPane();
+				m_scrollPane.setViewportView(m_SelectTable);
+				m_scrollPane.setBounds(new Rectangle(iPadding, 20, 200, height-30));
+				this.add(m_scrollPane);
+				
 			}
 
 		}
 		
+		public void changeSize(int width, int height)
+		{
+			int iPadding = 10;
+			m_scrollPane.setBounds(new Rectangle(iPadding, 20, 200, height-30));
+		}
+		
 		private MainFramePanel m_owerMainFramePanel;
 		private JTable m_SelectTable;
+		private JScrollPane m_scrollPane;
 	}
 	
 	public static class RTMonitorPanel extends JPanel
@@ -525,39 +561,52 @@ public class HelpPanel {
 			
 			int iTableHeight = height-60;
 			{
-		        m_RTMonitorTable = new JTable();
-		        //m_RTMonitorTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-				JScrollPane scrollPane = new JScrollPane();
-				//scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
-				scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-				scrollPane.setViewportView(m_RTMonitorTable);
-				scrollPane.setBounds(new Rectangle(iPadding, 20, width-20, iTableHeight));
-				this.add(scrollPane);
-
 				String[] header = new String[] { 
 						"stockID", "strategy", "buyTriggerPrice", "sellTriggerPrice",
 						"minCommitInterval", "oneCommitAmount", "maxHoldAmount", 
 						"targetProfitPrice", "targetProfitMoney", "stopLossPrice", "stopLossMoney", "maxHoldDays",
 						};
 				DefaultTableModel model = new DefaultTableModel(header, 0);
+				
+				m_RTMonitorTable = new JTable();
 				m_RTMonitorTable.setModel(model);
+				m_RTMonitorTable.setColumnSelectionAllowed(true);
+				//m_RTMonitorTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+				
+				m_scrollPane = new JScrollPane();
+				//scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
+		        //m_scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		        m_scrollPane.setViewportView(m_RTMonitorTable);
+		        m_scrollPane.setBounds(new Rectangle(iPadding, 20, width-20, iTableHeight));
+				this.add(m_scrollPane);
+				
 				//HelpPanel.FitTableColumns(m_RTMonitorTable);
 			}
 
-			JButton btn_add = new JButton("Add");
-			btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 80, 20));
-			btn_add.addActionListener(new AddBtnListener(this));
-			this.add(btn_add);
+			m_btn_add = new JButton("Add");
+			m_btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 80, 20));
+			m_btn_add.addActionListener(new AddBtnListener(this));
+			this.add(m_btn_add);
 			
-			JButton btn_remove = new JButton("Remove");
-			btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 80, 20));
-			btn_remove.addActionListener(new RemoveBtnListener(this));
-			this.add(btn_remove);
+			m_btn_remove = new JButton("Remove");
+			m_btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 80, 20));
+			m_btn_remove.addActionListener(new RemoveBtnListener(this));
+			this.add(m_btn_remove);
 			
-			JButton btn_commit = new JButton("Commit");
-			btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 80, 20));
-			btn_commit.addActionListener(new CommitBtnListener(this));
-			this.add(btn_commit);
+			m_btn_commit = new JButton("Commit");
+			m_btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 80, 20));
+			m_btn_commit.addActionListener(new CommitBtnListener(this));
+			this.add(m_btn_commit);
+		}
+		
+		public void changeSize(int width, int height)
+		{
+			int iPadding = 10;
+			int iTableHeight = height-60;
+			m_scrollPane.setBounds(new Rectangle(iPadding, 20, width-20, iTableHeight));
+			m_btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 80, 20));
+			m_btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 80, 20));
+			m_btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 80, 20));
 		}
 		
 		public void onClickAdd()
@@ -583,7 +632,13 @@ public class HelpPanel {
 		}
 		
 		private MainFramePanel m_owerMainFramePanel;
+		
 		private JTable m_RTMonitorTable;
+		private JScrollPane m_scrollPane;
+		
+		JButton m_btn_add;
+		JButton m_btn_remove;
+		JButton m_btn_commit;
 	}
 	
 	public static class AccountInfoPanel extends JPanel
@@ -634,17 +689,6 @@ public class HelpPanel {
 			this.add(m_tfMarketValue);
 	
 			{
-				m_HoldStockTable = new JTable();
-				//m_HoldStockTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-				m_HoldStockTable.setColumnSelectionAllowed(true);
-				JScrollPane scrollPane_holdstock = new JScrollPane();
-				//scrollPane_holdstock.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
-				scrollPane_holdstock.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-				scrollPane_holdstock.setViewportView(m_HoldStockTable);
-				scrollPane_holdstock.setSize(0, 0);
-				scrollPane_holdstock.setBounds(new Rectangle(10, 45, width-20, height-50));
-				this.add(scrollPane_holdstock);
-				
 				Vector vName = new Vector();
 				vName.add("stockID");
 				vName.add("createDate");
@@ -656,8 +700,30 @@ public class HelpPanel {
 				vName.add("refProfit");
 				Vector vData = new Vector();
 				DefaultTableModel model = new DefaultTableModel(vData, vName);
-				m_HoldStockTable.setModel(model);
+				
+				m_HoldStockTable = new JTable(model) {
+					public boolean isCellEditable(int row, int column) { 
+						return false;
+					}
+				};
+				//m_HoldStockTable = new JTable();
+				//m_HoldStockTable.setModel(model);
+				//m_HoldStockTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+				m_HoldStockTable.setColumnSelectionAllowed(true);
+				
+				m_scrollPane_holdstock = new JScrollPane();
+				//scrollPane_holdstock.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
+				m_scrollPane_holdstock.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+				m_scrollPane_holdstock.setViewportView(m_HoldStockTable);
+				m_scrollPane_holdstock.setSize(0, 0);
+				m_scrollPane_holdstock.setBounds(new Rectangle(10, 45, width-20, height-50));
+				this.add(m_scrollPane_holdstock);
 			}
+		}
+		
+		public void changeSize(int width, int height)
+		{
+			m_scrollPane_holdstock.setBounds(new Rectangle(10, 45, width-20, height-50));
 		}
 		
 		private MainFramePanel m_owerMainFramePanel;
@@ -665,6 +731,7 @@ public class HelpPanel {
 		private JTextField m_tfMoney;
 		private JTextField m_tfMarketValue;
 		private JTable m_HoldStockTable;
+		private JScrollPane m_scrollPane_holdstock;
 		
 	}
 	
@@ -705,6 +772,33 @@ public class HelpPanel {
 			m_AccountInfoPanel = new AccountInfoPanel(this, iAccountInfoPanelWidth, iAccountInfoPanelHeight);
 			m_AccountInfoPanel.setBounds(new Rectangle(iAccountInfoPanelX, iAccountInfoPanelY, iAccountInfoPanelWidth, iAccountInfoPanelHeight));
 			this.add(m_AccountInfoPanel);
+		}
+		
+		public void changeSize(int width, int height)
+		{
+			int iPadding = 5;
+			
+			int iSelectPanelX = 0+iPadding;
+			int iSelectPanelY = 0+iPadding;
+			int iSelectPanelWidth = width-2*iPadding;
+			int iSelectPanelHeight = (height-4*iPadding)/4;
+			m_selectPane.changeSize(iSelectPanelWidth, iSelectPanelHeight);
+			m_selectPane.setBounds(new Rectangle(iSelectPanelX, iSelectPanelY, iSelectPanelWidth, iSelectPanelHeight));
+			
+			int iRTMonitorPanelX = 0+iPadding;
+			int iRTMonitorPanelY = 0+iPadding+iSelectPanelHeight+iPadding;
+			int iRTMonitorPanelWidth = width-2*iPadding;
+			int iRTMonitorPanelHeight = ((height-4*iPadding)-iSelectPanelHeight)/2;
+			m_RTMonitorPanel.changeSize(iRTMonitorPanelWidth, iRTMonitorPanelHeight);
+			m_RTMonitorPanel.setBounds(new Rectangle(iPadding, iRTMonitorPanelY, iRTMonitorPanelWidth, iRTMonitorPanelHeight));
+			
+			
+			int iAccountInfoPanelX = 0+iPadding;
+			int iAccountInfoPanelY = 0+iPadding+iSelectPanelHeight+iPadding+iRTMonitorPanelHeight+iPadding;
+			int iAccountInfoPanelWidth = width-2*iPadding;
+			int iAccountInfoPanelHeight = ((height-4*iPadding)-iSelectPanelHeight-iRTMonitorPanelHeight);
+			m_AccountInfoPanel.changeSize(iAccountInfoPanelWidth, iAccountInfoPanelHeight);
+			m_AccountInfoPanel.setBounds(new Rectangle(iAccountInfoPanelX, iAccountInfoPanelY, iAccountInfoPanelWidth, iAccountInfoPanelHeight));
 		}
 		
 		public void onRTMonitorPanelCommit()
