@@ -54,6 +54,8 @@ public class QUSelectTable {
 					cSelectItem.setProperty(key, value);
 				}
 			}
+			
+			m_SelectItemList.add(cSelectItem);
 
 			cursor = m_CXmlTable.moveNext();
 		}
