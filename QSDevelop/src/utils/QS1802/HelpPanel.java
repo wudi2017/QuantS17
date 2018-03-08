@@ -265,8 +265,8 @@ public class HelpPanel {
 					newRot.add(cHoldStock.createDate);
 					newRot.add(cHoldStock.totalAmount);
 					newRot.add(cHoldStock.availableAmount);
-					newRot.add(cHoldStock.totalBuyCost);
 					newRot.add(cHoldStock.curPrice);
+					newRot.add(cHoldStock.curPrice*cHoldStock.totalAmount);
 					newRot.add(cHoldStock.refPrimeCostPrice);
 					newRot.add(CUtilsMath.saveNDecimal(cHoldStock.refProfit(), 3));
 
@@ -694,8 +694,8 @@ public class HelpPanel {
 				vName.add("createDate");
 				vName.add("totalAmount");
 				vName.add("availableAmount");
-				vName.add("totalBuyCost");
 				vName.add("curPrice");
+				vName.add("marketValue");
 				vName.add("refPrimeCostPrice");
 				vName.add("refProfit");
 				Vector vData = new Vector();
