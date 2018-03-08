@@ -45,7 +45,7 @@ public class QUSelectTable {
 			cSelectItem.m_sStockID = cursor.getColume("stockID");
 			cSelectItem.m_dPriority = Double.parseDouble(cursor.getColume("priority"));
 			Map<String,String> columesmap = cursor.columesMap();
-			for (Map.Entry<String, String> entry : cSelectItem.m_propMap.entrySet()) { 
+			for (Map.Entry<String, String> entry : columesmap.entrySet()) { 
 				String key = entry.getKey();
 				String value = entry.getValue();
 				
