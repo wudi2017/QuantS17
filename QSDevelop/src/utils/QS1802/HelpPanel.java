@@ -584,17 +584,17 @@ public class HelpPanel {
 			}
 
 			m_btn_add = new JButton("Add");
-			m_btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 80, 20));
+			m_btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 85, 20));
 			m_btn_add.addActionListener(new AddBtnListener(this));
 			this.add(m_btn_add);
 			
 			m_btn_remove = new JButton("Remove");
-			m_btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 80, 20));
+			m_btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 85, 20));
 			m_btn_remove.addActionListener(new RemoveBtnListener(this));
 			this.add(m_btn_remove);
 			
 			m_btn_commit = new JButton("Commit");
-			m_btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 80, 20));
+			m_btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 85, 20));
 			m_btn_commit.addActionListener(new CommitBtnListener(this));
 			this.add(m_btn_commit);
 		}
@@ -604,9 +604,9 @@ public class HelpPanel {
 			int iPadding = 10;
 			int iTableHeight = height-60;
 			m_scrollPane.setBounds(new Rectangle(iPadding, 20, width-20, iTableHeight));
-			m_btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 80, 20));
-			m_btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 80, 20));
-			m_btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 80, 20));
+			m_btn_add.setBounds(new Rectangle(iPadding, 30 + iTableHeight, 85, 20));
+			m_btn_remove.setBounds(new Rectangle(100, 30 + iTableHeight, 85, 20));
+			m_btn_commit.setBounds(new Rectangle(190, 30 + iTableHeight, 85, 20));
 		}
 		
 		public void onClickAdd()
