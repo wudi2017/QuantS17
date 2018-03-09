@@ -266,7 +266,7 @@ public class HelpPanel {
 					newRot.add(cHoldStock.totalAmount);
 					newRot.add(cHoldStock.availableAmount);
 					newRot.add(cHoldStock.curPrice);
-					newRot.add(cHoldStock.curPrice*cHoldStock.totalAmount);
+					newRot.add(CUtilsMath.saveNDecimal(cHoldStock.curPrice*cHoldStock.totalAmount, 3));
 					newRot.add(cHoldStock.refPrimeCostPrice);
 					newRot.add(CUtilsMath.saveNDecimal(cHoldStock.refProfit(), 3));
 
