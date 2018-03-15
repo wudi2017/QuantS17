@@ -157,13 +157,14 @@ public class QS1802T1 extends QS1802Base {
 	 * *************************************************************************************
 	 */
 	public static void main(String[] args) throws Exception {
+		
 		CSystem.start();
 		
 		CLog.output("TEST", "FastTest main begin");
 		
 		// create testaccount
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("account_QS1801T1" ,  new RealAccountOpe(), true); // MockAccountOpe | RealAccountOpe
+		cAccoutDriver.load("account_QS1801_REAL" ,  new RealAccountOpe(), true); // MockAccountOpe | RealAccountOpe
 		//cAccoutDriver.reset(100000);
 		cAccoutDriver.start();
 		Account acc = cAccoutDriver.account();
@@ -171,7 +172,7 @@ public class QS1802T1 extends QS1802Base {
 		QuantSession qSession = new QuantSession(
 				"Realtime", // Realtime | HistoryTest 2016-01-01 2016-03-01
 				cAccoutDriver, 
-				new QS1802T1(true, true)); // bAutoSelect2Monitor, bHelpPane
+				new QS1802T1(false, true)); // bAutoSelect2Monitor, bHelpPane
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		
@@ -180,5 +181,4 @@ public class QS1802T1 extends QS1802Base {
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();
 	}
-
 }
