@@ -4,6 +4,7 @@ import java.util.List;
 
 import pers.di.account.Account;
 import pers.di.account.AccoutDriver;
+import pers.di.account.IMarketOpe;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
@@ -162,20 +163,44 @@ public class QS1802T1 extends QS1802Base {
 		
 		CLog.output("TEST", "FastTest main begin");
 		
-		// create testaccount
+		boolean bMockTest = true;
+		
+		String accountName = "";
+		IMarketOpe cIMarketOpe = null;
+		String settionStr = "";
+		boolean bAutoSelect2Monitor = false;
+		if(bMockTest)
+		{
+			accountName = "account_QS1801T1";
+			cIMarketOpe = new MockAccountOpe();
+			settionStr = "Realtime"; // Realtime | HistoryTest 2016-01-01 2016-03-01
+			bAutoSelect2Monitor = true;
+		}
+		else
+		{
+			accountName = "account_QS1801_REAL";
+			cIMarketOpe = new RealAccountOpe();
+			settionStr = "Realtime";
+			bAutoSelect2Monitor = false;
+		}
+		
+		
+		// create & start account driver
 		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("account_QS1801_REAL" ,  new RealAccountOpe(), true); // MockAccountOpe | RealAccountOpe
+		cAccoutDriver.load(accountName ,  cIMarketOpe, true); 
 		//cAccoutDriver.reset(100000);
 		cAccoutDriver.start();
-		Account acc = cAccoutDriver.account();
 		
+		// create & run session
+		Account acc = cAccoutDriver.account();
 		QuantSession qSession = new QuantSession(
-				"Realtime", // Realtime | HistoryTest 2016-01-01 2016-03-01
+				settionStr, // Realtime | HistoryTest 2016-01-01 2016-03-01
 				cAccoutDriver, 
-				new QS1802T1(false, true)); // bAutoSelect2Monitor, bHelpPane
+				new QS1802T1(bAutoSelect2Monitor, true)); // bAutoSelect2Monitor, bHelpPane
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		qSession.run();
 		
+		// stop account driver
 		cAccoutDriver.stop();
 		
 		CLog.output("TEST", "FastTest main end");
