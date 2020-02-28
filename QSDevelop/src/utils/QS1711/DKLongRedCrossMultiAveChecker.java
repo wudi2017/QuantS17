@@ -1,6 +1,6 @@
 package utils.QS1711;
 
-import pers.di.dataapi.common.*;
+import pers.di.localstock.common.*;
 import pers.di.dataengine.*;
 /*
  * 长阳上穿多个均线

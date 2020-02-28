@@ -7,7 +7,6 @@ import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.common.CUtilsMath;
-import pers.di.dataapi.common.KLine;
 import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.QuantContext;
@@ -43,13 +42,13 @@ public abstract class QS1711SBase extends QuantStrategy {
 		double fNowPrice = cDAStock.price();
 		
 		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		ctx.ap().getHoldStockList(ctnHoldStockList);
+		ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 		if(ctnHoldStockList.size() < m_iMaxHoldCount)
 		{
 			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-			ctx.ap().getTotalAssets(ctnTotalAssets);
+			ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 			CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-			ctx.ap().getMoney(ctnMoney);
+			ctx.accountProxy().getMoney(ctnMoney);
 			double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/m_iMaxHoldCount)?ctnTotalAssets.get()/m_iMaxHoldCount:ctnMoney.get();
 			if(validRatio>=0 && validRatio<=1)
 			{
@@ -58,7 +57,7 @@ public abstract class QS1711SBase extends QuantStrategy {
 			int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
 			if(iCreateAmount > 0)
 			{
-				ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
+				ctx.accountProxy().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
 			}
 		}
 	}
@@ -69,20 +68,20 @@ public abstract class QS1711SBase extends QuantStrategy {
 		double fNowPrice = cDAStock.price();
 		
 		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		ctx.ap().getHoldStockList(ctnHoldStockList);
+		ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 		for(int i=0; i<ctnHoldStockList.size(); i++)
 		{
 			HoldStock cHoldStock = ctnHoldStockList.get(i);
 			if(cHoldStock.stockID.equals(stockID))
 			{
-				ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+				ctx.accountProxy().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
 			}
 		}
 	}
 	
 	@Override
 	public void onInit(QuantContext ctx) {
-		m_XStockSelectManager = new XStockSelectManager(ctx.ap());
+		m_XStockSelectManager = new XStockSelectManager(ctx.accountProxy());
 		m_TranReportor = new TranReportor(this.getClass().getSimpleName());
 		this.onStrateInit(ctx);
 	}
@@ -92,9 +91,9 @@ public abstract class QS1711SBase extends QuantStrategy {
 	@Override
 	public void onDayStart(QuantContext ctx) {
 		CLog.output("TEST", "onDayStart %s", ctx.date());
-		super.addCurrentDayInterestMinuteDataIDs(ctx.ap().getHoldStockIDList());
+		ctx.addCurrentDayInterestMinuteDataIDs(ctx.accountProxy().getHoldStockIDList());
 		m_XStockSelectManager.loadFromFile();
-		super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
+		ctx.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
 		CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		this.onStrateDayStart(ctx);
 	}
@@ -113,7 +112,7 @@ public abstract class QS1711SBase extends QuantStrategy {
 		
 		// sell check
 		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-		ctx.ap().getHoldStockList(ctnHoldStockList);
+		ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 		for(int i=0; i<ctnHoldStockList.size(); i++)
 		{
 			HoldStock cHoldStock = ctnHoldStockList.get(i);
@@ -133,12 +132,12 @@ public abstract class QS1711SBase extends QuantStrategy {
 		
 		// report
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-		ctx.ap().getTotalAssets(ctnTotalAssets);
+		ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 		double dSH = ctx.pool().get("999999").price();
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
-		CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+		CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 	}
 	
 	/*

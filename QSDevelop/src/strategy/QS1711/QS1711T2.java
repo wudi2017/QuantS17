@@ -3,19 +3,18 @@ package strategy.QS1711;
 import java.util.ArrayList;
 import java.util.List;
 
-import pers.di.account.Account;
-import pers.di.account.AccoutDriver;
+import pers.di.account.AccountController;
+import pers.di.account.IAccount;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsMath;
-import pers.di.dataapi.common.KLine;
 import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
-import pers.di.marketaccount.mock.MockAccountOpe;
+import pers.di.localstock.common.KLine;
+import pers.di.quantplatform.Quant;
 import pers.di.quantplatform.QuantContext;
-import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.QS1711.TranDaysChecker;
 import utils.QS1711.TranReportor;
@@ -195,16 +194,16 @@ public class QS1711T2 {
 		CLog.output("TEST", "FastTest main begin");
 		
 		// create testaccount
-		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
-		cAccoutDriver.reset(100000);
-		Account acc = cAccoutDriver.account();
+		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
+		cAccountController.open("fast_mock001", true);
+		cAccountController.reset(100000);
+		IAccount acc = cAccountController.account();
 		
-		QuantSession qSession = new QuantSession(
+		Quant.instance().run(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
-				cAccoutDriver, 
+				cAccountController, 
 				new QS1712T2Strategy());
-		qSession.run();
+		cAccountController.close();
 		
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();

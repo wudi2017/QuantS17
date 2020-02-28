@@ -2,19 +2,18 @@ package strategy.QS1801;
 
 import java.util.List;
 
-import pers.di.account.Account;
-import pers.di.account.AccoutDriver;
+import pers.di.account.AccountController;
+import pers.di.account.IAccount;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
 import pers.di.common.CUtilsMath;
-import pers.di.dataapi.common.KLine;
 import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
 import pers.di.dataengine.DATimePrices;
-import pers.di.marketaccount.mock.MockAccountOpe;
+import pers.di.localstock.common.KLine;
+import pers.di.quantplatform.Quant;
 import pers.di.quantplatform.QuantContext;
-import pers.di.quantplatform.QuantSession;
 import utils.QS1711.DayKLinePriceWaveChecker;
 import utils.QS1711.ETDropStable;
 import utils.QS1711.ETDropStable.ResultDropStable;
@@ -154,17 +153,17 @@ public class QS1801T1 extends QS1801Base {
 		CLog.output("TEST", "FastTest main begin");
 		
 		// create testaccount
-		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("account_QS1801T1" ,  new MockAccountOpe(), true);
-		cAccoutDriver.reset(100000);
-		Account acc = cAccoutDriver.account();
+		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
+		cAccountController.open("account_QS1801T1", true);
+		cAccountController.reset(100000);
+		IAccount acc = cAccountController.account();
 		
-		QuantSession qSession = new QuantSession(
+		Quant.instance().run(
 				"HistoryTest 2010-01-01 2018-01-20", // Realtime | HistoryTest 2016-01-01 2017-01-01
-				cAccoutDriver, 
+				cAccountController, 
 				new QS1801T1());
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
-		qSession.run();
+		cAccountController.close();
 		
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();

@@ -1,6 +1,6 @@
 package utils.QS1711.base;
 
-import pers.di.dataapi.common.KLine;
+import pers.di.localstock.common.*;
 import pers.di.dataengine.DAKLines;
 
 public class EKAveVolume {

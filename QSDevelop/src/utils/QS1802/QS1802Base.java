@@ -120,7 +120,7 @@ public abstract class QS1802Base extends QuantStrategy {
 				lStockOneCommitInterval = lMinCommitInterval;
 			}
 		}
-		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.ap(), stockID, TRANACT.BUY);
+		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.BUY);
 		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
@@ -135,18 +135,18 @@ public abstract class QS1802Base extends QuantStrategy {
 		lOneCommitAmount = cMonitorItem.oneCommitAmount();
 
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-		ctx.ap().getTotalAssets(ctnTotalAssets);
+		ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-		ctx.ap().getMoney(ctnMoney);
+		ctx.accountProxy().getMoney(ctnMoney);
 		
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		
 		if(null == cHoldStock) // first create
 		{
 			// max hold count check
 			Long lMaxHoldStockCount = m_defaultCfg.GlobalDefaulMaxHoldStockCount;
 			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-			ctx.ap().getHoldStockList(ctnHoldStockList);
+			ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 			if(ctnHoldStockList.size() > lMaxHoldStockCount)
 			{
 				//CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
@@ -209,7 +209,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 		
 		// post request
-		ctx.ap().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
+		ctx.accountProxy().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
 		
 		// create clear property
 		dTargetProfitMoney = cMonitorItem.targetProfitMoney();
@@ -260,7 +260,7 @@ public abstract class QS1802Base extends QuantStrategy {
 				
 		// interval commit check
 		Long lStockOneCommitInterval = cMonitorItem.minCommitInterval();
-		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.ap(), stockID, TRANACT.SELL);
+		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.SELL);
 		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
@@ -272,7 +272,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 
 		// hold check
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		if(null == cHoldStock || cHoldStock.availableAmount < 0)
 		{
 			//CLog.output("TEST", "sellSignalEmit %s ignore! not have availableAmount", stockID);
@@ -290,7 +290,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 		
 		// post request
-		ctx.ap().pushSellOrder(cHoldStock.stockID, lCommitAmount.intValue(), fNowPrice);
+		ctx.accountProxy().pushSellOrder(cHoldStock.stockID, lCommitAmount.intValue(), fNowPrice);
 		return true;
 	}
 	
@@ -302,7 +302,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		String stockID = cDAStock.ID();
 		Double fNowPrice = cDAStock.price();
 	
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		if(null == cHoldStock || cHoldStock.availableAmount <= 0)
 		{
 			//CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
@@ -364,7 +364,7 @@ public abstract class QS1802Base extends QuantStrategy {
 
 		if(bCLearAll)
 		{
-			ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+			ctx.accountProxy().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
 			return true;
 		}
 		else
@@ -425,37 +425,37 @@ public abstract class QS1802Base extends QuantStrategy {
 		return false;
 	}
 	
-	public void onQURTMonitorTableCB(CALLBACKTYPE cb)
-	{
-		if(CALLBACKTYPE.COMMITED == cb)
-		{
-			// add new
-			super.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
-			// remove not exist in m_QURTMonitorTable
-			List<String> monitorIDs = m_QURTMonitorTable.monitorStockIDs();
-			List<String> curInterestMinuteDataIDs = super.getCurrentDayInterestMinuteDataIDs();
-			List<String> rmIDs = new ArrayList<String>();
-			for(int i=0; i<curInterestMinuteDataIDs.size(); i++)
-			{
-				String stockID = curInterestMinuteDataIDs.get(i);
-				if(!monitorIDs.contains(stockID))
-				{
-					rmIDs.add(stockID);
-				}
-			}
-			for(int i=0; i<rmIDs.size(); i++)
-			{
-				String stockID = rmIDs.get(i);
-				super.removeCurrentDayInterestMinuteDataID(stockID);
-			}
-		}
-	}
+//	public void onQURTMonitorTableCB(CALLBACKTYPE cb)
+//	{
+//		if(CALLBACKTYPE.COMMITED == cb)
+//		{
+//			// add new
+//			super.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
+//			// remove not exist in m_QURTMonitorTable
+//			List<String> monitorIDs = m_QURTMonitorTable.monitorStockIDs();
+//			List<String> curInterestMinuteDataIDs = super.getCurrentDayInterestMinuteDataIDs();
+//			List<String> rmIDs = new ArrayList<String>();
+//			for(int i=0; i<curInterestMinuteDataIDs.size(); i++)
+//			{
+//				String stockID = curInterestMinuteDataIDs.get(i);
+//				if(!monitorIDs.contains(stockID))
+//				{
+//					rmIDs.add(stockID);
+//				}
+//			}
+//			for(int i=0; i<rmIDs.size(); i++)
+//			{
+//				String stockID = rmIDs.get(i);
+//				super.removeCurrentDayInterestMinuteDataID(stockID);
+//			}
+//		}
+//	}
 	
 	@Override
 	public void onInit(QuantContext ctx) 
 	{
 		String derivedStrategyClsName = this.getClass().getSimpleName();
-		String accountIDName = ctx.ap().ID();
+		String accountIDName = ctx.accountProxy().ID();
 		String strStockStrategyHelperPath = CSystem.getRWRoot() + "\\StockStrategyHelper";
 		CFileSystem.createDir(strStockStrategyHelperPath);
 		
@@ -469,14 +469,14 @@ public abstract class QS1802Base extends QuantStrategy {
 		m_QURTMonitorTable = new QURTMonitorTable(rtMonitorFileName);
 		m_QURTMonitorTable.open();
 		
-		m_QURTMonitorTableCB = new QURTMonitorTableCB(this);
-		m_QURTMonitorTable.registerCallback("QS1802BaseRTMCb", m_QURTMonitorTableCB);
+//		m_QURTMonitorTableCB = new QURTMonitorTableCB(this);
+//		m_QURTMonitorTable.registerCallback("QS1802BaseRTMCb", m_QURTMonitorTableCB);
 		
 		// initialize report module
 		m_TranReportor = new TranReportor(accountIDName);
 		
 		// add current day monitor data ID according monitor table
-		super.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
+		ctx.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
 		this.onStrateDayStart(ctx);
 				
 		// callback onStrateInit
@@ -486,7 +486,7 @@ public abstract class QS1802Base extends QuantStrategy {
 		if(m_defaultCfg.GlobalDefaultShowHelpPanel)
 		{
 			m_helpPanel = new HelpPanel();
-			m_helpPanel.bindQUObject(m_QUSelectTable,m_QURTMonitorTable, ctx.ap());
+			m_helpPanel.bindQUObject(m_QUSelectTable,m_QURTMonitorTable, ctx.accountProxy());
 			m_helpPanel.start();
 		}
 	}
@@ -499,7 +499,7 @@ public abstract class QS1802Base extends QuantStrategy {
 	public void onDayStart(QuantContext ctx) 
 	{
 		// add current day monitor data ID according monitor table
-		super.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
+		ctx.addCurrentDayInterestMinuteDataIDs(m_QURTMonitorTable.monitorStockIDs());
 		this.onStrateDayStart(ctx);
 	}
 	
@@ -546,13 +546,13 @@ public abstract class QS1802Base extends QuantStrategy {
 
 		// report
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-		ctx.ap().getTotalAssets(ctnTotalAssets);
+		ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 		double dSH = ctx.pool().get("999999").price();
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
 		CLog.output("TEST", "onDayFinish %s", ctx.date());
-		CLog.output("TEST", "dump account:\n %s", ctx.ap().dump());
+		CLog.output("TEST", "dump account:\n %s", ctx.accountProxy().dump());
 		CLog.output("TEST", "dump selecttable:\n %s", m_QUSelectTable.dump());
 	}
 	
@@ -587,7 +587,7 @@ public abstract class QS1802Base extends QuantStrategy {
 	// remove monitor ID item, which it is not exist in holdstock & strategy!=Manul
 	private void autoRemoveInvalidMonitor(QuantContext ctx)
 	{
-		List<String> holdIDs = ctx.ap().getHoldStockIDList();
+		List<String> holdIDs = ctx.accountProxy().getHoldStockIDList();
 		List<String> monitorIDs = m_QURTMonitorTable.monitorStockIDs();
 		for(int i=0; i<monitorIDs.size(); i++)
 		{
@@ -620,28 +620,28 @@ public abstract class QS1802Base extends QuantStrategy {
 		}
 	}
 	
-	public static class QURTMonitorTableCB implements QURTMonitorTable.ICallback
-	{
-		public QURTMonitorTableCB(QS1802Base cQS1802Base)
-		{
-			m_QS1802Base = cQS1802Base;
-		}
-		
-		@Override
-		public void onNotify(CALLBACKTYPE cb) {
-			if(null != m_QS1802Base)
-			{
-				m_QS1802Base.onQURTMonitorTableCB(cb);
-			}
-		}
-		private QS1802Base m_QS1802Base;
-	}
+//	public static class QURTMonitorTableCB implements QURTMonitorTable.ICallback
+//	{
+//		public QURTMonitorTableCB(QS1802Base cQS1802Base)
+//		{
+//			m_QS1802Base = cQS1802Base;
+//		}
+//		
+//		@Override
+//		public void onNotify(CALLBACKTYPE cb) {
+//			if(null != m_QS1802Base)
+//			{
+//				m_QS1802Base.onQURTMonitorTableCB(cb);
+//			}
+//		}
+//		private QS1802Base m_QS1802Base;
+//	}
 	
 	private DefaultConfig m_defaultCfg;
 	
 	private QUSelectTable m_QUSelectTable; // 选股表
 	private QURTMonitorTable m_QURTMonitorTable; // 实时监控表
-	private QURTMonitorTableCB m_QURTMonitorTableCB;
+//	private QURTMonitorTableCB m_QURTMonitorTableCB;
 	private TranReportor m_TranReportor; // 报告模块
 	
 	private HelpPanel m_helpPanel;

@@ -289,7 +289,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 				lStockOneCommitInterval = lMinCommitInterval;
 			}
 		}
-		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.ap(), stockID, TRANACT.BUY);
+		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.BUY);
 		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
@@ -301,18 +301,18 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		}
 
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-		ctx.ap().getTotalAssets(ctnTotalAssets);
+		ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-		ctx.ap().getMoney(ctnMoney);
+		ctx.accountProxy().getMoney(ctnMoney);
 		
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		
 		if(null == cHoldStock) // first create
 		{
 			// max hold count check
 			Long lMaxHoldStockCount = this.getGlobalMaxHoldStockCount();
 			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-			ctx.ap().getHoldStockList(ctnHoldStockList);
+			ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 			if(ctnHoldStockList.size() > lMaxHoldStockCount)
 			{
 				//CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
@@ -386,7 +386,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		}
 		
 		// post request
-		ctx.ap().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
+		ctx.accountProxy().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
 		
 		// create clear property
 		if(null == this.getPrivateStockPropertyMaxHoldDays(stockID))
@@ -424,7 +424,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		
 		// interval commit check
 		Long lStockOneCommitInterval = this.getGlobalStockMinCommitInterval();
-		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.ap(), stockID, TRANACT.SELL);
+		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.SELL);
 		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
@@ -436,7 +436,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		}
 
 		// hold check
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		if(null == cHoldStock || cHoldStock.availableAmount < 0)
 		{
 			//CLog.output("TEST", "sellSignalEmit %s ignore! not have availableAmount", stockID);
@@ -454,7 +454,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		}
 		
 		// post request
-		ctx.ap().pushSellOrder(cHoldStock.stockID, lCommitAmount.intValue(), fNowPrice);
+		ctx.accountProxy().pushSellOrder(cHoldStock.stockID, lCommitAmount.intValue(), fNowPrice);
 		return true;
 	}
 	
@@ -467,7 +467,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 	{
 		String stockID = cDAStock.ID();
 		Double fNowPrice = cDAStock.price();
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.ap(), stockID);
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		if(null == cHoldStock || cHoldStock.availableAmount <= 0)
 		{
 			//CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
@@ -522,7 +522,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 
 		if(bCLearAll)
 		{
-			ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+			ctx.accountProxy().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
 		}
 	}
 	
@@ -531,7 +531,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 	public void onInit(QuantContext ctx) {
 		
 		// String derivedClsName = this.getClass().getSimpleName();
-		String accountIDName = ctx.ap().ID();
+		String accountIDName = ctx.accountProxy().ID();
 		
 		m_QUSelector = new QUSelector(accountIDName);
 		m_QUSelector.loadFromFile();
@@ -564,7 +564,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		// init property
 		m_QUProperty.loadFormFile();
 
-		super.addCurrentDayInterestMinuteDataIDs(m_QUSelector.selectList());
+		ctx.addCurrentDayInterestMinuteDataIDs(m_QUSelector.selectList());
 		//CLog.output("TEST", "onDayStart %s", m_QUSelector.dumpSelect());
 		
 		this.onStrateDayStart(ctx);
@@ -577,7 +577,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		// user will raise buy|sell signal
 		
 		List<String> selectIDs = m_QUSelector.selectList();
-		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.ap());
+		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.accountProxy());
 		
 		HashSet<String> hashSet = new HashSet<String>();
 		hashSet.addAll(selectIDs);
@@ -603,7 +603,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		
 		// property reset£¬ remove it which not in select|hold
 		List<String> selectIDs = m_QUSelector.selectList();
-		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.ap());
+		List<String> holdIDs = QUCommon.getHoldStockIDList(ctx.accountProxy());
 		List<String> propStockIDs = m_QUProperty.propertyList();
 		for(int i=0; i<propStockIDs.size(); i++)
 		{
@@ -619,12 +619,12 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		
 		// report
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-		ctx.ap().getTotalAssets(ctnTotalAssets);
+		ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 		double dSH = ctx.pool().get("999999").price();
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
-		CLog.output("TEST", "onDayFinish %s dump account&select\n %s\n    -%s", ctx.date(), ctx.ap().dump(), m_QUSelector.dumpSelect());
+		CLog.output("TEST", "onDayFinish %s dump account&select\n %s\n    -%s", ctx.date(), ctx.accountProxy().dump(), m_QUSelector.dumpSelect());
 	}
 	
 	@Override

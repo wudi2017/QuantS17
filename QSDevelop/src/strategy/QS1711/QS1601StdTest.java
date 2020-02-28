@@ -5,34 +5,15 @@ import java.util.*;
 import pers.di.account.*;
 import pers.di.account.common.*;
 import pers.di.common.*;
-import pers.di.dataapi.StockDataApi;
-import pers.di.dataapi.common.*;
-import pers.di.dataapi_test.TestCommonHelper;
 import pers.di.dataengine.*;
+import pers.di.localstock.common.KLine;
 import pers.di.quantplatform.*;
+import pers.di.quantplatform_test.TestQuantSession_Simple.TestStrategy;
+import pers.di.account.AccountController;
 import utils.QS1711.TranReportor;
 import utils.QS1711.XStockSelectManager;
 
 public class QS1601StdTest {
-	
-	public static double s_transactionCostsRatioBuy = 0.0016f;
-	public static double s_transactionCostsRatioSell = 0.0f;
-	
-	public static class MockMarketOpe extends IMarketOpe
-	{
-		@Override
-		public int postTradeRequest(TRANACT tranact, String id, int amount, double price) {
-			if(tranact == TRANACT.BUY)
-			{
-				super.dealReply(tranact, id, amount, price, amount*price*s_transactionCostsRatioBuy);
-			}
-			else if(tranact == TRANACT.SELL)
-			{
-				super.dealReply(tranact, id, amount, price, amount*price*s_transactionCostsRatioSell);
-			}
-			return 0;
-		}
-	}
 	
 	public static class QS1601StdTestStrategy extends QuantStrategy
 	{
@@ -43,7 +24,7 @@ public class QS1601StdTest {
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XStockSelectManager = new XStockSelectManager(ctx.ap());
+			m_XStockSelectManager = new XStockSelectManager(ctx.accountProxy());
 			m_TranReportor = new TranReportor(this.getClass().getSimpleName());
 		}
 		
@@ -54,7 +35,7 @@ public class QS1601StdTest {
 		@Override
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
-			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS2(3));
+			ctx.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS2(3));
 		}
 		
 		public void onHandleBuy(QuantContext ctx)
@@ -81,9 +62,9 @@ public class QS1601StdTest {
 			}
 			
 			List<HoldStock> cHoldStockList = new ArrayList<HoldStock>();
-			int iRetHoldStockList = ctx.ap().getHoldStockList(cHoldStockList);
+			int iRetHoldStockList = ctx.accountProxy().getHoldStockList(cHoldStockList);
 			List<CommissionOrder> cCommissionOrderList = new ArrayList<CommissionOrder>();
-			int iRetBuyCommissionOrderList =  ctx.ap().getCommissionOrderList(cCommissionOrderList);
+			int iRetBuyCommissionOrderList =  ctx.accountProxy().getCommissionOrderList(cCommissionOrderList);
 			
 			// remove already hold
 			Iterator<String> it = cIntentCreateList.iterator();
@@ -164,9 +145,9 @@ public class QS1601StdTest {
 
 				// 买入量
 				CObjectContainer<Double> totalAssets = new CObjectContainer<Double>();
-				int iRetTotalAssets = ctx.ap().getTotalAssets(totalAssets);
+				int iRetTotalAssets = ctx.accountProxy().getTotalAssets(totalAssets);
 				CObjectContainer<Double> money = new CObjectContainer<Double>();
-				int iRetMoney = ctx.ap().getMoney(money);
+				int iRetMoney = ctx.accountProxy().getMoney(money);
 				if(0 == iRetTotalAssets && 0 == iRetMoney)
 				{
 					double fMaxPositionRatio = 0.3333f;
@@ -178,7 +159,7 @@ public class QS1601StdTest {
 					double curPrice = ctx.pool().get(createID).price();
 					int amount = (int)(buyMoney/curPrice);
 					amount = amount/100*100; // 买入整手化
-					ctx.ap().pushBuyOrder(createID, amount, curPrice); // 500 12.330769
+					ctx.accountProxy().pushBuyOrder(createID, amount, curPrice); // 500 12.330769
 				}
 				else
 				{
@@ -190,7 +171,7 @@ public class QS1601StdTest {
 		public void onHandleSell(QuantContext ctx)
 		{
 			List<HoldStock> cHoldStockList = new ArrayList<HoldStock>();
-			int iRetHoldStockList = ctx.ap().getHoldStockList(cHoldStockList);
+			int iRetHoldStockList = ctx.accountProxy().getHoldStockList(cHoldStockList);
 			
 			for(int i=0; i<cHoldStockList.size(); i++)
 			{
@@ -226,7 +207,7 @@ public class QS1601StdTest {
 				
 				if(bSell && cHoldStock.availableAmount > 0)
 				{
-					ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, curPrice); 
+					ctx.accountProxy().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, curPrice); 
 				}
 			}
 		}
@@ -274,16 +255,16 @@ public class QS1601StdTest {
 				}
 			}
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 			
 			// report
 			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-			ctx.ap().getTotalAssets(ctnTotalAssets);
+			ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 			double dSH = ctx.pool().get("999999").price();
 			m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 			m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 			m_TranReportor.generateReport();
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 		
 		}
 		
@@ -293,19 +274,15 @@ public class QS1601StdTest {
 	
 	public void run()
 	{
-		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		if(0 != cAccoutDriver.load("mock001" ,  new MockMarketOpe(), true)
-				|| 0 != cAccoutDriver.reset(10*10000f))
+		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
+		if(0 != cAccountController.open("mock001", true)
+				|| 0 != cAccountController.reset(10*10000f))
 		{
-			CLog.error("TEST", "SampleTestStrategy AccoutDriver ERR!");
+			CLog.error("TEST", "SampleTestStrategy AccountController ERR!");
 		}
-		Account acc = cAccoutDriver.account();
+		IAccount acc = cAccountController.account();
 		
-		QuantSession qSession = new QuantSession(
-				"HistoryTest 2016-03-01 2016-04-01", 
-				cAccoutDriver, 
-				new QS1601StdTestStrategy());
-		qSession.run();
+		Quant.instance().run("HistoryTest 2016-03-01 2016-04-01", cAccountController, new QS1601StdTestStrategy());
 	}
 	
 	public static void main(String[] args) throws Exception {

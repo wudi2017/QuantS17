@@ -2,18 +2,17 @@ package strategy.QS1711;
 
 import java.util.*;
 
-import pers.di.account.Account;
-import pers.di.account.AccoutDriver;
+import pers.di.account.*;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
-import pers.di.dataapi.common.*;
+import pers.di.localstock.*;
+import pers.di.localstock.common.*;
 import pers.di.common.*;
 import pers.di.dataengine.DAKLines;
 import pers.di.dataengine.DAStock;
-import pers.di.marketaccount.mock.MockAccountOpe;
+import pers.di.quantplatform.Quant;
 import pers.di.quantplatform.QuantContext;
-import pers.di.quantplatform.QuantSession;
 import pers.di.quantplatform.QuantStrategy;
 import utils.QS1711.TranDaysChecker;
 import utils.QS1711.TranReportor;
@@ -50,7 +49,7 @@ public class QS1605Real {
 		
 		@Override
 		public void onInit(QuantContext ctx) {
-			m_XStockSelectManager = new XStockSelectManager(ctx.ap());
+			m_XStockSelectManager = new XStockSelectManager(ctx.accountProxy());
 			m_TranReportor = new TranReportor("R");
 		}
 		@Override
@@ -60,7 +59,7 @@ public class QS1605Real {
 		public void onDayStart(QuantContext ctx) {
 			CLog.output("TEST", "onDayStart %s", ctx.date());
 			m_XStockSelectManager.loadFromFile();
-			super.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(30));
+			ctx.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(30));
 			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		}
 		
@@ -130,18 +129,18 @@ public class QS1605Real {
 				if(bBuyFlag)
 				{
 					List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-					ctx.ap().getHoldStockList(ctnHoldStockList);
+					ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 					if(ctnHoldStockList.size() < 5)
 					{
 						CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-						ctx.ap().getTotalAssets(ctnTotalAssets);
+						ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 						CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-						ctx.ap().getMoney(ctnMoney);
+						ctx.accountProxy().getMoney(ctnMoney);
 						double dCreateMoney = (ctnMoney.get() > ctnTotalAssets.get()/5)?ctnTotalAssets.get()/5:ctnMoney.get();
 						int iCreateAmount = (int) (dCreateMoney/fNowPrice)/100*100;
 						if(iCreateAmount > 0)
 						{
-							ctx.ap().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
+							ctx.accountProxy().pushBuyOrder(stockID, iCreateAmount, fNowPrice);
 						}
 					}
 				}
@@ -151,7 +150,7 @@ public class QS1605Real {
 		public void onSellCheck(QuantContext ctx)
 		{
 			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-			ctx.ap().getHoldStockList(ctnHoldStockList);
+			ctx.accountProxy().getHoldStockList(ctnHoldStockList);
 			for(int i=0; i<ctnHoldStockList.size(); i++)
 			{
 				HoldStock cHoldStock = ctnHoldStockList.get(i);
@@ -196,7 +195,7 @@ public class QS1605Real {
 					
 				if(bSellFlag)
 				{
-					ctx.ap().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+					ctx.accountProxy().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
 				}	
 			}
 		}
@@ -245,12 +244,12 @@ public class QS1605Real {
 			
 			// report
 			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-			ctx.ap().getTotalAssets(ctnTotalAssets);
+			ctx.accountProxy().getTotalAssets(ctnTotalAssets);
 			double dSH = ctx.pool().get("999999").price();
 			m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 			m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 			m_TranReportor.generateReport();
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.ap().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 		}
 		
 		private XStockSelectManager m_XStockSelectManager;
@@ -263,15 +262,16 @@ public class QS1605Real {
 		CLog.output("TEST", "FastTest main begin");
 		
 		// create testaccount
-		AccoutDriver cAccoutDriver = new AccoutDriver(CSystem.getRWRoot() + "\\account");
-		cAccoutDriver.load("fast_mock001" ,  new MockAccountOpe(), true);
-		Account acc = cAccoutDriver.account();
+		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
+		cAccountController.open("fast_mock001", true);
+		IAccount acc = cAccountController.account();
 		
-		QuantSession qSession = new QuantSession(
+		Quant.instance().run(
 				"HistoryTest 2010-01-01 2017-11-25", // Realtime | HistoryTest 2016-01-01 2017-01-01
-				cAccoutDriver, 
+				cAccountController, 
 				new QS1605RealStrategy());
-		qSession.run();
+		
+		cAccountController.close();
 		
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();

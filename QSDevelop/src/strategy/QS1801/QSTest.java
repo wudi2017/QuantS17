@@ -8,14 +8,10 @@ import javax.swing.*;
 
 import java.util.List;
 
-import pers.di.account.Account;
-import pers.di.account.AccoutDriver;
 import pers.di.common.CLog;
 import pers.di.common.CSystem;
 import pers.di.dataengine.DAStock;
-import pers.di.marketaccount.mock.MockAccountOpe;
 import pers.di.quantplatform.QuantContext;
-import pers.di.quantplatform.QuantSession;
 import utils.QS1711.ZCZXChecker;
 import utils.QS1711.base.EKRefHistoryPos;
 import utils.QS1711.base.EKRefHistoryPos.EKRefHistoryPosParam;
@@ -187,7 +183,7 @@ public class QSTest extends QS1801Base {
 //		cAccoutDriver.reset(100000);
 //		Account acc = cAccoutDriver.account();
 //		
-//		QuantSession qSession = new QuantSession(
+//		Quant.instance().run(
 //				"HistoryTest 2016-03-01 2016-04-01", // Realtime | HistoryTest 2016-01-01 2017-01-01
 //				cAccoutDriver, 
 //				new QSTest());

@@ -36,7 +36,7 @@ import pers.di.common.CThread;
 import pers.di.common.CUtilsMath;
 import pers.di.account.common.*;
 import pers.di.quantplatform.AccountProxy;
-import pers.di.account.Account;
+import pers.di.account.*;
 
 import utils.QS1802.QURTMonitorTable.MonitorItem;
 import utils.QS1802.QUSelectTable.SelectItem;
@@ -61,7 +61,7 @@ public class HelpPanel {
 		FlushMonitorTable2JTable();
 		
 		m_ap = ap;
-		m_ap.registerCallback(new AccountCB(this));
+		//m_ap.registerCallback(new AccountCB(this));
 		FlushAccount2JTable();
 		
 		m_sync.UnLock();
@@ -321,19 +321,19 @@ public class HelpPanel {
 		private HelpPanel m_HelpPanel;
 	}
 	
-	public static class AccountCB implements Account.ICallback
-	{
-		public AccountCB(HelpPanel cHelpPanel)
-		{
-			m_HelpPanel = cHelpPanel;
-		}
-		
-		@Override
-		public void onNotify(CALLBACKTYPE cb) {
-			m_HelpPanel.FlushAccount2JTable();
-		}
-		private HelpPanel m_HelpPanel;
-	}
+//	public static class AccountCB implements Account.ICallback
+//	{
+//		public AccountCB(HelpPanel cHelpPanel)
+//		{
+//			m_HelpPanel = cHelpPanel;
+//		}
+//		
+//		@Override
+//		public void onNotify(CALLBACKTYPE cb) {
+//			m_HelpPanel.FlushAccount2JTable();
+//		}
+//		private HelpPanel m_HelpPanel;
+//	}
 	
 	
 	private QUSelectTable m_selectTable;
