@@ -155,6 +155,7 @@ public class QS1802T1 extends QS1802Base {
 	 * *************************************************************************************
 	 */
 	public static void main(String[] args) throws Exception {
+		
 		CSystem.start();
 		
 		CLog.output("TEST", "FastTest main begin");
@@ -175,5 +176,4 @@ public class QS1802T1 extends QS1802Base {
 		CLog.output("TEST", "FastTest main end");
 		CSystem.stop();
 	}
-
 }
