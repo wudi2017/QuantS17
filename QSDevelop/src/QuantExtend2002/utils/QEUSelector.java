@@ -30,15 +30,21 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import pers.di.common.CFileSystem;
+import pers.di.common.CSystem;
 import pers.di.common.CUtilsXML;
 
 /*
  * Quant Extend Utils Selector (QEUSelector)
  */
 public class QEUSelector {
-	public QEUSelector(String fileName)
+	public QEUSelector(String name)
 	{
-		m_selectFileName = fileName;
+		String sDir = CSystem.getRWRoot() + "/QEUSelector/";
+		if (!CFileSystem.isDirExist(sDir)) {
+			CFileSystem.createDir(sDir);
+		}
+		m_selectFileName = sDir + name + ".xml";
 		m_maxCount = 3;
 		m_SelectItemList = new ArrayList<InnerSelectStockItem>();
 	}
