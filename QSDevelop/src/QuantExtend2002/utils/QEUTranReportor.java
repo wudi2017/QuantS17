@@ -10,6 +10,9 @@ import pers.di.common.CImageCurve;
 import pers.di.common.CSystem;
 import pers.di.common.CImageCurve.CurvePoint;
 
+/*
+ * Quant Extend Utils Transaction Report (QEUTranReportor)
+ */
 public class QEUTranReportor {
 	/*
 	 * 日报告结构体

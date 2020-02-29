@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import QuantExtend1711.utils.TranReportor;
+import QuantExtend1711.utils.TranDaysChecker;
+import QuantExtend1801.utils.QUCommon;
+import QuantExtend1801.utils.QUProperty;
 import QuantExtend2002.utils.*;
+import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
 import pers.di.dataengine.DAStock;
@@ -48,9 +51,13 @@ public abstract class QEBase2002 extends QuantStrategy {
 		String accountIDName = context.accountProxy().ID();
 		m_QEUSelector = new QEUSelector(accountIDName);
 		m_QEUSelector.loadFromFile();
+		m_QEUProperty = new QEUProperty(accountIDName);
+		m_QEUProperty.loadFormFile();
+		m_QEUTransactionController = new QEUTransactionController(m_QEUProperty);
 		m_QEUTranReportor = new QEUTranReportor(accountIDName);
 		this.onStrateInit(context);
 		m_QEUSelector.saveToFile();
+		m_QEUProperty.saveToFile();
 		
 	}
 	@Override 
@@ -60,11 +67,15 @@ public abstract class QEBase2002 extends QuantStrategy {
 	@Override
 	public void onDayStart(QuantContext context){
 		m_QEUSelector.loadFromFile();
+		m_QEUProperty.loadFormFile();
 		context.addCurrentDayInterestMinuteDataIDs(m_QEUSelector.list());
 		this.onStrateDayStart(context);
 	}
 	@Override
 	public void onMinuteData(QuantContext context){
+		
+		// callback to user with select&hold
+		// user will raise buy|sell signal
 		List<String> selectIDs = m_QEUSelector.list();
 		List<String> holdIDs = QEUCommon.getHoldStockIDList(context.accountProxy());
 		
@@ -78,6 +89,7 @@ public abstract class QEBase2002 extends QuantStrategy {
 		{
 			String stockID = uniqueIDs.get(iStock);
 			DAStock cDAStock = context.pool().get(stockID);
+			this.onAutoForceClearProcess(context, cDAStock);
 			this.onStrateMinute(context, cDAStock);
 		}
 	}
@@ -88,6 +100,22 @@ public abstract class QEBase2002 extends QuantStrategy {
 		this.onStrateDayFinish(context);
 		m_QEUSelector.saveToFile();
 		
+		// property reset， remove it which not in select|hold
+		List<String> selectIDs = m_QEUSelector.list();
+		List<String> holdIDs = QUCommon.getHoldStockIDList(context.accountProxy());
+		List<String> propStockIDs = m_QEUProperty.propertyList();
+		for(int i=0; i<propStockIDs.size(); i++)
+		{
+			String propStockID = propStockIDs.get(i);
+			if(propStockID.equals("Global")) continue;
+			if(!selectIDs.contains(propStockID)
+					&& !holdIDs.contains(propStockID))
+			{
+				m_QEUProperty.propertyClear(propStockID);
+			}
+		}
+		m_QEUProperty.saveToFile();
+				
 		// report
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
 		context.accountProxy().getTotalAssets(ctnTotalAssets);
@@ -97,6 +125,86 @@ public abstract class QEBase2002 extends QuantStrategy {
 		m_QEUTranReportor.generateReport();
 	}
 	
+	/*
+	 * Auto Clear Process, called by onMinuteData before user callback
+	 */
+	public void onAutoForceClearProcess(QuantContext ctx, DAStock cDAStock)
+	{
+		String stockID = cDAStock.ID();
+		Double fNowPrice = cDAStock.price();
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
+		if(null == cHoldStock || cHoldStock.availableAmount <= 0)
+		{
+			//CLog.output("TEST", "onAutoForceClearProcess %s ignore! NO availableAmount", stockID);
+			return;
+		}
+		
+		Double stopLossMoney = this.property().getPrivateStockPropertyStopLossMoney(stockID);
+		Double stopLossPrice = this.property().getPrivateStockPropertyStopLossPrice(stockID);
+		Double targetProfitMoney = this.property().getPrivateStockPropertyTargetProfitMoney(stockID);
+		Double targetProfitPrice = this.property().getPrivateStockPropertyTargetProfitPrice(stockID);
+		Long maxHoldDays = this.property().getPrivateStockPropertyMaxHoldDays(stockID);
+		
+		boolean bCLearAll = false;
+		// 止损额度
+		if(!bCLearAll &&
+				null != stopLossMoney && 0 != stopLossMoney &&
+				(fNowPrice - cHoldStock.refPrimeCostPrice)*cHoldStock.totalAmount <= stopLossMoney) 
+		{
+			bCLearAll = true;
+		}
+		// 止损股价
+		if(!bCLearAll &&
+				null != stopLossPrice && 0 != stopLossPrice &&
+				cDAStock.price() <= stopLossPrice) 
+		{
+			bCLearAll = true;
+		}
+		// 止盈额度
+		if(!bCLearAll &&
+				null != targetProfitMoney && 0 != targetProfitMoney &&
+				(fNowPrice - cHoldStock.refPrimeCostPrice)*cHoldStock.totalAmount >= targetProfitMoney) 
+		{
+			bCLearAll = true;
+		}
+		// 止盈股价
+		if(!bCLearAll &&
+				null != targetProfitPrice && 0 != targetProfitPrice &&
+				cDAStock.price() >= targetProfitPrice) 
+		{
+			bCLearAll = true;
+		}
+		
+		// 持股超时
+		if(null != maxHoldDays && 0 != maxHoldDays) 
+		{
+			long lHoldDays = TranDaysChecker.check(ctx.pool().get("999999").dayKLines(), cHoldStock.createDate, ctx.date());
+			if(lHoldDays >= maxHoldDays)
+			{
+				bCLearAll = true;
+			}
+		}
+
+		if(bCLearAll)
+		{
+			ctx.accountProxy().pushSellOrder(cHoldStock.stockID, cHoldStock.availableAmount, fNowPrice);
+		}
+	}
+	
+	protected QEUSelector selector() {
+		return m_QEUSelector;
+	}
+	
+	protected QEUProperty property() {
+		return m_QEUProperty;
+	}
+	
+	protected QEUTransactionController transactionController() {
+		return m_QEUTransactionController;
+	}
+	
 	private QEUSelector m_QEUSelector;
+	private QEUProperty m_QEUProperty;
+	private QEUTransactionController m_QEUTransactionController;
 	private QEUTranReportor m_QEUTranReportor;
-}
+};
