@@ -68,7 +68,10 @@ public abstract class QEBase2002 extends QuantStrategy {
 	public void onDayStart(QuantContext context){
 		m_QEUSelector.loadFromFile();
 		m_QEUProperty.loadFormFile();
+		// add select to interest 
 		context.addCurrentDayInterestMinuteDataIDs(m_QEUSelector.list());
+		// add hold stock to interest 
+		context.addCurrentDayInterestMinuteDataIDs(QEUCommon.getHoldStockIDList(context.accountProxy()));
 		this.onStrateDayStart(context);
 	}
 	@Override
@@ -95,12 +98,12 @@ public abstract class QEBase2002 extends QuantStrategy {
 	}
 	@Override
 	public void onDayFinish(QuantContext context){
-		// fetch user select stocks
+		// select save, fetch user select stocks and save to file
 		m_QEUSelector.clear();
 		this.onStrateDayFinish(context);
 		m_QEUSelector.saveToFile();
 		
-		// property reset£¬ remove it which not in select|hold
+		// property save£¬ remove it which not in select|hold and save to file
 		List<String> selectIDs = m_QEUSelector.list();
 		List<String> holdIDs = QUCommon.getHoldStockIDList(context.accountProxy());
 		List<String> propStockIDs = m_QEUProperty.propertyList();
@@ -116,7 +119,7 @@ public abstract class QEBase2002 extends QuantStrategy {
 		}
 		m_QEUProperty.saveToFile();
 				
-		// report
+		// report save to file
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
 		context.accountProxy().getTotalAssets(ctnTotalAssets);
 		double dSH = context.pool().get("999999").price();

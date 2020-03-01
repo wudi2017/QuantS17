@@ -25,85 +25,135 @@ public class QEUProperty {
 	/*
 	 * ************************************************************************************
 	 * global property 
+	 * 全局属性有默认值，用于自动生成单只股票的控制属性
 	 * 
-	 * MaxHoldStockCount 单只股票最大持股数量
-	 * StockMaxPosstion 单只股票最大持仓位
-	 * StockOneCommitPossition 单只股票单次提交相对最大持仓位比例
-	 * StockOneCommitInterval 提交频率控制
+	 * HoldStockMaxCount 持股最大个数，表示可以持有的股票的个数，例如最多可以持有3只股票
+	 * HoldOneStockMaxMarketValue 持有单只股票的最大市值，用于买入时计算单只最大持有量
+	 * BuyOneStockCommitMaxMarketValue 买入单只股票一次提交的最大市值
+	 * StockOneCommitInterval 提交频率控制(单位分钟)
 	 * MaxHoldDays 最大持有天数
-	 * TargetProfitRatio 目标止盈比（相对最大持仓位）
-	 * StopLossRatio 停止亏损比（相对最大持仓位）
+	 * TargetProfitRatio 目标止盈比（相对最大持仓位）例如：0.1 为盈利10个点
+	 * StopLossRatio 停止亏损比（相对最大持仓位） 例如：-0.1 为亏损10个点
 	 * 
 	 * ************************************************************************************
 	 */
-	// 最大持股数量
-	public void setGlobalMaxHoldStockCount(long count) { 
-		this.propertySetLong("Global", "MaxHoldStockCount", count); 
+	public static long sDefaultStockMaxCount = 10;
+	public static double sDefaultHoldOneStockMaxMarketValue = 10*10000.0;
+	public static double sDefaultBuyOneStockCommitMaxMarketValue = 2*10000.0;
+	public static long sDefaultStockOneCommitInterval = 60;
+	public static long sDefaultMaxHoldDays = 30;
+	public static double sDefaultTargetProfitRatio = 0.1; 
+	public static double sDefaultStopLossRatio = -0.1;
+	
+	// 单只股票最大持股数量
+	public void setGlobalStockMaxCount(Long count) { 
+		this.propertySetLong("Global", "StockMaxCount", count); 
 	}
-	public Long getGlobalMaxHoldStockCount() {
-		return this.propertyGetLong("Global", "MaxHoldStockCount");
+	public Long getGlobalStockMaxCount() {
+		Long ret = this.propertyGetLong("Global", "StockMaxCount");
+		if(null == ret) {
+			ret = sDefaultStockMaxCount;
+		}
+		return ret;
 	}
-	// 单只股票最大仓位，用于首次建仓时生成个股最大满仓持股数量属性，此属性用户控制个股下单最大上限
-	// 目标个性：FullHoldAmount
-	public void setGlobalStockMaxHoldPosstion(double dMaxPossition) 
+	
+	// 单只股票最大持股市值
+	public void setGlobalHoldOneStockMaxMarketValue(Double value) { 
+		this.propertySetDouble("Global", "HoldOneStockMaxMarketValue", value); 
+	}
+	public Double getGlobalHoldOneStockMaxMarketValue() {
+		Double ret = this.propertyGetDouble("Global", "HoldOneStockMaxMarketValue");
+		if (null == ret) {
+			ret = sDefaultHoldOneStockMaxMarketValue;
+		}
+		return ret;
+	}
+	
+	// 单只股票每次买入提交的最大市值
+	public void setGlobalBuyOneStockCommitMaxMarketValue(Double dDefaultCommit)
 	{
-		this.propertySetDouble("Global", "StockMaxHoldPosstion", dMaxPossition);
+		this.propertySetDouble("Global", "BuyOneStockCommitMaxMarketValue", dDefaultCommit);
 	}
-	public Double getGlobalStockMaxHoldPosstion()
+	public Double getGlobalBuyOneStockCommitMaxMarketValue()
 	{
-		return this.propertyGetDouble("Global", "StockMaxHoldPosstion");
+		Double ret = this.propertyGetDouble("Global", "BuyOneStockCommitMaxMarketValue");
+		if (null == ret) {
+			ret = sDefaultBuyOneStockCommitMaxMarketValue;
+		}
+		return ret;
 	}
-	// 单只股票操作默相对仓位（相对最大满仓持股数量属性），用于首次建仓时生成个股单笔操作股票数量属性
-	// 目标个性：OneCommitAmount
-	public void setGlobalStockOneCommitPossition(double dDefaultCommit)
-	{
-		this.propertySetDouble("Global", "StockOneCommitPossition", dDefaultCommit);
-	}
-	public Double getGlobalStockOneCommitPossition()
-	{
-		return this.propertyGetDouble("Global", "StockOneCommitPossition");
-	}
+	
 	// 股票提交最小时间间隔，用于限制提交频率
-	public void setGlobalStockMinCommitInterval(long min)
+	public void setGlobalStockMinCommitInterval(Long min)
 	{
-		this.propertySetLong("Global", "StockMinCommitInterval", min);
+		if (null != min) {
+			this.propertySetLong("Global", "StockMinCommitInterval", min);
+		} else {
+			this.propertyClear("Global", "StockMinCommitInterval");
+		}
 	}
 	public Long getGlobalStockMinCommitInterval()
 	{
-		return this.propertyGetLong("Global", "StockMinCommitInterval");
+		Long ret = this.propertyGetLong("Global", "StockMinCommitInterval");
+		if (null == ret) {
+			ret = sDefaultStockOneCommitInterval;
+		}
+		return ret;
 	}
+	
 	// 设置全局属性：股票最大持有天数
-	// 目标个性：MaxHoldDays
-	public void setGlobalStockMaxHoldDays(long value)
+	public void setGlobalStockMaxHoldDays(Long value)
 	{
-		this.propertySetLong("Global", "StockMaxHoldDays", value);
+		if (null != value) {
+			this.propertySetLong("Global", "StockMaxHoldDays", value);
+		} else {
+			this.propertyClear("Global", "StockMaxHoldDays");
+		}
 	}
 	public Long getGlobalStockMaxHoldDays()
 	{
-		return this.propertyGetLong("Global", "StockMaxHoldDays");
+		Long ret = this.propertyGetLong("Global", "StockMaxHoldDays");
+		if (null == ret) {
+			ret = sDefaultMaxHoldDays;
+		}
+		return ret;
 	}
+	
 	// 设置全局属性：目标止盈比例（相对FullHoldAmount的）
-	// 目标个性：TargetProfitMoney
 	public void setGlobalStockTargetProfitRatio(Double value)
 	{
-		this.propertySetDouble("Global", "StockTargetProfitRatio", value);
+		if (null != value) {
+			this.propertySetDouble("Global", "StockTargetProfitRatio", value);
+		} else {
+			this.propertyClear("Global", "StockTargetProfitRatio");
+		}
 	}
 	public Double getGlobalStockTargetProfitRatio()
 	{
-		return this.propertyGetDouble("Global", "StockTargetProfitRatio");
+		Double ret = this.propertyGetDouble("Global", "StockTargetProfitRatio");
+		if (null == ret) {
+			ret = sDefaultTargetProfitRatio;
+		}
+		return ret;
 	}
+	
 	// 设置全局属性：目标止损比例（相对FullHoldAmount的）
-	// 目标个性：StopLossMoney
 	public void setGlobalStockStopLossRatio(Double value)
 	{
-		this.propertySetDouble("Global", "StockStopLossRatio", value);
+		if (null != value) {
+			this.propertySetDouble("Global", "StockStopLossRatio", value);
+		} else {
+			this.propertyClear("Global", "StockStopLossRatio");
+		}
 	}
 	public Double getGlobalStockStopLossRatio()
 	{
-		return this.propertyGetDouble("Global", "StockStopLossRatio");
+		Double ret = this.propertyGetDouble("Global", "StockStopLossRatio");
+		if (null == ret) {
+			ret = sDefaultStopLossRatio;
+		}
+		return ret;
 	}
-		
-
 	
 	/*
 	 * ************************************************************************************
@@ -153,24 +203,43 @@ public class QEUProperty {
 	{
 		this.propertyClear(stockID);
 	}
+	// 股票全仓位时候的最大持股市值
+	public void setPrivateStockPropertyMaxHoldketValue(String stockID, Double value)
+	{
+		this.propertySetDouble(stockID, "MaxHoldMarketValue", value);
+	}
+	public Double getPrivateStockPropertyMaxHoldMarketValue(String stockID)
+	{
+		return this.propertyGetDouble(stockID, "MaxHoldMarketValue");
+	}
+	// 股票一次提交的最大市值
+	public void setPrivateStockPropertyOneCommitMaxMarketValue(String stockID, Double value)
+	{
+		this.propertySetDouble(stockID, "OneCommitMaxMarketValue", value);
+	}
+	public Double getPrivateStockPropertyOneCommitMaxMarketValue(String stockID)
+	{
+		return this.propertyGetDouble(stockID, "OneCommitMaxMarketValue");
+	}
+	
 	// 股票全仓位时候的持股数量
-	public void setPrivateStockPropertyMaxHoldAmount(String stockID, long value)
-	{
-		this.propertySetLong(stockID, "MaxHoldAmount", value);
-	}
-	public Long getPrivateStockPropertyMaxHoldAmount(String stockID)
-	{
-		return this.propertyGetLong(stockID, "MaxHoldAmount");
-	}
-	// 股票一次提交的数量
-	public void setPrivateStockPropertyOneCommitAmount(String stockID, long value)
-	{
-		this.propertySetLong(stockID, "OneCommitAmount", value);
-	}
-	public Long getPrivateStockPropertyOneCommitAmount(String stockID)
-	{
-		return this.propertyGetLong(stockID, "OneCommitAmount");
-	}
+		public void setPrivateStockPropertyMaxHoldAmount(String stockID, long value)
+		{
+			this.propertySetLong(stockID, "MaxHoldAmount", value);
+		}
+		public Long getPrivateStockPropertyMaxHoldAmount(String stockID)
+		{
+			return this.propertyGetLong(stockID, "MaxHoldAmount");
+		}
+		// 股票一次提交的数量
+		public void setPrivateStockPropertyOneCommitAmount(String stockID, long value)
+		{
+			this.propertySetLong(stockID, "OneCommitAmount", value);
+		}
+		public Long getPrivateStockPropertyOneCommitAmount(String stockID)
+		{
+			return this.propertyGetLong(stockID, "OneCommitAmount");
+		}
 	// 提交频率
 	public void setPrivateStockPropertyMinCommitInterval(String stockID, long value)
 	{
@@ -277,44 +346,32 @@ public class QEUProperty {
 	
 	private void propertySetString(String main, String property, String value) 
 	{
-		if(isManualStockProperty(main))
-		{
-			return;
-		}
 		m_CL2Property.setProperty(main, property, value);
 	}
+	
 	private String propertyGetString(String main, String property)
 	{
 		return m_CL2Property.getProperty(main, property);
 	}
+	
+	public void propertyClear(String main, String property)
+	{
+		m_CL2Property.clear(main, property);
+	}
+	
 	private boolean propertyContains(String main)
 	{
 		return m_CL2Property.contains(main);
 	}
+	
 	public void propertyClear(String main)
 	{
-		if(isManualStockProperty(main))
-		{
-			return;
-		}
 		m_CL2Property.clear(main);
 	}
+	
 	public List<String> propertyList()
 	{
 		return m_CL2Property.list();
-	}
-		
-	private boolean isManualStockProperty(String main)
-	{
-		if(m_CL2Property.contains(main, "Manual"))
-		{
-			String test = m_CL2Property.getProperty(main, "Manual");
-			if(null != test && test.equals("1"))
-			{
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	public void loadFormFile()

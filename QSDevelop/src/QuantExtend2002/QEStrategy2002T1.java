@@ -26,11 +26,17 @@ public class QEStrategy2002T1 extends QEBase2002 {
 	void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
 		// TODO Auto-generated method stub
 		if (ctx.time().equals("13:00:00")) {
-			CLog.output(TAG, "onStrateMinute %s %s %s %.02f", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
+			if (cDAStock.timePrices().size() != 0 ) {
+				CLog.output(TAG, "onStrateMinute %s %s %s %.02f (timePrices newest Price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
+			} else {
+				CLog.output(TAG, "onStrateMinute %s %s %s %.02f (last day close price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
+			}
+			
 			if (ctx.date().equals("2020-02-04")) {
 				this.transactionController().buySignalEmit(ctx, cDAStock.ID());
 				CLog.output(TAG, "onStrateMinute %s %s transactionController().buySignalEmit", ctx.date(), ctx.time());
 			}
+			
 		}
 	}
 

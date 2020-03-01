@@ -27,7 +27,7 @@ public class QEUTransactionController {
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
-		// interval commit check
+		// interval commit check -------------------------------
 		Long lStockOneCommitInterval = mQEUProperty.getPrivateStockPropertyMinCommitInterval(stockID);
 		if(null == lStockOneCommitInterval)
 		{
@@ -56,85 +56,48 @@ public class QEUTransactionController {
 		
 		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		
-		if(null == cHoldStock) // first create
+		// first create ------------------------------- 
+		// need init private property PrivateStockPropertyMaxHoldAmount & PrivateStockPropertyOneCommitAmount 
+		if(null == cHoldStock) 
 		{
-			// max hold count check, default is 1000;
-			Long lMaxHoldStockCount = mQEUProperty.getGlobalMaxHoldStockCount();
-			if(null == lMaxHoldStockCount)
-			{
-				lMaxHoldStockCount = 1000L;
-			}
-			
+			// 最大持股个数检查
+			long lMaxHoldStockCountX = mQEUProperty.getGlobalStockMaxCount();
 			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
 			ctx.accountProxy().getHoldStockList(ctnHoldStockList);
-			if(ctnHoldStockList.size() > lMaxHoldStockCount)
+			if(ctnHoldStockList.size() > lMaxHoldStockCountX)
 			{
 				//CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
 				return false;
 			}
 			
-			// define stock FullHoldAmount OneCommitAmount property
+			// init PrivateStockPropertyMaxHoldAmount
 			Long lFullHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
 			if(null == lFullHoldAmount)
 			{
-				Double dGlobalStockMaxPosstion = mQEUProperty.getGlobalStockMaxHoldPosstion();
-				if (null == dGlobalStockMaxPosstion) {
-					dGlobalStockMaxPosstion = 0.1;
-				}
-				double curFullPositionMoney = ctnTotalAssets.get()*dGlobalStockMaxPosstion;
-				long curFullPositionAmmount = (long)(curFullPositionMoney/fNowPrice);
+				Double dGlobalFullHoldMarketValue = mQEUProperty.getGlobalHoldOneStockMaxMarketValue();
+				long curFullPositionAmmount = (long)(dGlobalFullHoldMarketValue/fNowPrice)/100*100;
 				mQEUProperty.setPrivateStockPropertyMaxHoldAmount(stockID, curFullPositionAmmount);
-				lFullHoldAmount = curFullPositionAmmount;
 			}
+			// init PrivateStockPropertyOneCommitAmount
 			Long lOneCommitAmount = mQEUProperty.getPrivateStockPropertyOneCommitAmount(stockID);
 			if(null == lOneCommitAmount)
 			{
-				Double dGlobalStockOneCommitPossition = mQEUProperty.getGlobalStockOneCommitPossition();
-				if (null == dGlobalStockOneCommitPossition) {
-					dGlobalStockOneCommitPossition = 0.1;
-				}
-				Long curFullPositionAmmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
-				long curStockOneCommitPossitionAmmount = (long)(curFullPositionAmmount*dGlobalStockOneCommitPossition);
-				mQEUProperty.setPrivateStockPropertyOneCommitAmount(stockID, curStockOneCommitPossitionAmmount);
-				lOneCommitAmount = curStockOneCommitPossitionAmmount;
+				Double dGlobalBuyCommitMaxMarketValue = mQEUProperty.getGlobalBuyOneStockCommitMaxMarketValue();
+				long curFullPositionAmmount = (long)(dGlobalBuyCommitMaxMarketValue/fNowPrice)/100*100;
+				mQEUProperty.setPrivateStockPropertyOneCommitAmount(stockID, curFullPositionAmmount);
 			}	
-			// 标准化
-			long newlOneCommitAmount = lOneCommitAmount; 
-			if(0 != newlOneCommitAmount%100)
-			{
-				newlOneCommitAmount = newlOneCommitAmount/100*100;
-				if(0 == newlOneCommitAmount) {
-					newlOneCommitAmount = 100;
-				}
-			}
-			if(0 != newlOneCommitAmount)
-			{
-				if(newlOneCommitAmount != lOneCommitAmount)
-				{
-					mQEUProperty.setPrivateStockPropertyOneCommitAmount(stockID, newlOneCommitAmount);
-				}
-				if(0 != lFullHoldAmount%newlOneCommitAmount)
-				{
-					lFullHoldAmount = (lFullHoldAmount/newlOneCommitAmount)*newlOneCommitAmount;
-					mQEUProperty.setPrivateStockPropertyMaxHoldAmount(stockID, lFullHoldAmount);
-				}
-			}
-			else
-			{
-				mQEUProperty.setPrivateStockPropertyOneCommitAmount(stockID, 0);
-				mQEUProperty.setPrivateStockPropertyMaxHoldAmount(stockID, 0);
-			}
 		}
 		
 		Long lAlreadyHoldAmount = null!=cHoldStock?cHoldStock.totalAmount:0L;
-		Long lFullHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
+		Long lMaxHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
 		Long lOneCommitAmount = mQEUProperty.getPrivateStockPropertyOneCommitAmount(stockID);
-		if(lAlreadyHoldAmount >= lFullHoldAmount) // FullHoldAmount AlreadyHoldAmount check
+		// MaxHoldAmount AlreadyHoldAmount check
+		if(lAlreadyHoldAmount >= lMaxHoldAmount) 
 		{
 			//CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d",  stockID, lAlreadyHoldAmount, lFullHoldAmount);
 			return false;
 		}
-		Long lCommitAmount = Math.min(lFullHoldAmount-lAlreadyHoldAmount, lOneCommitAmount);
+		Long lCommitAmount = Math.min(lMaxHoldAmount-lAlreadyHoldAmount, lOneCommitAmount);
 		lCommitAmount = lCommitAmount/100*100;
 		if(lCommitAmount < 100) // CommitAmount check
 		{
@@ -148,7 +111,7 @@ public class QEUTransactionController {
 			return false;
 		}
 		
-		// post request
+		// post request -------------------------------
 		ctx.accountProxy().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
 		
 		// create clear property
@@ -165,7 +128,7 @@ public class QEUTransactionController {
 			Double dTargetProfitRatio = mQEUProperty.getGlobalStockTargetProfitRatio();
 			if(null != dTargetProfitRatio)
 			{
-				Double dTargetProfitMoney = lFullHoldAmount*fNowPrice*dTargetProfitRatio;
+				Double dTargetProfitMoney = lMaxHoldAmount*fNowPrice*dTargetProfitRatio;
 				mQEUProperty.setPrivateStockPropertyTargetProfitMoney(stockID, dTargetProfitMoney);
 			}
 		}
@@ -174,12 +137,14 @@ public class QEUTransactionController {
 			Double dStockStopLossRatio = mQEUProperty.getGlobalStockStopLossRatio();
 			if(null != dStockStopLossRatio)
 			{
-				Double dStockStopLossMoney = lFullHoldAmount*fNowPrice*dStockStopLossRatio;
+				Double dStockStopLossMoney = lMaxHoldAmount*fNowPrice*dStockStopLossRatio;
 				mQEUProperty.setPrivateStockPropertyStopLossMoney(stockID, dStockStopLossMoney);
 			}
 		}
 		return true;
 	}
+	
+	
 	public boolean sellSignalEmit(QuantContext ctx, String stockID)
 	{
 		DAStock cDAStock = ctx.pool().get(stockID);
@@ -207,9 +172,7 @@ public class QEUTransactionController {
 		}
 		
 		Long lAvailableAmount = null!=cHoldStock?cHoldStock.availableAmount:0L;
-		Long lFullHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
 		Long lOneCommitAmount = mQEUProperty.getPrivateStockPropertyOneCommitAmount(stockID);
-		
 		Long lCommitAmount = Math.min(lAvailableAmount, lOneCommitAmount);
 		if(lCommitAmount <= 0) // CommitAmount check
 		{
