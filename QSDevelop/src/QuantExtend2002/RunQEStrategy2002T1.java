@@ -19,7 +19,7 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 		this.property().setGlobalBuyOneStockCommitMaxMarketValue(5*10000.0);
 		this.property().setGlobalStockMinCommitInterval(60L);
 		this.property().setGlobalStockMaxHoldDays(30L);
-		this.property().setGlobalStockStopLossRatio(0.05);
+		this.property().setGlobalStockStopLossRatio(-0.05);
 		this.property().setGlobalStockTargetProfitRatio(0.05);
 	}
 
