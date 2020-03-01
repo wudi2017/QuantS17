@@ -1,14 +1,12 @@
-package QuantExtend1711.utils;
+package QuantExtend2002.utils;
 
-import pers.di.common.CLog;
-import pers.di.localstock.common.*;
-import pers.di.dataengine.*;
+import pers.di.dataengine.DAKLines;
+import pers.di.localstock.common.KLine;
 
 /*
- * 早晨之星K线组合
+ * 扩展特征 早晨之星
  */
-public class ZCZXChecker {
-
+public class ExtEigenMorningCross {
 	/*
 	 * 早晨之星3日K线检查
 	 */
@@ -23,7 +21,7 @@ public class ZCZXChecker {
 		}
 		
 		// 获取近期平均振幅
-		double dAveWave = DayKLinePriceWaveChecker.check(kLines, iCheck);
+		double dAveWave = ComEigenDayKLinePriceWave.check(kLines, iCheck);
 		
 		KLine cCurStockDay = kLines.get(iEnd);
 		KLine cStockDayMid = kLines.get(iMid);
@@ -165,7 +163,7 @@ public class ZCZXChecker {
 		int iTimesFail = 0;
 		for(int i=0; i<kLines.size(); i++)
 		{
-			if(ZCZXChecker.check(kLines, i) && ZCZXChecker.check_volume(kLines, i))
+			if(ExtEigenMorningCross.check(kLines, i) && ExtEigenMorningCross.check_volume(kLines, i))
 			{
 				if(i+30 >= kLines.size()) continue;
 				
@@ -180,8 +178,8 @@ public class ZCZXChecker {
 				}
 				
 				KLine cKLineIndex = kLines.get(i);
-				int iHigh = EKHighLowFind.indexHigh(kLines, i, i+30);
-				int iLow = EKHighLowFind.indexLow(kLines, i, i+30);
+				int iHigh = ComEigenKLineHighLowFind.indexHigh(kLines, i, i+30);
+				int iLow = ComEigenKLineHighLowFind.indexLow(kLines, i, i+30);
 				KLine cKLineH = kLines.get(iHigh);
 				KLine cKLineL = kLines.get(iLow);
 //				CLog.output("TEST", "ZCZX:%s H:%s L:%s MockTran:%b", 

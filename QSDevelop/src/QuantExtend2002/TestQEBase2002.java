@@ -3,6 +3,7 @@ package QuantExtend2002;
 import java.util.ArrayList;
 import java.util.List;
 
+import QuantExtend2002.framework.QEBase2002;
 import pers.di.account.AccountController;
 import pers.di.account.common.CommissionOrder;
 import pers.di.common.CLog;
@@ -16,15 +17,15 @@ import pers.di.quantplatform.QuantContext;
 public class TestQEBase2002 extends QEBase2002 {
 	public static String TAG = "TEST";
 	@Override
-	void onStrateInit(QuantContext ctx) {
+	public void onStrateInit(QuantContext ctx) {
 	}
 
 	@Override
-	void onStrateDayStart(QuantContext ctx) {
+	public void onStrateDayStart(QuantContext ctx) {
 	}
 
 	@Override
-	void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
+	public void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
 		if (ctx.time().equals("13:00:00")) {
 			if (cDAStock.timePrices().size() != 0 ) {
 				CLog.output(TAG, "onStrateMinute %s %s %s %.02f (timePrices newest Price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
@@ -48,7 +49,7 @@ public class TestQEBase2002 extends QEBase2002 {
 	}
 
 	@Override
-	void onStrateDayFinish(QuantContext ctx) {
+	public void onStrateDayFinish(QuantContext ctx) {
 		if(ctx.date().equals("2020-02-03")) {
 			this.selector().setMaxCount(3);
 			for (int i = 0; i < ctx.pool().size(); i++) {

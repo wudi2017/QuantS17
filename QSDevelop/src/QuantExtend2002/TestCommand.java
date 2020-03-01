@@ -10,7 +10,7 @@ import pers.di.quantplatform.QuantStrategy;
 
 import java.net.*;  
 
-public class RunCommand {
+public class TestCommand {
 
 	/*
 	 * runCmd

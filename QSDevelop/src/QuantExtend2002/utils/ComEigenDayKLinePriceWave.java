@@ -1,18 +1,21 @@
-package QuantExtend1711.utils;
+package QuantExtend2002.utils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import pers.di.localstock.common.*;
-import pers.di.dataengine.*;
+import pers.di.dataengine.DAKLines;
+import pers.di.localstock.common.KLine;
 
 /*
- * 波动系数
+ * 通用特征 波动系数
+ * 用于获得最近平均价格波动振幅
  * 
  * 算法细节：
  * 检查至少20天，最大60天的区间，计算每天的最大振幅波动百分比，去除最大的5个后，取均值。
  */
-public class DayKLinePriceWaveChecker {
-	
+
+public class ComEigenDayKLinePriceWave {
 	public static double check(DAKLines kLines, int iCheck)
 	{
 		double dResultCheckPriceWave = 0.0f;

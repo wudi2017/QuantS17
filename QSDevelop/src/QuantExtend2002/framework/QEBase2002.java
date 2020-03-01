@@ -1,4 +1,4 @@
-package QuantExtend2002;
+package QuantExtend2002.framework;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,7 +6,6 @@ import java.util.List;
 
 import QuantExtend1711.utils.TranDaysChecker;
 import QuantExtend1801.utils.QUCommon;
-import QuantExtend1801.utils.QUProperty;
 import QuantExtend2002.utils.*;
 import pers.di.account.common.HoldStock;
 import pers.di.common.CLog;
@@ -20,24 +19,24 @@ public abstract class QEBase2002 extends QuantStrategy {
 	 * 策略初始化
 	 * 程序启动时只调用一次
 	 */
-	abstract void onStrateInit(QuantContext ctx);
+	abstract public void onStrateInit(QuantContext ctx);
 	/*
 	 * 策略每天启动
 	 * 每个交易日开始交易前调用一次
 	 */
-	abstract void onStrateDayStart(QuantContext ctx);
+	abstract public void onStrateDayStart(QuantContext ctx);
 	/*
 	 * 策略买卖检查
 	 * 交易期间每分钟对每个选入|持有进行回调
 	 */
-	abstract void onStrateMinute(QuantContext ctx, DAStock cDAStock);
+	abstract public void onStrateMinute(QuantContext ctx, DAStock cDAStock);
 
 	/*
 	 * 策略选股
 	 * 每天交易结束更新数据后进行回调
 	 * 用户调用m_QEUSelector进行选股
 	 */
-	abstract void onStrateDayFinish(QuantContext ctx);
+	abstract public void onStrateDayFinish(QuantContext ctx);
 	
 	/*
 	 * *****************************************************************************************************
