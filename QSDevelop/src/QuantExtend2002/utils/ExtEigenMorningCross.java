@@ -153,72 +153,127 @@ public class ExtEigenMorningCross {
 		return true;
 	}
 	
+	/*
+	 * 成分-近期整体跌幅
+	 * 30天从最高最低看，越低得分越高
+	 */
+	public static double scoreCalc30DayLevel(DAKLines kLines, int iCheck) {
+		
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iCheck<30)
+		{
+			return 0.0;
+		}
+		
+		int iHigh = ComEigenKLineHighLowFind.indexHigh(kLines, iEnd-30, iEnd);
+		int iLow = ComEigenKLineHighLowFind.indexLow(kLines, iEnd-30, iEnd);
+		double highPrice = kLines.get(iHigh).high; String date1 = kLines.get(iHigh).date;
+		double lowPrice = kLines.get(iLow).low; String date2 = kLines.get(iLow).date;
+		if(highPrice == lowPrice) return 0.0; // // 近期波动太小 为0分分
+	
+		// 获取近期平均振幅
+		double dAveWave = ComEigenDayKLinePriceWave.check(kLines, iCheck);
+		if((highPrice-lowPrice)/lowPrice < 1.5*dAveWave) {
+			return 0.0; // 近期波动太小 为0分分
+		}
+				
+				
+		KLine cCurStockDay = kLines.get(iEnd);
+		KLine cStockDayMid = kLines.get(iMid);
+		KLine cCurStockBegin = kLines.get(iBegin);
+		double checkPrice = (cCurStockDay.entityMidle() +cStockDayMid.entityMidle() + cCurStockBegin.entityMidle())/3;
+		// 获取早晨之星中值
+		
+		double dH = highPrice*(1-dAveWave*0.5);
+		double dL = lowPrice*(1+dAveWave*0.5);
+				
+		if(checkPrice <= dL) return 1.0;
+		if(checkPrice >= dH) return 0.0;
+		
+		return 1.0 - (checkPrice-dL)/(dH-dL);
+	}
 	
 	/*
-	 * 历史检查：返回成功率
+	 * 成分-十字星底部下探短期跌幅
+	 * 10天从最高最低看，十字星底部的占比越低得分越高
 	 */
-	public static double check_history(DAKLines kLines)
-	{
-		int iTimesSucc = 0;
-		int iTimesFail = 0;
-		for(int i=0; i<kLines.size(); i++)
+	public static double scoreCalc10CrossDayLevel(DAKLines kLines, int iCheck) {
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iCheck<10)
 		{
-			if(ExtEigenMorningCross.check(kLines, i) && ExtEigenMorningCross.check_volume(kLines, i))
-			{
-				if(i+30 >= kLines.size()) continue;
-				
-				boolean bMockCheck = mocktran(kLines, i, i+30);
-				if(bMockCheck)
-				{
-					iTimesSucc++;
-				}
-				else
-				{
-					iTimesFail++;
-				}
-				
-				KLine cKLineIndex = kLines.get(i);
-				int iHigh = ComEigenKLineHighLowFind.indexHigh(kLines, i, i+30);
-				int iLow = ComEigenKLineHighLowFind.indexLow(kLines, i, i+30);
-				KLine cKLineH = kLines.get(iHigh);
-				KLine cKLineL = kLines.get(iLow);
-//				CLog.output("TEST", "ZCZX:%s H:%s L:%s MockTran:%b", 
-//						cKLineIndex.date, cKLineH.date, cKLineL.date, bMockCheck);
-			}
+			return 0.0;
 		}
-		double succRate = 0;
-		if(iTimesSucc+iTimesFail>5)
-		{
-			succRate = iTimesSucc/(double)(iTimesSucc+iTimesFail);
-		}
-//		CLog.output("TEST", "succRate:%.3f", succRate);
-		return succRate;
+		
+		int iHigh = ComEigenKLineHighLowFind.indexHigh(kLines, iEnd-10, iEnd);
+		int iLow = ComEigenKLineHighLowFind.indexLow(kLines, iEnd-10, iEnd);
+		double highPrice = kLines.get(iHigh).high; String date1 = kLines.get(iHigh).date;
+		double lowPrice = kLines.get(iLow).low; String date2 = kLines.get(iLow).date;
+		if(highPrice == lowPrice) return 0.0; // // 近期波动太小 为0分分
+		
+		KLine cCurStockDay = kLines.get(iEnd);
+		KLine cStockDayMid = kLines.get(iMid);
+		KLine cCurStockBegin = kLines.get(iBegin);
+		double checkPrice = cStockDayMid.low;
+		// 获取早晨之星最低值
+		
+		if(checkPrice <= lowPrice) return 1.0;
+		if(checkPrice >= highPrice) return 0.0;
+		return 1.0 - (checkPrice-lowPrice)/(highPrice-lowPrice);
 	}
 	
-	private static boolean mocktran(DAKLines kLines, int iB, int iE)
-	{
-		KLine cKLineIndex = kLines.get(iB);
-		double clearHigh = cKLineIndex.entityMidle()*1.1;
-		double clearLow = cKLineIndex.entityMidle()*0.9;
-		for(int i=iB; i<iE; i++)
+	/*
+	 * 成分-十字星标准程度
+	 * 实体得分占比0.5：看实体占最近波动比例，越小越好（有极值）
+     * 上下影线得分占比0.5：看影线站最近波动比例，越小越好（有极值）
+	 */
+	public static double scoreCalcCrossStandard(DAKLines kLines, int iCheck) {
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iCheck<30)
 		{
-			KLine cKLineCk = kLines.get(i);
-			if(cKLineCk.low <= clearLow)
-			{
-				return false;
-			}
-			if(cKLineCk.high >= clearHigh)
-			{
-				return true;
-			}
+			return 0.0;
 		}
-		if( kLines.get(iE).entityMidle() > cKLineIndex.entityMidle())
-		{
-			return true;
+		
+		// 获取近期平均振幅
+		double dAveWave = ComEigenDayKLinePriceWave.check(kLines, iCheck);
+		if (dAveWave <= 0) {
+			return 0.0;
 		}
-		else
-		{
-			return false;
+		
+		// 获取十字星日
+		KLine cStockDayMid = kLines.get(iMid);
+		
+		// 计算实体占波动系数比例和得分
+		double entityRatioPartScole = 0.0;
+		double entityRatio = (cStockDayMid.entityHigh()-cStockDayMid.low)/cStockDayMid.low;
+		double entityRatioPart = entityRatio/dAveWave;
+		if (entityRatioPart <= 0.2) {
+			entityRatioPartScole = 1;
+		} else if (entityRatioPartScole >= 0.8) {
+			entityRatioPartScole = 0;
+		} else {
+			entityRatioPartScole = 1 - (entityRatioPart - 0.2)/0.6;
 		}
+		
+		// 计算上下影线占波动系数比例和得分
+		double shadowRatioPartScole = 0;
+		double shadowRatio = ((cStockDayMid.high - cStockDayMid.entityHigh()) 
+				+ (cStockDayMid.entityLow() - cStockDayMid.low)) / cStockDayMid.low;
+		double shadowRatioPart = shadowRatio/dAveWave;
+		if (shadowRatioPart <= 0.2) {
+			shadowRatioPartScole = 1;
+		} else if (shadowRatioPart >= 0.8) {
+			shadowRatioPartScole = 0;
+		} else {
+			shadowRatioPartScole = 1 - (shadowRatioPart - 0.2)/0.6;
+		}
+		
+		return 0.5*entityRatioPartScole + 0.5*shadowRatioPartScole;
 	}
 }
+

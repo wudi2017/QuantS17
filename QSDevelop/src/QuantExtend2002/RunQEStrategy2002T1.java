@@ -35,16 +35,35 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 	@Override
 	public void onStrateDayFinish(QuantContext ctx) {
 		this.selector().setMaxCount(1);
+//		// test
+//		if(ctx.date().equals("2019-01-21")) {
+//			DAStock cStock = ctx.pool().get("600085");
+//			boolean bZCZX = ExtEigenMorningCross.check(cStock.dayKLines(), cStock.dayKLines().size()-1);
+//			if(bZCZX) {
+//				CLog.output(TAG, "onStrateDayFinish %s ZCZX selector:%s", ctx.date(), cStock.ID());
+//				
+//				double scole = ExtEigenMorningCross.scoreCalc30DayLevel(cStock.dayKLines(), cStock.dayKLines().size()-1);
+//				CLog.output(TAG, "scoreCalc30DayLevel:%f", scole);
+//			}
+//		}
+//		//test
+		
 		for (int i = 0; i < ctx.pool().size(); i++) {
 			DAStock cStock = ctx.pool().get(i);
+			
 			boolean bZCZX = ExtEigenMorningCross.check(cStock.dayKLines(), cStock.dayKLines().size()-1);
 			if(bZCZX) {
-				//CLog.output(TAG, "onStrateDayFinish %s ZCZX selector:%s", ctx.date(), cStock.ID());
-				this.selector().add(cStock.ID(), 0);
-				break;
+				double scole30DayLevel = ExtEigenMorningCross.scoreCalc30DayLevel(cStock.dayKLines(), cStock.dayKLines().size()-1);
+				double scole10CrossDayLevel = ExtEigenMorningCross.scoreCalc10CrossDayLevel(cStock.dayKLines(), cStock.dayKLines().size()-1);
+				double scoleCrossStandard = ExtEigenMorningCross.scoreCalcCrossStandard(cStock.dayKLines(), cStock.dayKLines().size()-1);
+				
+				CLog.output(TAG, "onStrateDayFinish %s ZCZX selector:%s 30DayL:%.2f 10CroDayL:%.2f CroDtd:%.2f", ctx.date(), cStock.ID(), 
+						scole30DayLevel, scole10CrossDayLevel, scoleCrossStandard);
+				
+				//this.selector().add(cStock.ID(), 0);
 			}
 		}
-		CLog.output(TAG, ctx.accountProxy().dump());
+//		CLog.output(TAG, ctx.accountProxy().dump());
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -55,7 +74,7 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 		cAccountController.open("fast_mock001", true);
 		cAccountController.reset(100000);
 		// "HistoryTest 2019-01-01 2020-02-20" "Realtime"
-		Quant.instance().run("HistoryTest 2019-01-01 2020-02-20", cAccountController, new RunQEStrategy2002T1()); 
+		Quant.instance().run("HistoryTest 2019-01-21 2020-02-20", cAccountController, new RunQEStrategy2002T1()); 
 		CLog.output(TAG, "%s", cAccountController.account().dump());
 		cAccountController.close();
 		
