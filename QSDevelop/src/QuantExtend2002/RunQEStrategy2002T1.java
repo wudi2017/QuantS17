@@ -56,9 +56,9 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 				double scole30DayLevel = ExtEigenMorningCross.scoreCalc30DayLevel(cStock.dayKLines(), cStock.dayKLines().size()-1);
 				double scole10CrossDayLevel = ExtEigenMorningCross.scoreCalc10CrossDayLevel(cStock.dayKLines(), cStock.dayKLines().size()-1);
 				double scoleCrossStandard = ExtEigenMorningCross.scoreCalcCrossStandard(cStock.dayKLines(), cStock.dayKLines().size()-1);
-				
-				CLog.output(TAG, "onStrateDayFinish %s ZCZX selector:%s 30DayL:%.2f 10CroDayL:%.2f CroDtd:%.2f", ctx.date(), cStock.ID(), 
-						scole30DayLevel, scole10CrossDayLevel, scoleCrossStandard);
+				double scoreBeginEndStandard = ExtEigenMorningCross.scoreBeginEndStandard(cStock.dayKLines(), cStock.dayKLines().size()-1);
+				CLog.output(TAG, "onStrateDayFinish %s ZCZX selector:%s 30DayL:%.2f 10CroDayL:%.2f CroStd:%.2f BEStd:%.2f", ctx.date(), cStock.ID(), 
+						scole30DayLevel, scole10CrossDayLevel, scoleCrossStandard, scoreBeginEndStandard);
 				
 				//this.selector().add(cStock.ID(), 0);
 			}

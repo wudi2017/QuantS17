@@ -275,5 +275,97 @@ public class ExtEigenMorningCross {
 		
 		return 0.5*entityRatioPartScole + 0.5*shadowRatioPartScole;
 	}
+	
+	/*
+	 * 成分-第一天与第三天标准得分
+	 * 第一天得分与第三天得分各占一半比重，
+	 * 计算影线占实体比例，计算实体幅度和近期振幅比例，二者各占一半比重。
+	 * A计算影线差值占实体差值比例，在0-(2/3)*2之间映射1-0，（需参考初选条件来定义阈值）
+	 * B计算实体幅度和近期振幅比例，0.5-1之间映射0-1，（需参考初选条件来定义阈值）
+	 * AB各占一半比重
+	 */
+	public static double scoreBeginEndStandard(DAKLines kLines, int iCheck) {
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iCheck<30)
+		{
+			return 0.0;
+		}
+		
+		// 获取近期平均振幅
+		double dAveWave = ComEigenDayKLinePriceWave.check(kLines, iCheck);
+		if (dAveWave <= 0) {
+			return 0.0;
+		}
+		
+		KLine cCurStockDay = kLines.get(iEnd);
+		KLine cStockDayMid = kLines.get(iMid);
+		KLine cCurStockBegin = kLines.get(iBegin);
+		
+		// BeginDay
+		double scoleDayBegin = 0.0;
+		do {
+			
+			double shangying = cCurStockBegin.high - cCurStockBegin.entityHigh();
+			double xiaying = cCurStockBegin.entityLow() - cCurStockBegin.low;
+			double shiti = cCurStockBegin.entityHigh() - cCurStockBegin.entityLow();
+			double shitiRatio = shiti/cCurStockBegin.low;
+			if(0 == shiti) {
+				break;
+			}
+			double yingxianRatio = (shangying+xiaying)/shiti;
+			double scoleYingxian = 0;
+			if (yingxianRatio >= 4/3) {
+				scoleYingxian = 0;
+			} else {
+				scoleYingxian = 1-yingxianRatio*3/4;
+			}
+			double shitiWaveRatio = shitiRatio/dAveWave;
+			double scoleShitiRatio = 0;
+			if(shitiWaveRatio >= 1) {
+				scoleShitiRatio = 1;
+			} else if(shitiWaveRatio <= 0.5){
+				scoleShitiRatio = 0;
+			} else {
+				scoleShitiRatio = (shitiWaveRatio-0.5)/0.5;
+			}
+			scoleDayBegin = scoleYingxian*0.5 + scoleShitiRatio*0.5;
+			break;
+		} while (true);
+		
+		// BeginDay
+		double scoleDayEnd = 0.0;
+		do {
+			
+			double shangying = cCurStockDay.high - cCurStockDay.entityHigh();
+			double xiaying = cCurStockDay.entityLow() - cCurStockDay.low;
+			double shiti = cCurStockDay.entityHigh() - cCurStockDay.entityLow();
+			double shitiRatio = shiti/cCurStockDay.low;
+			if(0 == shiti) {
+				break;
+			}
+			double yingxianRatio = (shangying+xiaying)/shiti;
+			double scoleYingxian = 0;
+			if (yingxianRatio >= 4/3) {
+				scoleYingxian = 0;
+			} else {
+				scoleYingxian = 1-yingxianRatio*3/4;
+			}
+			double shitiWaveRatio = shitiRatio/dAveWave;
+			double scoleShitiRatio = 0;
+			if(shitiWaveRatio >= 1) {
+				scoleShitiRatio = 1;
+			} else if(shitiWaveRatio <= 0.5){
+				scoleShitiRatio = 0;
+			} else {
+				scoleShitiRatio = (shitiWaveRatio-0.5)/0.5;
+			}
+			scoleDayEnd = scoleYingxian*0.5 + scoleShitiRatio*0.5;
+			break;
+		} while (true);
+		
+		return scoleDayBegin*0.5+scoleDayEnd*0.5;
+	}
 }
 
