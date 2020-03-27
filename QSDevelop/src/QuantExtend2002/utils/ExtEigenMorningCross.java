@@ -367,5 +367,58 @@ public class ExtEigenMorningCross {
 		
 		return scoleDayBegin*0.5+scoleDayEnd*0.5;
 	}
+	
+	/*
+	 * 成分-第二天十字星比第一天下探程度，第二天十字星比第三天下探程度
+	 * 十字星与第一天比较得分与死三天比较得分各占权值0.5
+	 * 十字星实体中点为m，以在第一天最低值为L，实体中值为H，看m在HL中的占比进行0-1映射得分
+	 */
+	public static double scoreCrossDownRefBeginEnd(DAKLines kLines, int iCheck) {
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iCheck<30)
+		{
+			return 0.0;
+		}
+		
+		KLine cCurStockDay = kLines.get(iEnd);
+		KLine cStockDayMid = kLines.get(iMid);
+		KLine cCurStockBegin = kLines.get(iBegin);
+		
+		double crossMid = cStockDayMid.entityMidle();
+		
+		// CrossDown-BeginDay
+		double scoleCrossDownBegin = 0.0;
+		do {
+			double beginMid = cCurStockBegin.entityMidle();
+			double beginLow = cCurStockBegin.low;
+			if(crossMid >= beginMid) {
+				scoleCrossDownBegin = 0;
+			} else if(crossMid <= beginLow) {
+				scoleCrossDownBegin = 1;
+			} else {
+				scoleCrossDownBegin = 1 - (crossMid-beginLow)/(beginMid-beginLow);
+			}
+			break;
+		} while (true);
+		
+		// BeginDay
+		double scoleCrossDownEnd = 0.0;
+		do {
+			double beginMid = cCurStockDay.entityMidle();
+			double beginLow = cCurStockDay.low;
+			if(crossMid >= beginMid) {
+				scoleCrossDownEnd = 0;
+			} else if(crossMid <= beginLow) {
+				scoleCrossDownEnd = 1;
+			} else {
+				scoleCrossDownEnd = 1 - (crossMid-beginLow)/(beginMid-beginLow);
+			}
+			break;
+		} while (true);
+		
+		return scoleCrossDownBegin*0.5+scoleCrossDownEnd*0.5;
+	}
 }
 
