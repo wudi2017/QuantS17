@@ -1,5 +1,6 @@
 package QuantExtend2002.utils;
 
+import pers.di.common.CLog;
 import pers.di.dataengine.DAKLines;
 import pers.di.localstock.common.KLine;
 
@@ -125,6 +126,44 @@ public class ExtEigenMorningCross {
 		}
 	
 		return true;
+	}
+	
+	/*
+	 * 早晨之星得分计算0-1
+	 * 多成分加权计算分值
+	 */
+	public static double scoreCalcAveWeight(DAKLines kLines, int iCheck) {
+		double scole30DayLevel = ExtEigenMorningCross.scoreCalc30DayLevel(kLines, iCheck);
+		double weight30DayLevel = 0.15;
+		
+		double scole10CrossDayLevel = ExtEigenMorningCross.scoreCalc10CrossDayLevel(kLines, iCheck);
+		double weight10CrossDayLevel = 0.15;
+		
+		double scoleCrossStandard = ExtEigenMorningCross.scoreCalcCrossStandard(kLines, iCheck);
+		double weightCrossStandard = 0.2;
+		
+		double scoreBeginEndStandard = ExtEigenMorningCross.scoreBeginEndStandard(kLines, iCheck);
+		double weightBeginEndStandard = 0.2;
+		
+		double scoreCrossDownRefBeginEnd = ExtEigenMorningCross.scoreCrossDownRefBeginEnd(kLines, iCheck);
+		double weightCrossDownRefBeginEnd = 0.15;
+		
+		double scoreEndBeyondBegin = ExtEigenMorningCross.scoreEndBeyondBegin(kLines, iCheck);
+		double weightEndBeyondBegin = 0.15;
+		
+//		CLog.output("TEST", "ZCZXScore 30DayL:%.2f 10CroDayL:%.2f CroStd:%.2f BEStd:%.2f CroDown:%.2f EBB:%.2f",
+//			scole30DayLevel, scole10CrossDayLevel, scoleCrossStandard, scoreBeginEndStandard, scoreCrossDownRefBeginEnd, scoreEndBeyondBegin);
+		
+		double scoreCalcAveWeight = 
+				(scole30DayLevel*weight30DayLevel + scole10CrossDayLevel*weight10CrossDayLevel +
+				scoleCrossStandard*weightCrossStandard + scoreBeginEndStandard*weightBeginEndStandard + 
+				scoreCrossDownRefBeginEnd*weightCrossDownRefBeginEnd + scoreEndBeyondBegin*weightEndBeyondBegin) 
+				/
+				(weight30DayLevel + weight10CrossDayLevel +
+				weightCrossStandard + weightBeginEndStandard +
+				weightCrossDownRefBeginEnd + weightEndBeyondBegin);
+		
+		return scoreCalcAveWeight;
 	}
 	
 	/*
@@ -419,6 +458,43 @@ public class ExtEigenMorningCross {
 		} while (true);
 		
 		return scoleCrossDownBegin*0.5+scoleCrossDownEnd*0.5;
+	}
+	
+	/*
+	 * 成分-第三天收复失地程度，收盘价在第一天跌幅的位置，三分之二到最高点比例得分（需参考初选条件来定义阈值）
+	 * 第三天收盘价为m，第一天实体的高位2/3处为L，最高点为H，看m在HL中的占比进行0-1映射得分
+	 */
+	public static double scoreEndBeyondBegin(DAKLines kLines, int iCheck) {
+		int iBegin = iCheck-2;
+		int iMid = iCheck-1;
+		int iEnd = iCheck;
+		if(iCheck<30)
+		{
+			return 0.0;
+		}
+		
+		KLine cCurStockDay = kLines.get(iEnd);
+		KLine cStockDayMid = kLines.get(iMid);
+		KLine cCurStockBegin = kLines.get(iBegin);
+		
+		double endClose = cCurStockDay.close;
+		
+		double dL = cCurStockBegin.entityLow() + (cCurStockBegin.entityHigh() - cCurStockBegin.entityLow())/3*2;
+		double dH = cCurStockBegin.high;
+		if(0 == dH-dL) {
+			return 0;
+		}
+		
+		double scoleEndBeyondBegin = 0.0;
+		if(endClose >= dH) {
+			scoleEndBeyondBegin = 1;
+		} else if(endClose <= dL) {
+			scoleEndBeyondBegin = 0;
+		} else {
+			scoleEndBeyondBegin = (endClose-dL)/(dH-dL);
+		}
+
+		return scoleEndBeyondBegin;
 	}
 }
 
