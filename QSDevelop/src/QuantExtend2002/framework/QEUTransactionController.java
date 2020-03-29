@@ -38,6 +38,7 @@ public class QEUTransactionController {
 				lStockOneCommitInterval = lMinCommitInterval;
 			}
 		}
+		// 不允许连续快速提交买单
 		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.BUY);
 		if(null != cCommissionOrder && null != lStockOneCommitInterval)
 		{
@@ -47,6 +48,13 @@ public class QEUTransactionController {
 				//CLog.output("TEST", "buySignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
 				return false;
 			}
+		}
+		// 不允许当日卖出后还提交买单
+		cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.SELL);
+		if(null != cCommissionOrder && null != lStockOneCommitInterval)
+		{
+			//CLog.output("TEST", "buySignalEmit %s ignore! lStockOneCommitInterval=%d", stockID, lStockOneCommitInterval);
+			return false;
 		}
 
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();

@@ -18,6 +18,13 @@ public class TestQEBase2002 extends QEBase2002 {
 	public static String TAG = "TEST";
 	@Override
 	public void onStrateInit(QuantContext ctx) {
+		this.property().setGlobalStockMaxCount(2L);
+		this.property().setGlobalHoldOneStockMaxMarketValue(5*10000.0);
+		this.property().setGlobalBuyOneStockCommitMaxMarketValue(5*10000.0);
+		this.property().setGlobalStockMinCommitInterval(60L);
+		this.property().setGlobalStockMaxHoldDays(30L);
+		this.property().setGlobalStockTargetProfitRatio(0.05);
+		this.property().setGlobalStockStopLossRatio(-0.05);
 	}
 
 	@Override

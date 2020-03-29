@@ -53,6 +53,11 @@ public class QEUSelector {
 		m_maxCount = maxCount;
 	}
 	
+	/*
+	 * add stock to select table
+	 * priority high will be saved take precedence
+	 * 优先级数值越高，优先被留下，留下个数被setMaxCount限定
+	 */
 	public void add(String stockID, double priority)
 	{
 		// 不重复添加
@@ -289,9 +294,9 @@ public class QEUSelector {
 				InnerSelectStockItem c2 = (InnerSelectStockItem)object2;
 				int iCmp = Double.compare(c1.dPriority, c2.dPriority);
 				if(iCmp > 0) 
-					return -1;
-				else if(iCmp < 0) 
 					return 1;
+				else if(iCmp < 0) 
+					return -1;
 				else
 					return 0;
 			}
