@@ -27,7 +27,7 @@ public class QEUTransactionController {
 		DAStock cDAStock = ctx.pool().get(stockID);
 		double fNowPrice = cDAStock.price();
 		
-		// interval commit check -------------------------------
+		// 提交频率检查，不允许连续快速提交买单
 		Long lStockOneCommitInterval = mQEUProperty.getPrivateStockPropertyMinCommitInterval(stockID);
 		if(null == lStockOneCommitInterval)
 		{
@@ -38,9 +38,8 @@ public class QEUTransactionController {
 				lStockOneCommitInterval = lMinCommitInterval;
 			}
 		}
-		// 不允许连续快速提交买单
 		CommissionOrder cCommissionOrder = QUCommon.getLatestCommissionOrder(ctx.accountProxy(), stockID, TRANACT.BUY);
-		if(null != cCommissionOrder && null != lStockOneCommitInterval)
+		if(null != cCommissionOrder && null != lStockOneCommitInterval) 
 		{
 			long seconds = CUtilsDateTime.subTime(ctx.time(), cCommissionOrder.time);
 			if(seconds < lStockOneCommitInterval*60)
@@ -57,27 +56,21 @@ public class QEUTransactionController {
 			return false;
 		}
 
-		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
-		ctx.accountProxy().getTotalAssets(ctnTotalAssets);
-		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-		ctx.accountProxy().getMoney(ctnMoney);
+		// 最大持股个数检查，不允许持有超过最大设定值的股票个数
+		long lMaxHoldStockCountX = mQEUProperty.getGlobalStockMaxCount();
+		List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
+		ctx.accountProxy().getHoldStockList(ctnHoldStockList);
+		if(ctnHoldStockList.size() >= lMaxHoldStockCountX)
+		{
+			//CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
+			return false;
+		}
 		
-		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
-		
-		// first create ------------------------------- 
+		// 如果是首次创建股票，初始化一些属性
 		// need init private property PrivateStockPropertyMaxHoldAmount & PrivateStockPropertyOneCommitAmount 
+		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		if(null == cHoldStock) 
 		{
-			// 最大持股个数检查
-			long lMaxHoldStockCountX = mQEUProperty.getGlobalStockMaxCount();
-			List<HoldStock> ctnHoldStockList = new ArrayList<HoldStock>();
-			ctx.accountProxy().getHoldStockList(ctnHoldStockList);
-			if(ctnHoldStockList.size() > lMaxHoldStockCountX)
-			{
-				//CLog.output("TEST", "buySignalEmit %s ignore! lMaxHoldStockCount=%d", stockID, lMaxHoldStockCount);
-				return false;
-			}
-			
 			// init PrivateStockPropertyMaxHoldAmount
 			Long lFullHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
 			if(null == lFullHoldAmount)
@@ -95,12 +88,12 @@ public class QEUTransactionController {
 				mQEUProperty.setPrivateStockPropertyOneCommitAmount(stockID, curFullPositionAmmount);
 			}	
 		}
-		
+	
+		// 本只股票持仓量检查，不允许超过设置的最大持有量
 		Long lAlreadyHoldAmount = null!=cHoldStock?cHoldStock.totalAmount:0L;
 		Long lMaxHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
 		Long lOneCommitAmount = mQEUProperty.getPrivateStockPropertyOneCommitAmount(stockID);
-		// MaxHoldAmount AlreadyHoldAmount check
-		if(lAlreadyHoldAmount >= lMaxHoldAmount) 
+		if(lAlreadyHoldAmount >= lMaxHoldAmount)  // MaxHoldAmount AlreadyHoldAmount check
 		{
 			//CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d",  stockID, lAlreadyHoldAmount, lFullHoldAmount);
 			return false;
@@ -112,6 +105,9 @@ public class QEUTransactionController {
 			//CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
 			return false;
 		}
+		// 本只股票确定买入时，持有足够现金检查，不允许现金不充足时下单
+		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
+		ctx.accountProxy().getMoney(ctnMoney);
 		double needCommitMoney = lCommitAmount*fNowPrice;
 		if(needCommitMoney > ctnMoney.get()) // CommitMoney check
 		{
@@ -119,16 +115,16 @@ public class QEUTransactionController {
 			return false;
 		}
 		
-		// post request -------------------------------
+		// 所有检查完毕，推送买单
 		ctx.accountProxy().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
 		
-		// create clear property
+		// 创建清仓属性，用于决定本只股票的清仓条件
 		if(null == mQEUProperty.getPrivateStockPropertyMaxHoldDays(stockID))
 		{
 			Long lStockMaxHoldDays = mQEUProperty.getGlobalStockMaxHoldDays();
 			if(null != lStockMaxHoldDays)
 			{
-				mQEUProperty.setPrivateStockPropertyMaxHoldDays(stockID, lStockMaxHoldDays);
+				mQEUProperty.setPrivateStockPropertyMaxHoldDays(stockID, lStockMaxHoldDays); // 最大持有天数
 			}
 		}
 		if(null == mQEUProperty.getPrivateStockPropertyTargetProfitMoney(stockID))
@@ -137,7 +133,7 @@ public class QEUTransactionController {
 			if(null != dTargetProfitRatio)
 			{
 				Double dTargetProfitMoney = lMaxHoldAmount*fNowPrice*dTargetProfitRatio;
-				mQEUProperty.setPrivateStockPropertyTargetProfitMoney(stockID, dTargetProfitMoney);
+				mQEUProperty.setPrivateStockPropertyTargetProfitMoney(stockID, dTargetProfitMoney);// 止盈涨幅
 			}
 		}
 		if(null == mQEUProperty.getPrivateStockPropertyStopLossMoney(stockID))
@@ -146,7 +142,7 @@ public class QEUTransactionController {
 			if(null != dStockStopLossRatio)
 			{
 				Double dStockStopLossMoney = lMaxHoldAmount*fNowPrice*dStockStopLossRatio;
-				mQEUProperty.setPrivateStockPropertyStopLossMoney(stockID, dStockStopLossMoney);
+				mQEUProperty.setPrivateStockPropertyStopLossMoney(stockID, dStockStopLossMoney);// 止损跌幅
 			}
 		}
 		return true;

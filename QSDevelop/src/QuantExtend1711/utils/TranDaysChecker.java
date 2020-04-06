@@ -11,7 +11,7 @@ public class TranDaysChecker {
 		for(int i=0; i<kLines.size(); i++)
 		{
 			KLine cKLine = kLines.get(i);
-			if(cKLine.date.compareTo(fromDate) >= 0 && cKLine.date.compareTo(fromDate) <= 0)
+			if(cKLine.date.compareTo(fromDate) >= 0 && cKLine.date.compareTo(toDate) <= 0)
 			{
 				iCount = iCount+1;
 			}
