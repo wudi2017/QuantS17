@@ -56,9 +56,14 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 	public void onStrateDayFinish(QuantContext ctx) {
 		this.selector().setMaxCount(1);
 		
-		// 对所有股票进行遍历
+		// transfer all stock
 		for (int iStock = 0; iStock < ctx.pool().size(); iStock++) {
 			DAStock cStock = ctx.pool().get(iStock);
+			if(!cStock.date().equals(ctx.date())) {
+				/* this stock newest dayK not exist at current date, continue! 
+				 * CANNOT be selected. */
+				continue; 
+			}
 			
 			// 股票日K线上，5天内存在早晨之星
 			int iBegin = cStock.dayKLines().size()-1-5;

@@ -92,7 +92,11 @@ public abstract class QEBase2002 extends QuantStrategy {
 			String stockID = uniqueIDs.get(iStock);
 			DAStock cDAStock = context.pool().get(stockID);
 			this.onAutoForceClearProcess(context, cDAStock);
-			this.onStrateMinute(context, cDAStock);
+			
+			/* only callback to user minute data, if current stock valid date is same with context date */
+			if (cDAStock.date().equals(context.date())) {
+				this.onStrateMinute(context, cDAStock);
+			}
 		}
 	}
 	@Override
