@@ -28,8 +28,10 @@ public class QEUProperty {
 	 * 全局属性有默认值，用于自动生成单只股票的控制属性
 	 * 
 	 * HoldStockMaxCount 持股最大个数，表示可以持有的股票的个数，例如最多可以持有3只股票
-	 * HoldOneStockMaxMarketValue 持有单只股票的最大市值，用于买入时计算单只最大持有量
-	 * BuyOneStockCommitMaxMarketValue 买入单只股票一次提交的最大市值
+	 * HoldOneStockMaxPositionRatio 持有单只股票的最大持仓比例，用于买入时计算单只最大持有量（MaxPositionRatio与MaxMarketValue共同取最小决定）
+	 * HoldOneStockMaxMarketValue 持有单只股票的最大市值，用于买入时计算单只最大持有量（MaxPositionRatio与MaxMarketValue共同取最小决定）
+	 * BuyOneStockCommitMaxPositionRatio 买入单只股票一次提交的最大持仓比例 ，用于买入时计算单次提交量（MaxPositionRatio与MaxMarketValue共同取最小决定）
+	 * BuyOneStockCommitMaxMarketValue 买入单只股票一次提交的最大市值，用于买入时计算单次提交量（MaxPositionRatio与MaxMarketValue共同取最小决定）
 	 * StockOneCommitInterval 提交频率控制(单位分钟)
 	 * MaxHoldDays 最大持有天数
 	 * TargetProfitRatio 目标止盈比（相对最大持仓位）例如：0.1 为盈利10个点
@@ -38,12 +40,14 @@ public class QEUProperty {
 	 * ************************************************************************************
 	 */
 	public static long sDefaultStockMaxCount = 10;
-	public static double sDefaultHoldOneStockMaxMarketValue = 10*10000.0;
-	public static double sDefaultBuyOneStockCommitMaxMarketValue = 2*10000.0;
-	public static long sDefaultStockOneCommitInterval = 60;
-	public static long sDefaultMaxHoldDays = 30;
-	public static double sDefaultTargetProfitRatio = 0.1; 
-	public static double sDefaultStopLossRatio = -0.1;
+	public static double sDefaultHoldOneStockMaxPositionRatio = 1.0; //默认全仓
+	public static double sDefaultBuyOneStockCommitMaxPositionRatio = 1.0; //默认全仓
+	public static double sDefaultHoldOneStockMaxMarketValue = 100*10000.0; //默认100w
+	public static double sDefaultBuyOneStockCommitMaxMarketValue = 100*10000.0; //默认100w
+	public static long sDefaultStockMinCommitInterval = 60;  // 默认最小提交频率 60分钟
+	public static long sDefaultMaxHoldDays = 30; // 默认股票最大持有天数30天
+	public static double sDefaultTargetProfitRatio = 0.1;  // 默认止盈10%
+	public static double sDefaultStopLossRatio = -0.1;// 默认止损-10%
 	
 	// 单只股票最大持股数量
 	public void setGlobalStockMaxCount(Long count) { 
@@ -57,7 +61,19 @@ public class QEUProperty {
 		return ret;
 	}
 	
-	// 单只股票最大持股市值
+	// 单只股票最大持股仓位（随着资产改变而动态改变）（初始化股票时检查时最大持股仓位与最大持股市值取较小者来限制）
+	public void setGlobalHoldOneStockMaxPositionRatio(Double dPositionRatio) { 
+		this.propertySetDouble("Global", "OneStockMaxPositionRadtio", dPositionRatio); 
+	}
+	public Double getGlobalHoldOneStockMaxPositionRatio() {
+		Double ret = this.propertyGetDouble("Global", "OneStockMaxPositionRadtio");
+		if(null == ret) {
+			ret = sDefaultHoldOneStockMaxPositionRatio;
+		}
+		return ret;
+	}
+	
+	// 单只股票最大持股市值（不随着资产改变而改变）（初始化股票时检查时最大持股仓位与最大持股市值取较小者来限制）
 	public void setGlobalHoldOneStockMaxMarketValue(Double value) { 
 		this.propertySetDouble("Global", "HoldOneStockMaxMarketValue", value); 
 	}
@@ -69,7 +85,20 @@ public class QEUProperty {
 		return ret;
 	}
 	
-	// 单只股票每次买入提交的最大市值
+	// 单只股票每次买入提交的最大仓位（随着资产改变而动态改变）（初始化股票时检查时单只股票每次买入提交的最大仓位与单只股票每次买入提交的最大市值较小者来限制）
+	public void setGlobalBuyOneStockCommitMaxPositionRatio(Double dPositionRatio)
+	{
+		this.propertySetDouble("Global", "BuyOneStockCommitMaxPositionRatio", dPositionRatio);
+	}
+	public Double getGlobalBuyOneStockCommitMaxPositionRatio()
+	{
+		Double ret = this.propertyGetDouble("Global", "BuyOneStockCommitMaxPositionRatio");
+		if (null == ret) {
+			ret = sDefaultBuyOneStockCommitMaxPositionRatio;
+		}
+		return ret;
+	}
+	// 单只股票每次买入提交的最大市值（不随着资产改变而改变）（初始化股票时检查时单只股票每次买入提交的最大仓位与单只股票每次买入提交的最大市值较小者来限制）
 	public void setGlobalBuyOneStockCommitMaxMarketValue(Double dDefaultCommit)
 	{
 		this.propertySetDouble("Global", "BuyOneStockCommitMaxMarketValue", dDefaultCommit);
@@ -96,7 +125,7 @@ public class QEUProperty {
 	{
 		Long ret = this.propertyGetLong("Global", "StockMinCommitInterval");
 		if (null == ret) {
-			ret = sDefaultStockOneCommitInterval;
+			ret = sDefaultStockMinCommitInterval;
 		}
 		return ret;
 	}
@@ -203,43 +232,25 @@ public class QEUProperty {
 	{
 		this.propertyClear(stockID);
 	}
-	// 股票全仓位时候的最大持股市值
-	public void setPrivateStockPropertyMaxHoldketValue(String stockID, Double value)
-	{
-		this.propertySetDouble(stockID, "MaxHoldMarketValue", value);
-	}
-	public Double getPrivateStockPropertyMaxHoldMarketValue(String stockID)
-	{
-		return this.propertyGetDouble(stockID, "MaxHoldMarketValue");
-	}
-	// 股票一次提交的最大市值
-	public void setPrivateStockPropertyOneCommitMaxMarketValue(String stockID, Double value)
-	{
-		this.propertySetDouble(stockID, "OneCommitMaxMarketValue", value);
-	}
-	public Double getPrivateStockPropertyOneCommitMaxMarketValue(String stockID)
-	{
-		return this.propertyGetDouble(stockID, "OneCommitMaxMarketValue");
-	}
 	
 	// 股票全仓位时候的持股数量
-		public void setPrivateStockPropertyMaxHoldAmount(String stockID, long value)
-		{
-			this.propertySetLong(stockID, "MaxHoldAmount", value);
-		}
-		public Long getPrivateStockPropertyMaxHoldAmount(String stockID)
-		{
-			return this.propertyGetLong(stockID, "MaxHoldAmount");
-		}
-		// 股票一次提交的数量
-		public void setPrivateStockPropertyOneCommitAmount(String stockID, long value)
-		{
-			this.propertySetLong(stockID, "OneCommitAmount", value);
-		}
-		public Long getPrivateStockPropertyOneCommitAmount(String stockID)
-		{
-			return this.propertyGetLong(stockID, "OneCommitAmount");
-		}
+	public void setPrivateStockPropertyMaxHoldAmount(String stockID, long value)
+	{
+		this.propertySetLong(stockID, "MaxHoldAmount", value);
+	}
+	public Long getPrivateStockPropertyMaxHoldAmount(String stockID)
+	{
+		return this.propertyGetLong(stockID, "MaxHoldAmount");
+	}
+	// 股票一次提交的数量
+	public void setPrivateStockPropertyOneCommitAmount(String stockID, long value)
+	{
+		this.propertySetLong(stockID, "OneCommitAmount", value);
+	}
+	public Long getPrivateStockPropertyOneCommitAmount(String stockID)
+	{
+		return this.propertyGetLong(stockID, "OneCommitAmount");
+	}
 	// 提交频率
 	public void setPrivateStockPropertyMinCommitInterval(String stockID, long value)
 	{

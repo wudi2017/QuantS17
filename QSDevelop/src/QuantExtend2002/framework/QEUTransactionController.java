@@ -7,7 +7,9 @@ import QuantExtend1801.utils.QUCommon;
 import pers.di.account.common.CommissionOrder;
 import pers.di.account.common.HoldStock;
 import pers.di.account.common.TRANACT;
+import pers.di.common.CLog;
 import pers.di.common.CObjectContainer;
+import pers.di.common.CSystem;
 import pers.di.common.CUtilsDateTime;
 import pers.di.dataengine.DAStock;
 import pers.di.quantplatform.QuantContext;
@@ -66,16 +68,27 @@ public class QEUTransactionController {
 			return false;
 		}
 		
-		// 如果是首次创建股票，初始化一些属性
+		// 如果是首次创建股票，初始化属性（此股票的最大持有量和单次提交量，根据全局属性初始化）
 		// need init private property PrivateStockPropertyMaxHoldAmount & PrivateStockPropertyOneCommitAmount 
 		HoldStock cHoldStock = QUCommon.getHoldStock(ctx.accountProxy(), stockID);
 		if(null == cHoldStock) 
 		{
+			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
+			int iRet = ctx.accountProxy().getTotalAssets(ctnTotalAssets);
+			if (0 != iRet) {
+				CLog.error("Quant", "QEUTransactionController.buySignalEmit getTotalAssets failed!");
+				CSystem.exit(-1);
+			}
 			// init PrivateStockPropertyMaxHoldAmount
 			Long lFullHoldAmount = mQEUProperty.getPrivateStockPropertyMaxHoldAmount(stockID);
 			if(null == lFullHoldAmount)
 			{
-				Double dGlobalFullHoldMarketValue = mQEUProperty.getGlobalHoldOneStockMaxMarketValue();
+				/* use HoldOneStockMaxPositionRatio and HoldOneStockMaxMarketValue to decide 
+				 * current stock PrivateStockPropertyMaxHoldAmount in current time.*/
+				Double dGlobalFullHoldPositionRatio = mQEUProperty.getGlobalHoldOneStockMaxPositionRatio();
+				Double dGlobalFullHoldPositionRatio_Value = ctnTotalAssets.get() * dGlobalFullHoldPositionRatio;
+				Double dGlobalFullHoldMarketValue_Value = mQEUProperty.getGlobalHoldOneStockMaxMarketValue();
+				Double dGlobalFullHoldMarketValue = Math.min(dGlobalFullHoldPositionRatio_Value, dGlobalFullHoldMarketValue_Value);
 				long curFullPositionAmmount = (long)(dGlobalFullHoldMarketValue/fNowPrice)/100*100;
 				mQEUProperty.setPrivateStockPropertyMaxHoldAmount(stockID, curFullPositionAmmount);
 			}
@@ -83,7 +96,10 @@ public class QEUTransactionController {
 			Long lOneCommitAmount = mQEUProperty.getPrivateStockPropertyOneCommitAmount(stockID);
 			if(null == lOneCommitAmount)
 			{
-				Double dGlobalBuyCommitMaxMarketValue = mQEUProperty.getGlobalBuyOneStockCommitMaxMarketValue();
+				Double dGlobalBuyCommitMaxPositionRatio = mQEUProperty.getGlobalBuyOneStockCommitMaxPositionRatio();
+				Double dGlobalBuyCommitMaxPositionRatio_Value = ctnTotalAssets.get() * dGlobalBuyCommitMaxPositionRatio;
+				Double dGlobalBuyCommitMaxMarketValue_Value = mQEUProperty.getGlobalBuyOneStockCommitMaxMarketValue();
+				Double dGlobalBuyCommitMaxMarketValue = Math.min(dGlobalBuyCommitMaxPositionRatio_Value, dGlobalBuyCommitMaxMarketValue_Value);
 				long curFullPositionAmmount = (long)(dGlobalBuyCommitMaxMarketValue/fNowPrice)/100*100;
 				mQEUProperty.setPrivateStockPropertyOneCommitAmount(stockID, curFullPositionAmmount);
 			}	
@@ -105,15 +121,19 @@ public class QEUTransactionController {
 			//CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
 			return false;
 		}
-		// 本只股票确定买入时，持有足够现金检查，不允许现金不充足时下单
+		// 本只股票确定买入时，重新确定买入数量（因为可能  1.没有足够现金 2.要预留部分现金 3.买入后超过最大数量 所以综合以上条件取最小值）
 		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
 		ctx.accountProxy().getMoney(ctnMoney);
-		double needCommitMoney = lCommitAmount*fNowPrice;
-		if(needCommitMoney > ctnMoney.get()) // CommitMoney check
+		double needStockCommitMoney = lCommitAmount*fNowPrice;
+		double reservedCostMoney = needStockCommitMoney*0.01 < 50.0 ? 50.0: needStockCommitMoney*0.01;
+		double stockMoney = Math.min(ctnMoney.get()-reservedCostMoney, needStockCommitMoney);
+		if(stockMoney < 100.0) // money is too less, cannot transact.
 		{
 			//CLog.output("TEST", "buySignalEmit %s ignore! needCommitMoney=%.3f ctnMoney=%.3f", stockID, needCommitMoney,ctnMoney.get());
 			return false;
 		}
+		lCommitAmount = ((long)(stockMoney/fNowPrice))/100*100;
+		lCommitAmount = Math.min(lMaxHoldAmount-lAlreadyHoldAmount, lCommitAmount);
 		
 		// 所有检查完毕，推送买单
 		ctx.accountProxy().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
