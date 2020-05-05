@@ -134,22 +134,22 @@ public class ExtEigenMorningCross {
 	 */
 	public static double scoreCalcAveWeight(DAKLines kLines, int iCheck) {
 		double scole30DayLevel = ExtEigenMorningCross.scoreCalc30DayLevel(kLines, iCheck);
-		double weight30DayLevel = 0.15;
+		double weight30DayLevel = 0.25;
 		
 		double scole10CrossDayLevel = ExtEigenMorningCross.scoreCalc10CrossDayLevel(kLines, iCheck);
-		double weight10CrossDayLevel = 0.15;
+		double weight10CrossDayLevel = 0.20;
 		
 		double scoleCrossStandard = ExtEigenMorningCross.scoreCalcCrossStandard(kLines, iCheck);
-		double weightCrossStandard = 0.2;
+		double weightCrossStandard = 0.1;
 		
 		double scoreBeginEndStandard = ExtEigenMorningCross.scoreBeginEndStandard(kLines, iCheck);
-		double weightBeginEndStandard = 0.2;
+		double weightBeginEndStandard = 0.1;
 		
 		double scoreCrossDownRefBeginEnd = ExtEigenMorningCross.scoreCrossDownRefBeginEnd(kLines, iCheck);
 		double weightCrossDownRefBeginEnd = 0.15;
 		
 		double scoreEndBeyondBegin = ExtEigenMorningCross.scoreEndBeyondBegin(kLines, iCheck);
-		double weightEndBeyondBegin = 0.15;
+		double weightEndBeyondBegin = 0.20;
 		
 //		CLog.output("TEST", "ZCZXScore 30DayL:%.2f 10CroDayL:%.2f CroStd:%.2f BEStd:%.2f CroDown:%.2f EBB:%.2f",
 //			scole30DayLevel, scole10CrossDayLevel, scoleCrossStandard, scoreBeginEndStandard, scoreCrossDownRefBeginEnd, scoreEndBeyondBegin);

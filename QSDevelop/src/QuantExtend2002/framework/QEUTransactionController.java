@@ -114,18 +114,12 @@ public class QEUTransactionController {
 			//CLog.output("TEST", "buySignalEmit %s ignore! lAlreadyHoldAmount=%d lFullHoldAmount=%d",  stockID, lAlreadyHoldAmount, lFullHoldAmount);
 			return false;
 		}
-		Long lCommitAmount = Math.min(lMaxHoldAmount-lAlreadyHoldAmount, lOneCommitAmount);
-		lCommitAmount = lCommitAmount/100*100;
-		if(lCommitAmount < 100) // CommitAmount check
-		{
-			//CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
-			return false;
-		}
 		// 本只股票确定买入时，重新确定买入数量（因为可能  1.没有足够现金 2.要预留部分现金 3.买入后超过最大数量 所以综合以上条件取最小值）
-		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
-		ctx.accountProxy().getMoney(ctnMoney);
+		Long lCommitAmount = Math.min(lMaxHoldAmount-lAlreadyHoldAmount, lOneCommitAmount);
 		double needStockCommitMoney = lCommitAmount*fNowPrice;
 		double reservedCostMoney = needStockCommitMoney*0.01 < 50.0 ? 50.0: needStockCommitMoney*0.01;
+		CObjectContainer<Double> ctnMoney = new CObjectContainer<Double>();
+		ctx.accountProxy().getMoney(ctnMoney);
 		double stockMoney = Math.min(ctnMoney.get()-reservedCostMoney, needStockCommitMoney);
 		if(stockMoney < 100.0) // money is too less, cannot transact.
 		{
@@ -133,7 +127,11 @@ public class QEUTransactionController {
 			return false;
 		}
 		lCommitAmount = ((long)(stockMoney/fNowPrice))/100*100;
-		lCommitAmount = Math.min(lMaxHoldAmount-lAlreadyHoldAmount, lCommitAmount);
+		if(lCommitAmount < 100) // CommitAmount check, less than 100, cannot commit
+		{
+			//CLog.output("TEST", "buySignalEmit %s ignore! iCreateAmount=%d", stockID, lCommitAmount);
+			return false;
+		}
 		
 		// 所有检查完毕，推送买单
 		ctx.accountProxy().pushBuyOrder(stockID, lCommitAmount.intValue(), fNowPrice);
