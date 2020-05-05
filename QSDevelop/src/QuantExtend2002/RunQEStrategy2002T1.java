@@ -19,15 +19,15 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 		// clear
 		this.selector().clear();
 		// init
-		this.property().setGlobalStockMaxCount(3L);
+		this.property().setGlobalStockMaxCount(4L);
 		this.property().setGlobalHoldOneStockMaxPositionRatio(0.3);
 		this.property().setGlobalHoldOneStockMaxMarketValue(5*10000.0);
 		this.property().setGlobalBuyOneStockCommitMaxPositionRatio(0.3);
 		this.property().setGlobalBuyOneStockCommitMaxMarketValue(5*10000.0);
 		this.property().setGlobalStockMinCommitInterval(60L);
 		this.property().setGlobalStockMaxHoldDays(20L);
-		this.property().setGlobalStockTargetProfitRatio(0.06);
-		this.property().setGlobalStockStopLossRatio(-0.05);
+		this.property().setGlobalStockTargetProfitRatio(0.10);
+		this.property().setGlobalStockStopLossRatio(-0.08);
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 
 	@Override
 	public void onStrateDayFinish(QuantContext ctx) {
-		this.selector().setMaxCount(1);
+		this.selector().setMaxCount(5);
 		
 		// transfer all stock
 		for (int iStock = 0; iStock < ctx.pool().size(); iStock++) {
