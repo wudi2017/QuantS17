@@ -27,7 +27,7 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 		this.property().setGlobalStockMinCommitInterval(60L);
 		this.property().setGlobalStockMaxHoldDays(20L);
 		this.property().setGlobalStockTargetProfitRatio(0.10);
-		this.property().setGlobalStockStopLossRatio(-0.06);
+		this.property().setGlobalStockStopLossRatio(-0.08);
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 		cAccountController.open("fast_mock001", true);
 		cAccountController.reset(100000);
 		// "HistoryTest 2019-01-01 2020-02-20" "Realtime"
-		Quant.instance().run("HistoryTest 2018-01-01 2020-05-05", cAccountController, new RunQEStrategy2002T1()); 
+		Quant.instance().run("HistoryTest 2018-01-01 2020-07-10", cAccountController, new RunQEStrategy2002T1()); 
 		CLog.output(TAG, "%s", cAccountController.account().dump());
 		cAccountController.close();
 		
