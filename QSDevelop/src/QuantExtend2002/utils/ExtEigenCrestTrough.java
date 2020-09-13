@@ -10,6 +10,9 @@ import pers.di.common.CImageCurve.CurvePoint;
 import pers.di.dataengine.DAKLines;
 import pers.di.localstock.common.KLine;
 
+/*
+ * ¶ÌÆÚ²¨·å²¨¹È
+ */
 public class ExtEigenCrestTrough {
 	public static String TAG = "TEST";
 	

@@ -1,6 +1,7 @@
 package QuantExtend2002_test;
 
 import QuantExtend2002.framework.QEBase2002;
+import QuantExtend2002.utils.ExtEigenContinuationTrend;
 import QuantExtend2002.utils.ExtEigenCrestTrough;
 import QuantExtend2002.utils.ExtEigenMorningCross;
 import pers.di.account.AccountController;
@@ -34,14 +35,15 @@ public class TestSingle {
 		@Override
 		public void onStrateDayFinish(QuantContext ctx) {
 			// transfer all stock
-			DAStock cStock = ctx.pool().get("000650");
+			DAStock cStock = ctx.pool().get("000651");
 			
 			//boolean bCk = ExtEigenMorningCross.check(cStock.dayKLines(), cStock.dayKLines().size()-1);
 			//CLog.output(TAG, "%s price:%.3f %b", cStock.date(), cStock.price(), bCk);
 			
-			if (0 == ctx.date().compareTo("2020-08-24")) {
+			if (0 == ctx.date().compareTo("2020-07-10")) {
 				CLog.output(TAG, "%s price:%.3f", cStock.date(), cStock.price());
-				ExtEigenCrestTrough.test(cStock.dayKLines(), cStock.dayKLines().size()-1-90, cStock.dayKLines().size()-1);
+				//ExtEigenCrestTrough.test(cStock.dayKLines(), cStock.dayKLines().size()-1-90, cStock.dayKLines().size()-1);
+				ExtEigenContinuationTrend.test(cStock.dayKLines(), cStock.dayKLines().size()-1-90, cStock.dayKLines().size()-1);
 			}
 		
 		}
@@ -56,7 +58,7 @@ public class TestSingle {
 		cAccountController.open("fast_mock001", true);
 		cAccountController.reset(100000);
 		// "HistoryTest 2019-01-01 2020-02-20" "Realtime"
-		Quant.instance().run("HistoryTest 2020-08-24 2020-08-24", cAccountController, new RunQEStrategyTESTSingle()); 
+		Quant.instance().run("HistoryTest 2020-07-10 2020-07-10", cAccountController, new RunQEStrategyTESTSingle()); 
 		CLog.output(TAG, "%s", cAccountController.account().dump());
 		cAccountController.close();
 		
