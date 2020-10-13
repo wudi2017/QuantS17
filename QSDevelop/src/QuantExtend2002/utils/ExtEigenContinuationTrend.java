@@ -23,23 +23,29 @@ public class ExtEigenContinuationTrend {
 		CLog.output(TAG, "ExtEigenContinuationTrend.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
 		CImageCurve cCImageCurve = new CImageCurve(1600,900,"test_stock_ExtEigenContinuationTrend.jpg");
 		List<CurvePoint> PoiList = new ArrayList<CurvePoint>();
-		for (int i = iBegin; i<=iEnd; i++) {
+		for (int i = iBegin; i <= iEnd; i++) {
+			PoiList.add(new CurvePoint(i,0));
+		}
+		
+		int iStartUpIndex = iEnd + 1;
+		for (int i = iEnd; i >= iBegin; i--) {
 			KLine cKLine =  kLines.get(i);
 			
 			CLog.output(TAG, "%s %.3f", cKLine.date, cKLine.close);
+			PoiList.get(i-iBegin).m_y = cKLine.close;
 			
-			boolean bck_up = false;
-			UnTrendInfo info = new UnTrendInfo();
-			//if (cKLine.date.equals("2020-07-10")) 
-			{
+			if (i < iStartUpIndex) {
+				boolean bck_up = false;
+				UpTrendInfo info = new UpTrendInfo();
 				bck_up = checkUpTrend(kLines, i, info);
+				if (bck_up) {
+					KLine cKLineStart =  kLines.get(info.startIndex);
+					CLog.output(TAG, "checkUpTrend %s->%s OK (%d %.3f %.3f)", cKLineStart.date, cKLine.date,
+							info.endIndex - info.startIndex, info.incRate(), info.incRateSlope());
+					iStartUpIndex = info.startIndex;
+					PoiList.get(i-iBegin).m_marked = true;
+				}
 			}
-			if (bck_up) {
-				KLine cKLineStart =  kLines.get(info.startIndex);
-				CLog.output(TAG, "checkUpTrend %s->%s OK", cKLineStart.date, cKLine.date);
-			}
-			
-			PoiList.add(new CurvePoint(i,kLines.get(i).close, bck_up));
 		}
 		cCImageCurve.setColor(Color.ORANGE);
 		cCImageCurve.writeLogicCurveSameRatio(PoiList);
@@ -48,10 +54,18 @@ public class ExtEigenContinuationTrend {
 		cCImageCurve.GenerateImage();
 	}
 	
-	static class UnTrendInfo {
+	static class UpTrendInfo {
 		public int startIndex;
+		public int endIndex;
+		public DAKLines kLines;
+		public double incRate() { // Ç÷ÊÆÕÇ·ù
+			return (kLines.get(endIndex).close - kLines.get(startIndex).close)/kLines.get(startIndex).close;
+		}
+		public double incRateSlope() {// Ç÷ÊÆÕÇ·ùÐ±ÂÊ
+			return incRate()/(endIndex-startIndex);
+		}
 	}
-	public static boolean checkUpTrend(DAKLines kLines, int iCheck, UnTrendInfo info) {
+	public static boolean checkUpTrend(DAKLines kLines, int iCheck, UpTrendInfo info) {
 		
 		// must has 20 days more
 		if (kLines.size() < 20) {
@@ -103,6 +117,8 @@ public class ExtEigenContinuationTrend {
 		if (ContinueDaysCnt >= 2) {
 			if (null != info) {
 				info.startIndex = iCheck - ContinueDaysCnt -1;
+				info.endIndex = iCheck;
+				info.kLines = kLines;
 			}
 			return true;
 		} else {
