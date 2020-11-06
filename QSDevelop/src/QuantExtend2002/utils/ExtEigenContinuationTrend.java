@@ -2,6 +2,7 @@ package QuantExtend2002.utils;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import pers.di.common.CImageCurve;
@@ -19,41 +20,62 @@ import pers.di.localstock.common.KLine;
 public class ExtEigenContinuationTrend {
 	public static String TAG = "TEST";
 	
-	public static void test(DAKLines kLines, int iBegin, int iEnd) {
-		CLog.output(TAG, "ExtEigenContinuationTrend.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
-		CImageCurve cCImageCurve = new CImageCurve(1600,900,"test_stock_ExtEigenContinuationTrend.jpg");
-		List<CurvePoint> PoiList = new ArrayList<CurvePoint>();
-		for (int i = iBegin; i <= iEnd; i++) {
-			PoiList.add(new CurvePoint(i,0));
-		}
-		
-		int iStartUpIndex = iEnd + 1;
-		for (int i = iEnd; i >= iBegin; i--) {
-			KLine cKLine =  kLines.get(i);
+	public static void test(DAKLines kLines) {
+		{
+			int iEnd = kLines.size()-1;
+			int iBegin = iEnd-90;
+			CLog.output(TAG, "ExtEigenContinuationTrend.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
+
+			List<Integer> upIdxList = new ArrayList<Integer>();
 			
-			CLog.output(TAG, "%s %.3f", cKLine.date, cKLine.close);
-			PoiList.get(i-iBegin).m_y = cKLine.close;
-			
-			if (i < iStartUpIndex) {
+			for (int i = iEnd; i >= iBegin; i--) {
+				KLine cKLine =  kLines.get(i);
+				CLog.output(TAG, "%s %.3f", cKLine.date, cKLine.close);
+				
 				boolean bck_up = false;
 				UpTrendInfo info = new UpTrendInfo();
 				bck_up = checkUpTrend(kLines, i, info);
-				if (bck_up) {
+				if (bck_up) { // find current day is up trend
+					upIdxList.add(i);
+					
 					KLine cKLineStart =  kLines.get(info.startIndex);
 					CLog.output(TAG, "checkUpTrend %s->%s OK (%d %.3f %.3f)", cKLineStart.date, cKLine.date,
 							info.endIndex - info.startIndex, info.incRate(), info.incRateSlope());
-					iStartUpIndex = info.startIndex;
-					PoiList.get(i-iBegin).m_marked = true;
+					i = i - (info.endIndex - info.startIndex);
 				}
 			}
+			
+			// generate show image
+			CImageCurve cCImageCurve = new CImageCurve(1600,900,"test_stock_ExtEigenContinuationTrend.jpg");
+			List<CurvePoint> PoiList = new ArrayList<CurvePoint>();
+			for (int i = iBegin; i <= iEnd; i++) {
+				KLine cKLine =  kLines.get(i);
+				if (upIdxList.contains(i)) {
+					PoiList.add(new CurvePoint(i,cKLine.close, true));
+				} else {
+					PoiList.add(new CurvePoint(i,cKLine.close));
+				}
+			}
+			cCImageCurve.setColor(Color.ORANGE);
+			cCImageCurve.writeLogicCurveSameRatio(PoiList);
+			cCImageCurve.setColor(Color.BLACK);
+			cCImageCurve.writeAxis();
+			cCImageCurve.GenerateImage();
 		}
-		cCImageCurve.setColor(Color.ORANGE);
-		cCImageCurve.writeLogicCurveSameRatio(PoiList);
-		cCImageCurve.setColor(Color.BLACK);
-		cCImageCurve.writeAxis();
-		cCImageCurve.GenerateImage();
+		{
+			List<UpTrendInfo> unTrendInfoList = new ArrayList<UpTrendInfo>();
+			findUpTrend(kLines, kLines.size()-90, kLines.size()-1, unTrendInfoList);
+			for (int i = 0; i < unTrendInfoList.size(); i++) {
+				UpTrendInfo cUpTrendInfo = unTrendInfoList.get(i);
+				KLine cKLineStart =  kLines.get(cUpTrendInfo.startIndex);
+				KLine cKLineEnd =  kLines.get(cUpTrendInfo.endIndex);
+				CLog.output(TAG, "Find UpTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
+						cUpTrendInfo.endIndex - cUpTrendInfo.startIndex, cUpTrendInfo.incRate(), cUpTrendInfo.incRateSlope());
+			}
+		}
 	}
 	
+
 	static class UpTrendInfo {
 		public int startIndex;
 		public int endIndex;
@@ -65,6 +87,26 @@ public class ExtEigenContinuationTrend {
 			return incRate()/(endIndex-startIndex);
 		}
 	}
+	/*
+	 * find all UpTrend in the period [index iBegin ~ iEnd]
+	 */
+	public static void findUpTrend(DAKLines kLines, int iBegin, int iEnd, List<UpTrendInfo> result) {
+		if (null == result) {
+			return;
+		}
+		for (int i = iEnd; i >= iBegin; i--) {
+			UpTrendInfo info = new UpTrendInfo();
+			if (checkUpTrend(kLines, i, info)) { // find current day is up trend
+				result.add(info);
+				i = i - (info.endIndex - info.startIndex);
+			}
+		}
+		Collections.reverse(result);
+	}
+	
+	/*
+	 * find current index is UpTrend end day or not, return UpTrendInfo in last param.
+	 */
 	public static boolean checkUpTrend(DAKLines kLines, int iCheck, UpTrendInfo info) {
 		
 		// must has 20 days more
