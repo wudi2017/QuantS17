@@ -126,6 +126,84 @@ public class ExtEigenContinuationTrend {
 	}
 	
 	/*
+	 * hava max up -> down trend recently
+	 * 1. have 3 or more uptrend and 3 more downtrend in 90 days
+	 * 2. last upTread is max up changed Rate
+	 * 3. last upTread is max price
+	 * 4. last downTrend is max down changed Rate
+	 * 5. last downTrend is after last upTrend
+	 */
+	public static boolean isMaxUpDownTrendRecently(DAKLines kLines, int index) {
+		if (index < 100) {
+			return false;
+		}
+
+		// find MaxDownTrend
+		boolean isRecentMaxDownTrend = true;
+		List<TrendInfo> downTrendInfoList = new ArrayList<TrendInfo>();
+		findDownTrend(kLines, index-90, index, downTrendInfoList);
+		if (downTrendInfoList.size() >= 5) { // have 5 or more downtread in 90 days
+			TrendInfo cDownTrendInfoLast = downTrendInfoList.get(downTrendInfoList.size()-1);
+			for (int i = downTrendInfoList.size()-2; i > 0 ; i--) {
+				TrendInfo cDownTrendInfoTmp = downTrendInfoList.get(i);
+				// last downTread have max changeRateValue
+				if (Math.abs(cDownTrendInfoTmp.changeRateValue) > Math.abs(cDownTrendInfoLast.changeRateValue)) { 
+					isRecentMaxDownTrend = false;
+					break;
+				}
+			}
+		} else {
+			isRecentMaxDownTrend = false;
+		}
+		
+		// find MaxUpTrend
+		boolean isRecentMaxUpTrend = true;
+		List<TrendInfo> upTrendInfoList = new ArrayList<TrendInfo>();
+		findUpTrend(kLines, index-90, index, upTrendInfoList);
+		if (upTrendInfoList.size() >= 5) { // have 5 or more uptread in 90 days
+			TrendInfo cUpTrendInfoLast = upTrendInfoList.get(upTrendInfoList.size()-1);
+			for (int i = upTrendInfoList.size()-2; i > 0 ; i--) {
+				TrendInfo cUpTrendInfoTmp = upTrendInfoList.get(i);
+				// last upTread have max changeRateValue
+				// last upTread have max price
+				if (cUpTrendInfoTmp.changeRateValue > cUpTrendInfoLast.changeRateValue ||
+						cUpTrendInfoTmp.endPrice > cUpTrendInfoLast.endPrice) { 
+					isRecentMaxUpTrend = false;
+					break;
+				}
+			}
+		} else {
+			isRecentMaxUpTrend = false;
+		}
+		
+		if (isRecentMaxDownTrend && isRecentMaxUpTrend) {
+			TrendInfo lastDownTrendInfo = downTrendInfoList.get(downTrendInfoList.size()-1);
+			TrendInfo lastUpTrendInfo = upTrendInfoList.get(upTrendInfoList.size()-1);
+			
+			// downTrend happened after upTrend
+			if (lastUpTrendInfo.endIndex > lastDownTrendInfo.startIndex ||
+					lastUpTrendInfo.startIndex > lastDownTrendInfo.startIndex) { 
+				return false;
+			}
+
+			// downTrend happened in 5 day
+			if (lastDownTrendInfo.endIndex < index - 5) {
+				return false;
+			}
+			
+			// upTrend happened in 10 days before downTrend
+			if (lastUpTrendInfo.endIndex < lastDownTrendInfo.startIndex - 5) { 
+				return false;
+			}
+
+			return true;
+			
+		} else {
+			return false;
+		}
+	}
+	
+	/*
 	 * hava max up trend recently
 	 * 1. have 5 or more uptread in 90 days
 	 * 2. last upTread is max up changed Rate
