@@ -34,16 +34,37 @@ public class TestSingle {
 
 		@Override
 		public void onStrateDayFinish(QuantContext ctx) {
-			// transfer all stock
-			DAStock cStock = ctx.pool().get("601607");
-			
-			//boolean bCk = ExtEigenMorningCross.check(cStock.dayKLines(), cStock.dayKLines().size()-1);
-			//CLog.output(TAG, "%s price:%.3f %b", cStock.date(), cStock.price(), bCk);
-			
-			if (0 == ctx.date().compareTo("2020-11-06")) {
-				CLog.output(TAG, "%s price:%.3f", cStock.date(), cStock.price());
-				//ExtEigenCrestTrough.test(cStock.dayKLines(), cStock.dayKLines().size()-1-90, cStock.dayKLines().size()-1);
-				ExtEigenContinuationTrend.test(cStock.dayKLines());
+			// check one stock
+			{
+//				DAStock cStock = ctx.pool().get("002991"); 
+//				
+//				//boolean bCk = ExtEigenMorningCross.check(cStock.dayKLines(), cStock.dayKLines().size()-1);
+//				//CLog.output(TAG, "%s price:%.3f %b", cStock.date(), cStock.price(), bCk);
+//				
+//				if (0 == ctx.date().compareTo("2020-11-06")) 
+//				{
+//					CLog.output(TAG, "%s price:%.3f", cStock.date(), cStock.price());
+//					//ExtEigenCrestTrough.test(cStock.dayKLines(), cStock.dayKLines().size()-1-90, cStock.dayKLines().size()-1);
+//					ExtEigenContinuationTrend.test(cStock.dayKLines());
+//				}
+			}
+			// traversal all stock
+			{
+				for (int iStock = 0; iStock < ctx.pool().size(); iStock++) {
+					DAStock cStock = ctx.pool().get(iStock);
+					if(!cStock.date().equals(ctx.date())) {
+						/* this stock newest dayK not exist at current date, continue! 
+						 * CANNOT be selected. */
+						continue; 
+					}
+//					CLog.output(TAG, "(%d/%d) %s %s %f", iStock+1, ctx.pool().size(), 
+//							cStock.ID(), cStock.date(), cStock.price());
+					boolean isMaxUpTrendRecently = ExtEigenContinuationTrend.isMaxUpTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1, 10);
+					boolean isMaxDownTrendRecently = ExtEigenContinuationTrend.isMaxDownTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1, 5);
+					if (isMaxUpTrendRecently && isMaxDownTrendRecently) {
+						CLog.output(TAG, "isMaxUpDownTrendRecently %s %s", cStock.ID(), ctx.date());
+					}
+				}
 			}
 		
 		}
@@ -58,7 +79,7 @@ public class TestSingle {
 		cAccountController.open("fast_mock001", true);
 		cAccountController.reset(100000);
 		// "HistoryTest 2019-01-01 2020-02-20" "Realtime"
-		Quant.instance().run("HistoryTest 2020-07-10 2020-11-06", cAccountController, new RunQEStrategyTESTSingle()); 
+		Quant.instance().run("HistoryTest 2020-11-01 2020-11-06", cAccountController, new RunQEStrategyTESTSingle()); 
 		CLog.output(TAG, "%s", cAccountController.account().dump());
 		cAccountController.close();
 		

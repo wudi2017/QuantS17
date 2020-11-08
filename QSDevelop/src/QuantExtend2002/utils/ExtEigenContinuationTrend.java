@@ -21,6 +21,7 @@ public class ExtEigenContinuationTrend {
 	public static String TAG = "TEST";
 	
 	public static void test(DAKLines kLines) {
+		// test checkUpTrend
 		{
 			int iEnd = kLines.size()-1;
 			int iBegin = iEnd-90;
@@ -33,14 +34,14 @@ public class ExtEigenContinuationTrend {
 				CLog.output(TAG, "%s %.3f", cKLine.date, cKLine.close);
 				
 				boolean bck_up = false;
-				UpTrendInfo info = new UpTrendInfo();
+				TrendInfo info = new TrendInfo();
 				bck_up = checkUpTrend(kLines, i, info);
 				if (bck_up) { // find current day is up trend
 					upIdxList.add(i);
 					
 					KLine cKLineStart =  kLines.get(info.startIndex);
 					CLog.output(TAG, "checkUpTrend %s->%s OK (%d %.3f %.3f)", cKLineStart.date, cKLine.date,
-							info.endIndex - info.startIndex, info.incRate(), info.incRateSlope());
+							info.endIndex - info.startIndex, info.changeRateValue, info.changeRateSlope());
 					i = i - (info.endIndex - info.startIndex);
 				}
 			}
@@ -62,41 +63,179 @@ public class ExtEigenContinuationTrend {
 			cCImageCurve.writeAxis();
 			cCImageCurve.GenerateImage();
 		}
+		// test findUpTrend findDownTrend
 		{
-			List<UpTrendInfo> unTrendInfoList = new ArrayList<UpTrendInfo>();
-			findUpTrend(kLines, kLines.size()-90, kLines.size()-1, unTrendInfoList);
-			for (int i = 0; i < unTrendInfoList.size(); i++) {
-				UpTrendInfo cUpTrendInfo = unTrendInfoList.get(i);
+			List<TrendInfo> upTrendInfoList = new ArrayList<TrendInfo>();
+			findUpTrend(kLines, kLines.size()-90, kLines.size()-1, upTrendInfoList);
+			for (int i = 0; i < upTrendInfoList.size(); i++) {
+				TrendInfo cUpTrendInfo = upTrendInfoList.get(i);
 				KLine cKLineStart =  kLines.get(cUpTrendInfo.startIndex);
 				KLine cKLineEnd =  kLines.get(cUpTrendInfo.endIndex);
 				CLog.output(TAG, "Find UpTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
-						cUpTrendInfo.endIndex - cUpTrendInfo.startIndex, cUpTrendInfo.incRate(), cUpTrendInfo.incRateSlope());
+						cUpTrendInfo.endIndex - cUpTrendInfo.startIndex, cUpTrendInfo.changeRateValue, cUpTrendInfo.changeRateSlope());
+			}
+		}
+		{
+			List<TrendInfo> downTrendInfoList = new ArrayList<TrendInfo>();
+			findDownTrend(kLines, kLines.size()-90, kLines.size()-1, downTrendInfoList);
+			for (int i = 0; i < downTrendInfoList.size(); i++) {
+				TrendInfo cDownTrendInfo = downTrendInfoList.get(i);
+				KLine cKLineStart =  kLines.get(cDownTrendInfo.startIndex);
+				KLine cKLineEnd =  kLines.get(cDownTrendInfo.endIndex);
+				CLog.output(TAG, "Find DownTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
+						cDownTrendInfo.endIndex - cDownTrendInfo.startIndex, cDownTrendInfo.changeRateValue, cDownTrendInfo.changeRateSlope());
+			}
+		}
+		// test isMaxUpTrendRecently
+		{
+			int iEnd = kLines.size()-1;
+			int iBegin = iEnd-90;
+			for (int i = iBegin; i <= iEnd; i++) {
+				boolean isMaxUpTrendRecently = isMaxUpTrendRecently(kLines, i, 5);
+				if (isMaxUpTrendRecently) {
+					KLine cKLine =  kLines.get(i);
+					CLog.output(TAG, "isMaxUpTrendRecently %s", cKLine.date);
+				}
+			}
+		}
+		// test isMaxDownTrendRecently
+		{
+			int iEnd = kLines.size()-1;
+			int iBegin = iEnd-90;
+			for (int i = iBegin; i <= iEnd; i++) {
+				boolean isMaxDownTrendRecently = isMaxDownTrendRecently(kLines, i, 5);
+				if (isMaxDownTrendRecently) {
+					KLine cKLine =  kLines.get(i);
+					CLog.output(TAG, "isMaxDownTrendRecently %s", cKLine.date);
+				}
+			}
+		}
+		// test up down trend max
+		{
+			int iEnd = kLines.size()-1;
+			int iBegin = iEnd-90;
+			for (int i = iBegin; i <= iEnd; i++) {
+				boolean isMaxUpTrendRecently = isMaxUpTrendRecently(kLines, i, 10);
+				boolean isMaxDownTrendRecently = isMaxDownTrendRecently(kLines, i, 5);
+				if (isMaxUpTrendRecently && isMaxDownTrendRecently) {
+					KLine cKLine =  kLines.get(i);
+					CLog.output(TAG, "isMaxUpTrendRecently isMaxDownTrendRecently %s", cKLine.date);
+				}
 			}
 		}
 	}
 	
-
-	static class UpTrendInfo {
-		public int startIndex;
-		public int endIndex;
-		public DAKLines kLines;
-		public double incRate() { // Ç÷ÊÆÕÇ·ù
-			return (kLines.get(endIndex).close - kLines.get(startIndex).close)/kLines.get(startIndex).close;
+	/*
+	 * hava max up trend recently
+	 * 1. have 5 or more uptread in 90 days
+	 * 2. last upTread is max up changed Rate
+	 * 3. last upTread is max price
+	 */
+	public static boolean isMaxUpTrendRecently(DAKLines kLines, int index, int happenedInDays) {
+		if (index < 100) {
+			return false;
 		}
-		public double incRateSlope() {// Ç÷ÊÆÕÇ·ùÐ±ÂÊ
-			return incRate()/(endIndex-startIndex);
+		boolean isRecentMaxUpTrend = true;
+		List<TrendInfo> upTrendInfoList = new ArrayList<TrendInfo>();
+		findUpTrend(kLines, index-90, index, upTrendInfoList);
+		if (upTrendInfoList.size() >= 5) { // have 5 or more uptread in 90 days
+			TrendInfo cUpTrendInfoLast = upTrendInfoList.get(upTrendInfoList.size()-1);
+			if (cUpTrendInfoLast.endIndex < index - happenedInDays) { // happen in days
+				isRecentMaxUpTrend = false;
+			} else {
+				for (int i = upTrendInfoList.size()-2; i > 0 ; i--) {
+					TrendInfo cUpTrendInfoTmp = upTrendInfoList.get(i);
+					// last upTread have max changeRateValue
+					// last upTread have max price
+					if (cUpTrendInfoTmp.changeRateValue > cUpTrendInfoLast.changeRateValue ||
+							cUpTrendInfoTmp.endPrice > cUpTrendInfoLast.endPrice) { 
+						isRecentMaxUpTrend = false;
+						break;
+					}
+				}
+			}
+		} else {
+			isRecentMaxUpTrend = false;
+		}
+
+		return isRecentMaxUpTrend;
+	}
+	
+	/*
+	 * hava max down trend recently
+	 * 1. have 5 or more downtread in 90 days
+	 * 2. last downTread is max down changed Rate
+	 */
+	public static boolean isMaxDownTrendRecently(DAKLines kLines, int index, int happenedInDays) {
+		if (index < 100) {
+			return false;
+		}
+		boolean isRecentMaxDownTrend = true;
+		List<TrendInfo> downTrendInfoList = new ArrayList<TrendInfo>();
+		findDownTrend(kLines, index-90, index, downTrendInfoList);
+		if (downTrendInfoList.size() >= 5) { // have 5 or more downtread in 90 days
+			TrendInfo cDownTrendInfoLast = downTrendInfoList.get(downTrendInfoList.size()-1);
+			if (cDownTrendInfoLast.endIndex < index - happenedInDays) { // happen in days
+				isRecentMaxDownTrend = false;
+			} else {
+				for (int i = downTrendInfoList.size()-2; i > 0 ; i--) {
+					TrendInfo cDownTrendInfoTmp = downTrendInfoList.get(i);
+					// last downTread have max changeRateValue
+					if (Math.abs(cDownTrendInfoTmp.changeRateValue) > Math.abs(cDownTrendInfoLast.changeRateValue)) { 
+						isRecentMaxDownTrend = false;
+						break;
+					}
+				}
+			}
+		} else {
+			isRecentMaxDownTrend = false;
+		}
+
+		return isRecentMaxDownTrend;
+	}
+
+	/**********************************************************************************
+	 *  BASE
+	 */
+	static class TrendInfo {
+		public int startIndex;
+		public String startDate;
+		public double startPrice;
+		public int endIndex;
+		public String endDate;
+		public double endPrice;
+		public double changeRateValue; // Ç÷ÊÆÕÇ·ùµø·ùÂÊ°Ù·Ö±È
+		public double changeRateSlope() {// Ç÷ÊÆÕÇ·ùµø·ùÐ±ÂÊ
+			return changeRateValue/(endIndex-startIndex);
 		}
 	}
 	/*
 	 * find all UpTrend in the period [index iBegin ~ iEnd]
 	 */
-	public static void findUpTrend(DAKLines kLines, int iBegin, int iEnd, List<UpTrendInfo> result) {
+	public static void findUpTrend(DAKLines kLines, int iBegin, int iEnd, List<TrendInfo> result) {
 		if (null == result) {
 			return;
 		}
 		for (int i = iEnd; i >= iBegin; i--) {
-			UpTrendInfo info = new UpTrendInfo();
+			TrendInfo info = new TrendInfo();
 			if (checkUpTrend(kLines, i, info)) { // find current day is up trend
+				result.add(info);
+				i = i - (info.endIndex - info.startIndex);
+			}
+		}
+		Collections.reverse(result);
+	}
+	
+	/*
+	 * find all DownTrend in the period [index iBegin ~ iEnd]
+	 */
+	public static void findDownTrend(DAKLines kLines, int iBegin, int iEnd, List<TrendInfo> result) {
+		if (null == result) {
+			return;
+		}
+		for (int i = iEnd; i >= iBegin; i--) {
+			TrendInfo info = new TrendInfo();
+			if (checkDownTrend(kLines, i, info)) { // find current day is down trend
 				result.add(info);
 				i = i - (info.endIndex - info.startIndex);
 			}
@@ -107,7 +246,8 @@ public class ExtEigenContinuationTrend {
 	/*
 	 * find current index is UpTrend end day or not, return UpTrendInfo in last param.
 	 */
-	public static boolean checkUpTrend(DAKLines kLines, int iCheck, UpTrendInfo info) {
+	public static boolean checkUpTrend(DAKLines kLines, int iCheck, TrendInfo info) {
+		int CHECK_CONTINUES_DAYS = 3;
 		
 		// must has 20 days more
 		if (kLines.size() < 20) {
@@ -127,9 +267,11 @@ public class ExtEigenContinuationTrend {
 			return false;
 		}
 		
-		int ContinueDaysCnt = 0;
-		
+		int iFindStartIndex = iCheck;
 		while (true) {
+			if (iDayLeft-1 < 0) { // before unit not exist
+				return false;
+			}
 			
 			KLine cKLineUnitLeft = kLines.get(iDayLeft);
 			KLine cKLineUnitMid = kLines.get(iDayMid);
@@ -143,10 +285,14 @@ public class ExtEigenContinuationTrend {
 			double cBeforeUnitClose = cKLineBeforeUnitLeft.close > cKLineBeforeUnitMid.close? cKLineBeforeUnitLeft.close: cKLineBeforeUnitMid.close;
 			cBeforeUnitClose = cBeforeUnitClose > cKLineBeforeUnitRight.close? cBeforeUnitClose: cKLineBeforeUnitRight.close;
 			
-			boolean bCheckUp = false;
-			if (cUnitClose >= cBeforeUnitClose) {
-				ContinueDaysCnt++;
-			} else {
+			if (cUnitClose < cBeforeUnitClose) {
+				if (cKLineUnitLeft.close < cKLineUnitMid.close && cKLineUnitLeft.close < cKLineUnitRight.close) {
+					iFindStartIndex = iDayLeft;
+				} else if (cKLineUnitMid.close < cKLineUnitLeft.close && cKLineUnitMid.close < cKLineUnitRight.close) {
+					iFindStartIndex = iDayMid;
+				} else {
+					iFindStartIndex = iDayRight;
+				}
 				break;
 			}
 			
@@ -156,11 +302,92 @@ public class ExtEigenContinuationTrend {
 			iDayLeft = iDayLeft-1;
 		}
 		
-		if (ContinueDaysCnt >= 2) {
+		int ContinueDaysCnt = iCheck - iFindStartIndex;
+		if (ContinueDaysCnt >= CHECK_CONTINUES_DAYS) {
 			if (null != info) {
-				info.startIndex = iCheck - ContinueDaysCnt -1;
+				info.startIndex = iFindStartIndex;
+				info.startDate = kLines.get(iFindStartIndex).date;
+				info.startPrice = kLines.get(iFindStartIndex).close;
 				info.endIndex = iCheck;
-				info.kLines = kLines;
+				info.endDate = kLines.get(iCheck).date;
+				info.endPrice = kLines.get(iCheck).close;
+				info.changeRateValue = (kLines.get(info.endIndex).close - kLines.get(info.startIndex).close)/kLines.get(info.startIndex).close;
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	/*
+	 * find current index is DownTrend end day or not, return DownTrendInfo in last param.
+	 */
+	public static boolean checkDownTrend(DAKLines kLines, int iCheck, TrendInfo info) {
+		int CHECK_CONTINUES_DAYS = 3;
+		
+		// must has 20 days more
+		if (kLines.size() < 20) {
+			return false;
+		}
+			
+		int iDayLeft = iCheck-2;
+		int iDayMid = iCheck-1;
+		int iDayRight = iCheck;
+		
+		
+		// current day close <= before1 day  && current day close <= before2 day
+		KLine cKLineCur = kLines.get(iDayRight);
+		KLine cKLineCurBefore1 = kLines.get(iDayMid);
+		KLine cKLineCurBefore2 = kLines.get(iDayLeft);
+		if (cKLineCur.close > cKLineCurBefore1.close || cKLineCur.close > cKLineCurBefore2.close) {
+			return false;
+		}
+		
+		int iFindStartIndex = iCheck;
+		while (true) {
+			if (iDayLeft-1 < 0) { // before unit not exist
+				return false;
+			}
+			
+			KLine cKLineUnitLeft = kLines.get(iDayLeft);
+			KLine cKLineUnitMid = kLines.get(iDayMid);
+			KLine cKLineUnitRight = kLines.get(iDayRight);
+			double cUnitClose = cKLineUnitLeft.close < cKLineUnitMid.close? cKLineUnitLeft.close: cKLineUnitMid.close;
+			cUnitClose = cUnitClose < cKLineUnitRight.close? cUnitClose: cKLineUnitRight.close;
+			
+			KLine cKLineBeforeUnitLeft = kLines.get(iDayLeft-1);
+			KLine cKLineBeforeUnitMid = kLines.get(iDayMid-1);
+			KLine cKLineBeforeUnitRight = kLines.get(iDayRight-1);
+			double cBeforeUnitClose = cKLineBeforeUnitLeft.close < cKLineBeforeUnitMid.close? cKLineBeforeUnitLeft.close: cKLineBeforeUnitMid.close;
+			cBeforeUnitClose = cBeforeUnitClose < cKLineBeforeUnitRight.close? cBeforeUnitClose: cKLineBeforeUnitRight.close;
+			
+			if (cUnitClose > cBeforeUnitClose) {
+				if (cKLineUnitLeft.close > cKLineUnitMid.close && cKLineUnitLeft.close > cKLineUnitRight.close) {
+					iFindStartIndex = iDayLeft;
+				} else if (cKLineUnitMid.close > cKLineUnitLeft.close && cKLineUnitMid.close > cKLineUnitRight.close) {
+					iFindStartIndex = iDayMid;
+				} else {
+					iFindStartIndex = iDayRight;
+				}
+				break;
+			}
+			
+			// reset dayLeft dayRitht
+			iDayRight = iDayRight-1;
+			iDayMid = iDayMid-1;
+			iDayLeft = iDayLeft-1;
+		}
+		
+		int ContinueDaysCnt = iCheck - iFindStartIndex;
+		if (ContinueDaysCnt >= CHECK_CONTINUES_DAYS) {
+			if (null != info) {
+				info.startIndex = iFindStartIndex;
+				info.startDate = kLines.get(iFindStartIndex).date;
+				info.startPrice = kLines.get(iFindStartIndex).close;
+				info.endIndex = iCheck;
+				info.endDate = kLines.get(iCheck).date;
+				info.endPrice = kLines.get(iCheck).close;
+				info.changeRateValue = (kLines.get(info.endIndex).close - kLines.get(info.startIndex).close)/kLines.get(info.startIndex).close;
 			}
 			return true;
 		} else {
