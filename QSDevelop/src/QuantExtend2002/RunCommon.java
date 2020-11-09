@@ -8,13 +8,13 @@ import pers.di.localstock.LocalStock;
 public class RunCommon {
 	public static String TAG = "TEST";
 	public static void help() {
-		CLog.output(TAG, "RunCommon main. param error.");
-		CLog.output(TAG, "Usage:");
-		CLog.output(TAG, "    RunCommon operation param");
-		CLog.output(TAG, "operation:");
-		CLog.output(TAG, "    update");
-		CLog.output(TAG, "param:");
-		CLog.output(TAG, "    [update] all|000001");
+		CLog.debug(TAG, "RunCommon main. param error.");
+		CLog.debug(TAG, "Usage:");
+		CLog.debug(TAG, "    RunCommon operation param");
+		CLog.debug(TAG, "operation:");
+		CLog.debug(TAG, "    update");
+		CLog.debug(TAG, "param:");
+		CLog.debug(TAG, "    [update] all|000001");
 	}
 	public static void main(String[] args) throws Exception {
 		CSystem.start();

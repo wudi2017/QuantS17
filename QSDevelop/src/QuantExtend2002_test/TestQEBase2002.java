@@ -35,21 +35,21 @@ public class TestQEBase2002 extends QEBase2002 {
 	public void onStrateMinute(QuantContext ctx, DAStock cDAStock) {
 		if (ctx.time().equals("13:00:00")) {
 			if (cDAStock.timePrices().size() != 0 ) {
-				CLog.output(TAG, "onStrateMinute %s %s %s %.02f (timePrices newest Price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
+				CLog.debug(TAG, "onStrateMinute %s %s %s %.02f (timePrices newest Price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
 			} else {
-				CLog.output(TAG, "onStrateMinute %s %s %s %.02f (last day close price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
+				CLog.debug(TAG, "onStrateMinute %s %s %s %.02f (last day close price)", ctx.date(), ctx.time(), cDAStock.ID(), cDAStock.price());
 			}
 			
 			if (ctx.date().equals("2020-02-04")) {
 				CTest.EXPECT_DOUBLE_EQ(cDAStock.price(), 10.60, 2);
 				this.transactionController().buySignalEmit(ctx, cDAStock.ID());
-				CLog.output(TAG, "onStrateMinute %s %s transactionController().buySignalEmit", ctx.date(), ctx.time());
+				CLog.debug(TAG, "onStrateMinute %s %s transactionController().buySignalEmit", ctx.date(), ctx.time());
 			}
 			
 			if (ctx.date().equals("2020-02-17")) {
 				CTest.EXPECT_DOUBLE_EQ(cDAStock.price(), 11.04, 2);
 				this.transactionController().sellSignalEmit(ctx, cDAStock.ID());
-				CLog.output(TAG, "onStrateMinute %s %s transactionController().sellSignalEmit", ctx.date(), ctx.time());
+				CLog.debug(TAG, "onStrateMinute %s %s transactionController().sellSignalEmit", ctx.date(), ctx.time());
 			}
 			
 		}
@@ -63,7 +63,7 @@ public class TestQEBase2002 extends QEBase2002 {
 				DAStock cStock = ctx.pool().get(i);
 				if(cStock.ID().equals("600000")) {
 					this.selector().add(cStock.ID(), 0);
-					CLog.output(TAG, "onStrateDayFinish %s %s selector: %s", ctx.date(), ctx.time(), cStock.ID());
+					CLog.debug(TAG, "onStrateDayFinish %s %s selector: %s", ctx.date(), ctx.time(), cStock.ID());
 				}
 			}
 		}
@@ -79,7 +79,7 @@ public class TestQEBase2002 extends QEBase2002 {
 
 	@CTest.test
 	public static void test_QEBase2002() {
-		CLog.output(TAG, "test_QEBase2002 main begin");
+		CLog.debug(TAG, "test_QEBase2002 main begin");
 		
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
 		cAccountController.open("TestQEBase2002_account", true);
@@ -87,7 +87,7 @@ public class TestQEBase2002 extends QEBase2002 {
 		
 		Quant.instance().run("HistoryTest 2020-02-01 2020-02-20", cAccountController, new TestQEBase2002());
 		
-		CLog.output(TAG, "%s", cAccountController.account().dump());
+		CLog.debug(TAG, "%s", cAccountController.account().dump());
 		
 		CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
 		cAccountController.account().getTotalAssets(ctnTotalAssets);
@@ -97,7 +97,7 @@ public class TestQEBase2002 extends QEBase2002 {
 		// 792-5.382-25.269=761.349
 		cAccountController.close();
 		
-		CLog.output(TAG, "test_QEBase2002 main end");
+		CLog.debug(TAG, "test_QEBase2002 main end");
 	}
 	
 	public static void main(String[] args) throws Exception {

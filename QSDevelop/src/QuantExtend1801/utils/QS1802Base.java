@@ -548,9 +548,9 @@ public abstract class QS1802Base extends QuantStrategy {
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
-		CLog.output("TEST", "onDayFinish %s", ctx.date());
-		CLog.output("TEST", "dump account:\n %s", ctx.accountProxy().dump());
-		CLog.output("TEST", "dump selecttable:\n %s", m_QUSelectTable.dump());
+		CLog.debug("TEST", "onDayFinish %s", ctx.date());
+		CLog.debug("TEST", "dump account:\n %s", ctx.accountProxy().dump());
+		CLog.debug("TEST", "dump selecttable:\n %s", m_QUSelectTable.dump());
 	}
 	
 	/*

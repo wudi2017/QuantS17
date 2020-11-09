@@ -158,7 +158,7 @@ public class QS1802T1 extends QS1802Base {
 		
 		CSystem.start();
 		
-		CLog.output("TEST", "FastTest main begin");
+		CLog.debug("TEST", "FastTest main begin");
 		
 		// create testaccount
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
@@ -173,7 +173,7 @@ public class QS1802T1 extends QS1802Base {
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		cAccountController.close();
 		
-		CLog.output("TEST", "FastTest main end");
+		CLog.debug("TEST", "FastTest main end");
 		CSystem.stop();
 	}
 }

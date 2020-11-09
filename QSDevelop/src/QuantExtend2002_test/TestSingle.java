@@ -63,18 +63,18 @@ public class TestSingle {
 //						 * CANNOT be selected. */
 //						continue; 
 //					}
-//					CLog.output(TAG, "(%d/%d) %s %s %f", iStock+1, ctx.pool().size(), 
+//					CLog.info(TAG, "(%d/%d) %s %s %f", iStock+1, ctx.pool().size(), 
 //							cStock.ID(), cStock.date(), cStock.price());
-
-					boolean isMaxUpTrendRecently = ExtEigenContinuationTrend.isMaxUpTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1, 10);
-					boolean isMaxDownTrendRecently = ExtEigenContinuationTrend.isMaxDownTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1, 5);
-					if (isMaxUpTrendRecently && isMaxDownTrendRecently) {
-						CLog.output(TAG, "isMaxUpTrendRecently isMaxDownTrendRecently %s %s", cStock.ID(), ctx.date());
-					}
+//
+//					boolean isMaxUpTrendRecently = ExtEigenContinuationTrend.isMaxUpTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1, 10);
+//					boolean isMaxDownTrendRecently = ExtEigenContinuationTrend.isMaxDownTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1, 5);
+//					if (isMaxUpTrendRecently && isMaxDownTrendRecently) {
+//						CLog.info(TAG, "isMaxUpTrendRecently isMaxDownTrendRecently %s %s", cStock.ID(), ctx.date());
+//					}
 					
 					boolean isMaxUpDownTrendRecently = ExtEigenContinuationTrend.isMaxUpDownTrendRecently(cStock.dayKLines(), cStock.dayKLines().size()-1);
 					if (isMaxUpDownTrendRecently) {
-						CLog.output(TAG, "isMaxUpDownTrendRecently %s %s", cStock.ID(), ctx.date());
+						CLog.info(TAG, "isMaxUpDownTrendRecently %s %s", cStock.ID(), ctx.date());
 					}
 				}
 			}
@@ -85,17 +85,17 @@ public class TestSingle {
 	
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
-		CLog.output(TAG, "RunQEStrategy2002T1 main begin");
+		CLog.info(TAG, "RunQEStrategy2002T1 main begin");
 		
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
 		cAccountController.open("fast_mock001", true);
 		cAccountController.reset(100000);
 		// "HistoryTest 2019-01-01 2020-02-20" "Realtime"
-		Quant.instance().run("HistoryTest 2020-11-02 2020-11-06", cAccountController, new RunQEStrategyTESTSingle()); 
-		CLog.output(TAG, "%s", cAccountController.account().dump());
+		Quant.instance().run("HistoryTest 2020-04-24 2020-11-06", cAccountController, new RunQEStrategyTESTSingle()); 
+		CLog.info(TAG, "%s", cAccountController.account().dump());
 		cAccountController.close();
 		
 		CSystem.stop();
-		CLog.output(TAG, "RunQEStrategy2002T1 main end");
+		CLog.info(TAG, "RunQEStrategy2002T1 main end");
 	}
 }

@@ -138,7 +138,7 @@ public class TestUISample {
 				
 				
 				int iRowCnt = dftModel.getRowCount();
-				CLog.output("Test", "%d", iRowCnt);
+				CLog.debug("Test", "%d", iRowCnt);
 			}
 			
 			

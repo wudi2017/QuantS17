@@ -13,7 +13,7 @@ public class TestQUSelector {
 	public static void test_QUSelector()
 	{
 		String runsessionRoot = CSystem.getRunSessionRoot();
-		CLog.output("TEST", "%s", runsessionRoot);
+		CLog.debug("TEST", "%s", runsessionRoot);
 		
 		QUSelector selector = new QUSelector("test");
 		
@@ -28,7 +28,7 @@ public class TestQUSelector {
 		selector.selectAdd("S8", 22);
 		selector.selectAdd("S9", 19);
 		selector.selectAdd("S10", 5);
-		CLog.output("TEST", "1: %s", selector.dumpSelect());
+		CLog.debug("TEST", "1: %s", selector.dumpSelect());
 		CTest.EXPECT_LONG_EQ(selector.selectSize(), 11);
 		
 		List<String> rmList = new ArrayList<String>();
@@ -36,11 +36,11 @@ public class TestQUSelector {
 		rmList.add("S3");
 		rmList.add("S10");
 		selector.selectRemove(rmList);
-		CLog.output("TEST", "2: %s", selector.dumpSelect());
+		CLog.debug("TEST", "2: %s", selector.dumpSelect());
 		CTest.EXPECT_LONG_EQ(selector.selectSize(), 8);
 		
 		selector.selectKeepMaxCount(5);
-		CLog.output("TEST", "2: %s", selector.dumpSelect());
+		CLog.debug("TEST", "2: %s", selector.dumpSelect());
 		CTest.EXPECT_LONG_EQ(selector.selectSize(), 5);
 		CTest.EXPECT_STR_EQ(selector.selectList().get(0), "S8");
 		

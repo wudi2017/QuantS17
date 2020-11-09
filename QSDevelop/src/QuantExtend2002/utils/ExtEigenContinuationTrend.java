@@ -25,13 +25,13 @@ public class ExtEigenContinuationTrend {
 		{
 			int iEnd = kLines.size()-1;
 			int iBegin = iEnd-90;
-			CLog.output(TAG, "ExtEigenContinuationTrend.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
+			CLog.debug(TAG, "ExtEigenContinuationTrend.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
 
 			List<Integer> upIdxList = new ArrayList<Integer>();
 			
 			for (int i = iEnd; i >= iBegin; i--) {
 				KLine cKLine =  kLines.get(i);
-				CLog.output(TAG, "%s %.3f", cKLine.date, cKLine.close);
+				CLog.debug(TAG, "%s %.3f", cKLine.date, cKLine.close);
 				
 				boolean bck_up = false;
 				TrendInfo info = new TrendInfo();
@@ -40,7 +40,7 @@ public class ExtEigenContinuationTrend {
 					upIdxList.add(i);
 					
 					KLine cKLineStart =  kLines.get(info.startIndex);
-					CLog.output(TAG, "checkUpTrend %s->%s OK (%d %.3f %.3f)", cKLineStart.date, cKLine.date,
+					CLog.debug(TAG, "checkUpTrend %s->%s OK (%d %.3f %.3f)", cKLineStart.date, cKLine.date,
 							info.endIndex - info.startIndex, info.changeRateValue, info.changeRateSlope());
 					i = i - (info.endIndex - info.startIndex);
 				}
@@ -71,7 +71,7 @@ public class ExtEigenContinuationTrend {
 				TrendInfo cUpTrendInfo = upTrendInfoList.get(i);
 				KLine cKLineStart =  kLines.get(cUpTrendInfo.startIndex);
 				KLine cKLineEnd =  kLines.get(cUpTrendInfo.endIndex);
-				CLog.output(TAG, "Find UpTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
+				CLog.debug(TAG, "Find UpTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
 						cUpTrendInfo.endIndex - cUpTrendInfo.startIndex, cUpTrendInfo.changeRateValue, cUpTrendInfo.changeRateSlope());
 			}
 		}
@@ -82,7 +82,7 @@ public class ExtEigenContinuationTrend {
 				TrendInfo cDownTrendInfo = downTrendInfoList.get(i);
 				KLine cKLineStart =  kLines.get(cDownTrendInfo.startIndex);
 				KLine cKLineEnd =  kLines.get(cDownTrendInfo.endIndex);
-				CLog.output(TAG, "Find DownTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
+				CLog.debug(TAG, "Find DownTrend: %s->%s (%d %.3f %.3f)", cKLineStart.date, cKLineEnd.date, 
 						cDownTrendInfo.endIndex - cDownTrendInfo.startIndex, cDownTrendInfo.changeRateValue, cDownTrendInfo.changeRateSlope());
 			}
 		}
@@ -94,7 +94,7 @@ public class ExtEigenContinuationTrend {
 				boolean isMaxUpTrendRecently = isMaxUpTrendRecently(kLines, i, 5);
 				if (isMaxUpTrendRecently) {
 					KLine cKLine =  kLines.get(i);
-					CLog.output(TAG, "isMaxUpTrendRecently %s", cKLine.date);
+					CLog.debug(TAG, "isMaxUpTrendRecently %s", cKLine.date);
 				}
 			}
 		}
@@ -106,7 +106,7 @@ public class ExtEigenContinuationTrend {
 				boolean isMaxDownTrendRecently = isMaxDownTrendRecently(kLines, i, 5);
 				if (isMaxDownTrendRecently) {
 					KLine cKLine =  kLines.get(i);
-					CLog.output(TAG, "isMaxDownTrendRecently %s", cKLine.date);
+					CLog.debug(TAG, "isMaxDownTrendRecently %s", cKLine.date);
 				}
 			}
 		}
@@ -119,7 +119,7 @@ public class ExtEigenContinuationTrend {
 				boolean isMaxDownTrendRecently = isMaxDownTrendRecently(kLines, i, 5);
 				if (isMaxUpTrendRecently && isMaxDownTrendRecently) {
 					KLine cKLine =  kLines.get(i);
-					CLog.output(TAG, "isMaxUpTrendRecently isMaxDownTrendRecently %s", cKLine.date);
+					CLog.debug(TAG, "isMaxUpTrendRecently isMaxDownTrendRecently %s", cKLine.date);
 				}
 			}
 		}

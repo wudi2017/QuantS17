@@ -34,7 +34,7 @@ public class QS1601StdTest {
 	
 		@Override
 		public void onDayStart(QuantContext ctx) {
-			CLog.output("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
+			CLog.debug("TEST", "TestStrategy.onDayStart %s %s", ctx.date(), ctx.time());
 			ctx.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS2(3));
 		}
 		
@@ -163,7 +163,7 @@ public class QS1601StdTest {
 				}
 				else
 				{
-					CLog.output("TEST", "getTotalAssets failed\n");
+					CLog.debug("TEST", "getTotalAssets failed\n");
 				}
 			}
 		}
@@ -221,7 +221,7 @@ public class QS1601StdTest {
 
 		@Override
 		public void onDayFinish(QuantContext ctx) {
-			CLog.output("TEST", "TestStrategy.onDayFinish %s %s", ctx.date(), ctx.time());
+			CLog.debug("TEST", "TestStrategy.onDayFinish %s %s", ctx.date(), ctx.time());
 			
 			m_XStockSelectManager.clearSelect();
 			
@@ -255,7 +255,7 @@ public class QS1601StdTest {
 				}
 			}
 			
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.debug("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 			
 			// report
 			CObjectContainer<Double> ctnTotalAssets = new CObjectContainer<Double>();
@@ -264,7 +264,7 @@ public class QS1601StdTest {
 			m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 			m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 			m_TranReportor.generateReport();
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.debug("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 		
 		}
 		
@@ -289,7 +289,7 @@ public class QS1601StdTest {
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
 		
-		CLog.output("TEST", "QuantS1711 main");
+		CLog.debug("TEST", "QuantS1711 main");
 		
 		QS1601StdTest cQS1601StdTest = new QS1601StdTest();
 		cQS1601StdTest.run();

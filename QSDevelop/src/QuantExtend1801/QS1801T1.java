@@ -51,7 +51,7 @@ public class QS1801T1 extends QS1801Base {
 		
 		if(ctx.date().equals("2016-03-04") && ctx.time().equals("13:20:00"))
 		{
-			CLog.output("TEST", "");
+			CLog.debug("TEST", "");
 		}
 		
 		// buy signal
@@ -150,7 +150,7 @@ public class QS1801T1 extends QS1801Base {
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
 		
-		CLog.output("TEST", "FastTest main begin");
+		CLog.debug("TEST", "FastTest main begin");
 		
 		// create testaccount
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
@@ -165,7 +165,7 @@ public class QS1801T1 extends QS1801Base {
 		//qSession.resetDataRoot("C:\\D\\MyProg\\QuantS17Release\\rw\\data");
 		cAccountController.close();
 		
-		CLog.output("TEST", "FastTest main end");
+		CLog.debug("TEST", "FastTest main end");
 		CSystem.stop();
 	}
 

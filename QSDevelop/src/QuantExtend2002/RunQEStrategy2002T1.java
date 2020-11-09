@@ -100,23 +100,23 @@ public class RunQEStrategy2002T1 extends QEBase2002 {
 			}
 		}
 
-		CLog.output(TAG, ctx.accountProxy().dump() + "\n    -"+this.selector().dump());
+		CLog.debug(TAG, ctx.accountProxy().dump() + "\n    -"+this.selector().dump());
 		//this.selector().clear();
 	}
 
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
-		CLog.output(TAG, "RunQEStrategy2002T1 main begin");
+		CLog.debug(TAG, "RunQEStrategy2002T1 main begin");
 		
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
 		cAccountController.open("fast_mock001", true);
 		cAccountController.reset(100000);
 		// "HistoryTest 2019-01-01 2020-02-20" "Realtime"
 		Quant.instance().run("HistoryTest 2020-10-01 2020-11-05", cAccountController, new RunQEStrategy2002T1()); 
-		CLog.output(TAG, "%s", cAccountController.account().dump());
+		CLog.debug(TAG, "%s", cAccountController.account().dump());
 		cAccountController.close();
 		
 		CSystem.stop();
-		CLog.output(TAG, "RunQEStrategy2002T1 main end");
+		CLog.debug(TAG, "RunQEStrategy2002T1 main end");
 	}
 }

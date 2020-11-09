@@ -141,14 +141,14 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 	}
 	@Override
 	public void onDayStart(QuantContext ctx) {
-		CLog.output("TEST", "onDayStart %s", ctx.date());
+		CLog.debug("TEST", "onDayStart %s", ctx.date());
 		
 		ctx.addCurrentDayInterestMinuteDataIDs(ctx.accountProxy().getHoldStockIDList());
 		
 		// init select stock
 		m_XStockSelectManager.loadFromFile();
 		ctx.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(m_iMaxSelectCount));
-		CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
+		CLog.debug("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		
 		// init clear rule
 		m_XStockClearRuleManager.loadFromFile();
@@ -197,7 +197,7 @@ public abstract class QS1711SCBase extends QuantStrategy  {
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
-		CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
+		CLog.debug("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 	}
 	
 	/*

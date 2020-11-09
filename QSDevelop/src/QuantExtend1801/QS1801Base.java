@@ -557,7 +557,7 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 	
 	@Override
 	public void onDayStart(QuantContext ctx) {
-		CLog.output("TEST", "onDayStart %s", ctx.date());
+		CLog.debug("TEST", "onDayStart %s", ctx.date());
 
 		// init select stock
 		m_QUSelector.loadFromFile();
@@ -624,13 +624,13 @@ public abstract class QS1801Base extends QuantStrategy implements CConsole.IHand
 		m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 		m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 		m_TranReportor.generateReport();
-		CLog.output("TEST", "onDayFinish %s dump account&select\n %s\n    -%s", ctx.date(), ctx.accountProxy().dump(), m_QUSelector.dumpSelect());
+		CLog.debug("TEST", "onDayFinish %s dump account&select\n %s\n    -%s", ctx.date(), ctx.accountProxy().dump(), m_QUSelector.dumpSelect());
 	}
 	
 	@Override
 	public void command(String cmd)
 	{
-		CLog.output("TEST", "command %s", cmd);
+		CLog.debug("TEST", "command %s", cmd);
 		if(cmd.equals("pa"))
 		{
 		}

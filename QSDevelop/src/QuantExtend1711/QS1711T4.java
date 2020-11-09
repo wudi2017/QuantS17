@@ -186,7 +186,7 @@ public class QS1711T4 {
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
 		
-		CLog.output("TEST", "FastTest main begin");
+		CLog.debug("TEST", "FastTest main begin");
 		
 		// create testaccount
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
@@ -200,7 +200,7 @@ public class QS1711T4 {
 				new QS1711T4Strategy());
 		cAccountController.close();
 		
-		CLog.output("TEST", "FastTest main end");
+		CLog.debug("TEST", "FastTest main end");
 		CSystem.stop();
 	}
 }

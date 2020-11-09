@@ -57,10 +57,10 @@ public class QS1605Real {
 		}
 		@Override
 		public void onDayStart(QuantContext ctx) {
-			CLog.output("TEST", "onDayStart %s", ctx.date());
+			CLog.debug("TEST", "onDayStart %s", ctx.date());
 			m_XStockSelectManager.loadFromFile();
 			ctx.addCurrentDayInterestMinuteDataIDs(m_XStockSelectManager.validSelectListS1(30));
-			CLog.output("TEST", "%s", m_XStockSelectManager.dumpSelect());
+			CLog.debug("TEST", "%s", m_XStockSelectManager.dumpSelect());
 		}
 		
 		public void onBuyCheck(QuantContext ctx)
@@ -249,7 +249,7 @@ public class QS1605Real {
 			m_TranReportor.collectInfo_SHComposite(ctx.date(), dSH);
 			m_TranReportor.collectInfo_TotalAssets(ctx.date(), ctnTotalAssets.get());
 			m_TranReportor.generateReport();
-			CLog.output("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
+			CLog.debug("TEST", "dump account&select\n %s\n    -%s", ctx.accountProxy().dump(), m_XStockSelectManager.dumpSelect());
 		}
 		
 		private XStockSelectManager m_XStockSelectManager;
@@ -259,7 +259,7 @@ public class QS1605Real {
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
 		
-		CLog.output("TEST", "FastTest main begin");
+		CLog.debug("TEST", "FastTest main begin");
 		
 		// create testaccount
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
@@ -273,7 +273,7 @@ public class QS1605Real {
 		
 		cAccountController.close();
 		
-		CLog.output("TEST", "FastTest main end");
+		CLog.debug("TEST", "FastTest main end");
 		CSystem.stop();
 	}
 }

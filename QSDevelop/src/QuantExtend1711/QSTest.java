@@ -94,7 +94,7 @@ public class QSTest {
 					{
 						double succRate = ZCZXChecker.check_history(cDAStock.dayKLines());
 						EKRefHistoryPosParam cEKRefHistoryPosParam = EKRefHistoryPos.check(20, cDAStock.dayKLines(), cDAStock.dayKLines().size()-1);
-						CLog.output("TEST", "PreCheck ZCZX Date:%s ID:%s !%.3f !%.3f Succ:%.3f", ctx.date(), cDAStock.ID(), 
+						CLog.debug("TEST", "PreCheck ZCZX Date:%s ID:%s !%.3f !%.3f Succ:%.3f", ctx.date(), cDAStock.ID(), 
 								cEKRefHistoryPosParam.refHigh, cEKRefHistoryPosParam.refLow, succRate);
 						m_selectID = cDAStock.ID();
 						
@@ -107,7 +107,7 @@ public class QSTest {
 	public static void main(String[] args) throws Exception {
 		CSystem.start();
 		
-		CLog.output("TEST", "FastTest main begin");
+		CLog.debug("TEST", "FastTest main begin");
 
 		// create testaccount
 		AccountController cAccountController = new AccountController(CSystem.getRWRoot() + "\\account");
@@ -121,7 +121,7 @@ public class QSTest {
 				new QSTestStrategy());
 		cAccountController.close();
 		
-		CLog.output("TEST", "FastTest main end");
+		CLog.debug("TEST", "FastTest main end");
 		CSystem.stop();
 	}
 }

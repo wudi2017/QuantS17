@@ -17,11 +17,11 @@ public class ExtEigenCrestTrough {
 	public static String TAG = "TEST";
 	
 	public static void test(DAKLines kLines, int iBegin, int iEnd) {
-		CLog.output(TAG, "ExtEigenCrestTrough.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
+		CLog.debug(TAG, "ExtEigenCrestTrough.check (%s->%s)", kLines.get(iBegin).date, kLines.get(iEnd).date);
 		CImageCurve cCImageCurve = new CImageCurve(1600,900,"test_stock.jpg");
 		List<CurvePoint> PoiList = new ArrayList<CurvePoint>();
 		for (int i = iBegin; i<iEnd; i++) {
-			CLog.output(TAG, "%s %.3f", kLines.get(i).date, kLines.get(i).close);
+			CLog.debug(TAG, "%s %.3f", kLines.get(i).date, kLines.get(i).close);
 			boolean bck_top = checkCrest(kLines, i);
 			PoiList.add(new CurvePoint(i,kLines.get(i).close, bck_top));
 			boolean bck_bottm = checkTrough(kLines, i);
@@ -48,7 +48,7 @@ public class ExtEigenCrestTrough {
 		int iCheckBegin = iCheck-checkSpanDaysCount > 0? iCheck-checkSpanDaysCount: 0; 
 		int iCheckEnd = iCheck+checkSpanDaysCount < kLines.size() -1? iCheck+checkSpanDaysCount:kLines.size() -1;
 		if (iCheckEnd - iCheckBegin < 6) {
-			CLog.output(TAG, "ExtEigenCrestTrough.check date:%s no enough data.", kLines.get(iCheck).date);
+			CLog.debug(TAG, "ExtEigenCrestTrough.check date:%s no enough data.", kLines.get(iCheck).date);
 			return false;
 		}
 		
@@ -155,7 +155,7 @@ public class ExtEigenCrestTrough {
 			}
 		}
 		
-		CLog.output(TAG, "ExtEigenCrestTrough.checkCrest TOPdate:%s OK!", kLines.get(iCheck).date);
+		CLog.debug(TAG, "ExtEigenCrestTrough.checkCrest TOPdate:%s OK!", kLines.get(iCheck).date);
 		
 		return true;
 	}
@@ -168,7 +168,7 @@ public class ExtEigenCrestTrough {
 		int iCheckBegin = iCheck-checkSpanDaysCount > 0? iCheck-checkSpanDaysCount: 0; 
 		int iCheckEnd = iCheck+checkSpanDaysCount < kLines.size() -1? iCheck+checkSpanDaysCount:kLines.size() -1;
 		if (iCheckEnd - iCheckBegin < 6) {
-			CLog.output(TAG, "ExtEigenCrestTrough.check date:%s no enough data.", kLines.get(iCheck).date);
+			CLog.debug(TAG, "ExtEigenCrestTrough.check date:%s no enough data.", kLines.get(iCheck).date);
 			return false;
 		}
 		
@@ -275,7 +275,7 @@ public class ExtEigenCrestTrough {
 			}
 		}
 		
-		CLog.output(TAG, "ExtEigenCrestTrough.checkTrough Bottomdate:%s OK!", kLines.get(iCheck).date);
+		CLog.debug(TAG, "ExtEigenCrestTrough.checkTrough Bottomdate:%s OK!", kLines.get(iCheck).date);
 		
 		return true;
 	}
